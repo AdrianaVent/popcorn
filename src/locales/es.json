@@ -7,6 +7,20 @@
     "label": "Idioma actual: {{language}}"
   },
   "greeting": "¡Bienvenido!",
+  "login": {
+    "title": "Accede a Popcorn",
+    "subtitle": "Explora el universo del cine",
+    "email": "Usuario",
+    "password": "Contraseña",
+    "submit": "Iniciar sesión",
+    "loading": "Iniciando sesión...",
+    "validation": {
+      "emailRequired": "El usuario es obligatorio",
+      "emailInvalid": "El formato del correo no es válido",
+      "passwordRequired": "La contraseña es obligatoria",
+      "passwordWeak": "Mínimo 8 caracteres, una mayúscula, un número y un carácter especial"
+    }
+  },
   "tmdb": {
     "errors": {
       "TMDB_UNAUTHORIZED": "Clave de API inválida, revisa la configuración",
