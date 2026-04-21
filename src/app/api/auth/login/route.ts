@@ -3,13 +3,13 @@ import { authService } from '@/services/auth'
 import { TOKEN_MAX_TIME, REFRESH_TOKEN_MAX_TIME } from '@/config/auth'
 
 export async function POST(req: NextRequest) {
-  const { username, password } = await req.json()
-
-  if (!username || !password) {
-    return NextResponse.json({ code: 'MISSING_CREDENTIALS' }, { status: 400 })
-  }
-
   try {
+    const { username, password } = await req.json()
+
+    if (!username || !password) {
+      return NextResponse.json({ code: 'MISSING_CREDENTIALS' }, { status: 400 })
+    }
+
     const { accessToken, refreshToken } = await authService.login(username, password)
 
     const response = NextResponse.json({ code: 'LOGIN' })
