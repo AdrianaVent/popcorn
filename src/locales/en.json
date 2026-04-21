@@ -1,0 +1,10 @@
+{
+  "button": {
+    "accept": "Accept",
+    "cancel": "Cancel"
+  },
+  "languageSwitcher": {
+    "label": "Current language: {{language}}"
+  },
+  "greeting": "Welcome!"
+}
