@@ -1,7 +1,7 @@
 {
   "name": "Popcorn",
   "short_name": "Popcorn",
-  "description": "Discover movies and series with Popcorn",
+  "description": "Personal project focused on building a modern movie & series dashboard with Next.js and TypeScript, developed with Claude Code as the primary AI-assisted development tool.",
   "start_url": "/",
   "icons": [
     {

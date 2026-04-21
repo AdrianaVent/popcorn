@@ -18,7 +18,7 @@
  */
 
 import { DEFAULT_LANGUAGE } from '@/config/constants'
-import { TMDB_BASE_URL, TMDB_API_KEY } from '@/config/tmdb'
+import { TMDB_BASE_URL, TMDB_API_KEY } from '@/services/tmdb/config'
 
 export async function tmdbFetch<T>(endpoint: string, params?: Record<string, string | number | boolean>): Promise<T> {
   const url = new URL(`${TMDB_BASE_URL}${endpoint}`)
