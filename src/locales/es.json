@@ -6,5 +6,28 @@
   "languageSwitcher": {
     "label": "Idioma actual: {{language}}"
   },
-  "greeting": "¡Bienvenido!"
+  "greeting": "¡Bienvenido!",
+  "tmdb": {
+    "errors": {
+      "TMDB_UNAUTHORIZED": "Clave de API inválida, revisa la configuración",
+      "TMDB_NOT_FOUND": "Contenido no encontrado",
+      "TMDB_RATE_LIMIT": "Demasiadas peticiones, inténtalo más tarde",
+      "TMDB_FETCH_ERROR": "No se ha podido cargar el contenido, inténtalo de nuevo"
+    }
+  },
+  "auth": {
+    "errors": {
+      "MISSING_CREDENTIALS": "El usuario y la contraseña son obligatorios",
+      "INVALID_CREDENTIALS": "Usuario o contraseña incorrectos",
+      "NO_REFRESH_TOKEN": "No se ha proporcionado el token de refresco",
+      "SESSION_EXPIRED": "Tu sesión ha expirado, vuelve a iniciar sesión",
+      "LOGIN_FAILED": "Error al iniciar sesión, inténtalo de nuevo",
+      "REFRESH_FAILED": "No se ha podido renovar la sesión"
+    },
+    "success": {
+      "LOGIN": "Sesión iniciada correctamente",
+      "LOGOUT": "Sesión cerrada correctamente",
+      "REFRESH": "Sesión renovada correctamente"
+    }
+  }
 }
