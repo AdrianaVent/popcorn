@@ -1,35 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authService } from '@/services/auth'
-import { TOKEN_MAX_TIME } from '@/config/auth'
+import { TOKEN_MAX_TIME, REFRESH_TOKEN_MAX_TIME } from '@/config/auth'
 
 export async function POST(req: NextRequest) {
   const { username, password } = await req.json()
 
   if (!username || !password) {
-    return NextResponse.json(
-      { message: 'Username and password are required' },
-      { status: 400 }
-    )
+    return NextResponse.json({ code: 'MISSING_CREDENTIALS' }, { status: 400 })
   }
 
   try {
-    const { accessToken } = await authService.login(username, password)
+    const { accessToken, refreshToken } = await authService.login(username, password)
 
-    const response = NextResponse.json({ message: 'Login successful' })
+    const response = NextResponse.json({ code: 'LOGIN' })
 
-    response.cookies.set('token', accessToken, {
+    const cookieOptions = {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'lax' as const,
       secure: process.env.NODE_ENV === 'production',
       path: '/',
+    }
+
+    response.cookies.set('token', accessToken, {
+      ...cookieOptions,
       maxAge: TOKEN_MAX_TIME,
     })
 
+    response.cookies.set('refresh_token', refreshToken, {
+      ...cookieOptions,
+      maxAge: REFRESH_TOKEN_MAX_TIME,
+    })
+
     return response
-  } catch (error) {
-    return NextResponse.json(
-      { message: error instanceof Error ? error.message : 'Login failed' },
-      { status: 401 }
-    )
+  } catch {
+    return NextResponse.json({ code: 'INVALID_CREDENTIALS' }, { status: 401 })
   }
 }
