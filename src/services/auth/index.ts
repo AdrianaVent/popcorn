@@ -1,4 +1,4 @@
-import { DUMMYJSON_LOGIN_URL } from '@/config/auth'
+import { DUMMYJSON_LOGIN_URL, DUMMYJSON_REFRESH_URL } from '@/config/auth'
 
 type LoginResponse = {
   accessToken: string
@@ -9,6 +9,11 @@ type LoginResponse = {
   firstName: string
   lastName: string
   image: string
+}
+
+type RefreshResponse = {
+  accessToken: string
+  refreshToken: string
 }
 
 export const authService = {
@@ -22,6 +27,21 @@ export const authService = {
     if (!res.ok) {
       const error = await res.json()
       throw new Error(error.message ?? 'Invalid credentials')
+    }
+
+    return res.json()
+  },
+
+  refresh: async (refreshToken: string): Promise<RefreshResponse> => {
+    const res = await fetch(DUMMYJSON_REFRESH_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken, expiresInMins: 60 }),
+    })
+
+    if (!res.ok) {
+      const error = await res.json()
+      throw new Error(error.message ?? 'Session expired')
     }
 
     return res.json()
