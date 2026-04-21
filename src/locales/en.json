@@ -6,5 +6,28 @@
   "languageSwitcher": {
     "label": "Current language: {{language}}"
   },
-  "greeting": "Welcome!"
+  "greeting": "Welcome!",
+  "tmdb": {
+    "errors": {
+      "TMDB_UNAUTHORIZED": "Invalid API key, please check your configuration",
+      "TMDB_NOT_FOUND": "Content not found",
+      "TMDB_RATE_LIMIT": "Too many requests, please try again later",
+      "TMDB_FETCH_ERROR": "Could not load content, please try again"
+    }
+  },
+  "auth": {
+    "errors": {
+      "MISSING_CREDENTIALS": "Username and password are required",
+      "INVALID_CREDENTIALS": "Invalid username or password",
+      "NO_REFRESH_TOKEN": "No refresh token provided",
+      "SESSION_EXPIRED": "Your session has expired, please log in again",
+      "LOGIN_FAILED": "Login failed, please try again",
+      "REFRESH_FAILED": "Could not refresh session"
+    },
+    "success": {
+      "LOGIN": "Login successful",
+      "LOGOUT": "Logout successful",
+      "REFRESH": "Session refreshed"
+    }
+  }
 }

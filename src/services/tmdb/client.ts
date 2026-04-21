@@ -32,7 +32,16 @@ export async function tmdbFetch<T>(endpoint: string, params?: Record<string, str
   const res = await fetch(url.toString())
 
   if (!res.ok) {
-    throw new Error(`TMDB error ${res.status}: ${res.statusText}`)
+    const code =
+      res.status === 401 ? 'TMDB_UNAUTHORIZED' :
+      res.status === 404 ? 'TMDB_NOT_FOUND' :
+      res.status === 429 ? 'TMDB_RATE_LIMIT' :
+      'TMDB_FETCH_ERROR'
+
+    const error = new Error(code) as Error & { code: string; status: number }
+    error.code = code
+    error.status = res.status
+    throw error
   }
 
   return res.json() as Promise<T>
