@@ -18,6 +18,11 @@ export const useLanguageStore = create<LanguageState>()(
         set({ language: lang })
       },
     }),
-    { name: 'popcorn-language' }
+    {
+      name: 'popcorn-language',
+      onRehydrateStorage: () => (state) => {
+        if (state?.language) i18n.changeLanguage(state.language)
+      },
+    }
   )
 )

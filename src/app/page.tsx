@@ -1,18 +1,21 @@
 'use client'
 
-import { useState } from 'react'
-import LanguageSwitcher from '@/components/languageSwitcher'
-import ThemeSwitcher from '@/components/themeSwitcher'
-import Text from '@/components/text'
+import { useState, useEffect } from 'react'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher'
+import Text from '@/components/ui/Text'
 import { useTranslation } from 'react-i18next'
 import { colors } from '@/styles/theme'
+import ThemeSwitcher from '@/components/common/ThemeSwitcher'
 
 type AuthState = 'idle' | 'loading' | 'logged_in' | 'error'
 
 export default function Home() {
   const { t } = useTranslation()
+  const [mounted, setMounted] = useState(false)
   const [authState, setAuthState] = useState<AuthState>('idle')
   const [responseCode, setResponseCode] = useState<string | null>(null)
+
+  useEffect(() => setMounted(true), [])
 
   const handleLogin = async () => {
     setAuthState('loading')
@@ -64,8 +67,10 @@ export default function Home() {
     return code
   }
 
+  if (!mounted) return null
+
   return (
-    <main style={{ padding: '2rem', maxWidth: '480px' }}>
+    <main style={{ padding: '2rem', maxWidth: '30rem' }}>
       <Text variant="title">Popcorn Dashboard</Text>
       <Text variant="body">Welcome to the platform</Text>
       <Text variant="caption" color={colors.yellow[500]}>
@@ -105,8 +110,8 @@ export default function Home() {
         <div style={{
           marginTop: '1.5rem',
           padding: '1rem',
-          borderRadius: '8px',
-          border: `1px solid ${authState === 'error' ? colors.red[400] : colors.green[400]}`,
+          borderRadius: '0.5rem',
+          border: `0.0625rem solid ${authState === 'error' ? colors.red[400] : colors.green[400]}`,
           background: authState === 'error' ? colors.red[100] : colors.green[100],
         }}>
           <Text variant="caption" color={authState === 'error' ? colors.red[600] : colors.green[600]}>

@@ -21,7 +21,12 @@ export const useThemeStore = create<ThemeState>()(
         }),
     }),
     {
-      name: 'popcorn-theme', // localStorage key
+      name: 'popcorn-theme',
+      partialize: (state) => ({ mode: state.mode }),
+      merge: (persisted, current) => {
+        const mode = (persisted as { mode: ThemeMode }).mode ?? current.mode
+        return { ...current, mode, theme: resolveTheme(mode) }
+      },
     }
   )
 )

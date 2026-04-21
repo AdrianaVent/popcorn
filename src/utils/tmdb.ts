@@ -1,4 +1,4 @@
-import { TMDB_IMAGE_BASE_URL } from '@/config/tmdb'
+import { TMDB_IMAGE_BASE_URL } from '@/services/tmdb/config'
 
 export type TMDBImageSize =
   | 'w92'
