@@ -7,6 +7,20 @@
     "label": "Current language: {{language}}"
   },
   "greeting": "Welcome!",
+  "login": {
+    "title": "Sign in to Popcorn",
+    "subtitle": "Explore the world of cinema",
+    "email": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "loading": "Signing in...",
+    "validation": {
+      "emailRequired": "Username is required",
+      "emailInvalid": "Invalid email format",
+      "passwordRequired": "Password is required",
+      "passwordWeak": "Min. 8 characters, one uppercase, one number and one special character"
+    }
+  },
   "tmdb": {
     "errors": {
       "TMDB_UNAUTHORIZED": "Invalid API key, please check your configuration",

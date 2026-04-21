@@ -1,36 +1,6 @@
 # Popcorn 🍿
 
-Personal project focused on building a modern movie & series dashboard with Next.js and TypeScript.
-
-## Features
-
-#### Theme
-- Global theme support: Light, Dark, and Auto modes
-- Theme managed with Zustand
-- Theme persists in localStorage
-- Theme can be switched dynamically via `ThemeSwitcher` component
-
-#### Language Management
-- English / Spanish
-- Uses **i18next** with JSON files in `src/locales/`
-- State persisted with Zustand
-- Dynamic switching via `LanguageSwitcher` component
-- Translation hook: `useTranslation()`
-
-#### Authentication
-- Route protection via Next.js middleware (`src/middleware.ts`)
-- HttpOnly cookie-based sessions (`token`)
-- Login and logout via internal Route Handlers (`src/app/api/auth/`)
-- Auth logic (DummyJSON calls) isolated in `src/services/auth/`
-
-#### Movie & Series Data
-- Powered by [TMDB API](https://developer.themoviedb.org/) — used strictly as a data provider
-- Service layer in `src/services/tmdb/` (movies, series, search)
-
-#### Favicons & Manifest
-- Favicons located in `/public/icons/`
-- Manifest: `/public/manifest.json` ready for PWA
-- Favicon types included: `.ico`, `.png`, `.svg`
+Personal movie & series dashboard. Track what you watch, discover new titles.
 
 ## Tech Stack
 
@@ -42,69 +12,100 @@ Personal project focused on building a modern movie & series dashboard with Next
 - **jose** — JWT utilities (Edge Runtime compatible)
 - **ESLint 9** + Prettier — no semicolons, single quotes
 
+## Getting started
+
+```bash
+npm install
+cp .env.local.example .env.local  # add your TMDB API key
+npm run dev   # http://localhost:3000
+```
+
+```bash
+npm run build       # production build
+npm run lint        # check code
+npm run lint:fix    # auto-fix
+npm run format      # prettier
+```
+
+## Features
+
+#### Theme
+- Light, dark, and auto modes (auto resolves by time of day: light 7am–7pm)
+- Managed with Zustand, persisted in localStorage
+- Switched dynamically via `ThemeSwitcher`
+
+#### Language
+- English / Spanish — auto-detects browser language on first visit
+- State persisted with Zustand, synced to i18n via `onRehydrateStorage`
+- Dynamic switching via `LanguageSwitcher`
+
+#### Authentication
+- Login UI with skeleton loading, field validation and i18n error messages
+- Route protection via Next.js middleware (`src/middleware.ts`)
+- HttpOnly cookie-based sessions — `token` (1h) + `refresh_token` (7d)
+- Login, logout and refresh via Route Handlers (`src/app/api/auth/`)
+- Auth logic isolated in `src/services/auth/` (DummyJSON as mock provider)
+
+#### Movie & Series Data
+- Powered by [TMDB API](https://developer.themoviedb.org/) — used strictly as a data provider
+- Service layer in `src/services/tmdb/` (movies, series, search)
+
+#### PWA
+- Favicons in `/public/icons/`, manifest at `/public/manifest.json`
+
 ## Project Structure
 
 ```
 src/
 ├── app/
-│   ├── api/               # Route Handlers (thin — HTTP in/out only)
-│   │   └── auth/
-│   │       ├── login/     # POST /api/auth/login  — sets HttpOnly cookie
-│   │       └── logout/    # POST /api/auth/logout — clears cookie
-│   └── ...                # Pages (App Router)
-├── components/            # Text (polymorphic), ThemeSwitcher, LanguageSwitcher
-├── config/                # App constants split by domain
-│   ├── constants.ts       # General (DEFAULT_LANGUAGE)
-│   ├── tmdb.ts            # TMDB_BASE_URL, TMDB_API_KEY
-│   └── auth.ts            # DUMMYJSON_LOGIN_URL, TOKEN_MAX_TIME
-├── features/              # Feature modules (empty — ready for development)
+│   ├── api/auth/          # login / logout / refresh — Route Handlers (thin)
+│   ├── login/             # Login page (ssr: false via dynamic import)
+│   └── page.tsx           # Home (temporary auth demo — will become dashboard)
+├── components/
+│   ├── common/            # ThemeSwitcher, LanguageSwitcher
+│   ├── layouts/           # AuthLayout
+│   └── ui/                # Button, Input, Text (polymorphic), LoginSkeleton
+├── config/                # Constants split by domain (auth, i18n, constants)
+├── features/
+│   └── auth/login/        # LoginFeature, LoginForm, useLogin, login.service.ts
 ├── hooks/                 # useTranslation
-├── layouts/               # Layout components (empty)
-├── locales/               # en.json, es.json
-├── middleware.ts          # Route protection — redirects based on token cookie
+├── locales/               # en.json, es.json — auth.errors, auth.success, tmdb.errors, login.*
+├── middleware.ts          # Route protection (skips /api/*)
 ├── providers/             # GlobalProvider, ThemeProvider, LanguageProvider
-├── services/              # All external API clients
-│   ├── tmdb/              # TMDB client (movies, series, search)
-│   └── auth/              # DummyJSON auth client
+├── services/
+│   ├── auth/              # DummyJSON client — login(), refresh()
+│   └── tmdb/              # TMDB client — movies, series, search
 ├── store/                 # themeStore, languageStore
 ├── styles/
-│   └── theme/             # colors.ts, light.ts, dark.ts, resolveTheme.ts
-├── types/                 # TypeScript types (tmdb.ts, ...)
-└── utils/                 # Shared utilities (empty)
+│   ├── theme/             # colors.ts, light.ts, dark.ts, resolveTheme.ts
+│   └── typography.ts      # textStyles (size + lineHeight per variant)
+├── types/                 # tmdb.ts, languageTypes.ts
+└── utils/
+    └── tmdb.ts            # getTMDBImageUrl(path, size)
 ```
 
 ## Architecture Decisions
 
-- **API separation**: `src/app/api/` holds Route Handlers (framework-required location); `src/services/` holds all external API clients. Route Handlers are thin — business logic lives in services.
-- **Auth**: HttpOnly cookies only — no localStorage. Cookie is set on login and deleted (`maxAge: 0`) on logout.
+- **API separation**: `src/app/api/` holds Route Handlers; `src/services/` holds all external API clients. Route Handlers are thin — business logic lives in services.
+- **Auth**: Two HttpOnly cookies — `token` (1h) and `refresh_token` (7d). Set on login, both cleared on logout or failed refresh.
+- **Auth provider**: DummyJSON (`dummyjson.com/auth`). Login field accepts username (not email). Test credentials: `emilys` / `emilyspass`.
 - **TMDB**: Strictly a data provider. Never used for user authentication.
-- **Auto theme**: resolves light (7am–7pm) vs dark based on time of day — see `resolveTheme.ts`
-- **Theme applied**: inline styles on provider wrapper, not CSS classes
-- **State**: separate Zustand stores per domain (theme, language)
-- **PWA**: manifest + favicons configured in root layout
+- **Error codes**: API responses return `{ code: string }` — never hardcoded text. Frontend translates via i18next.
+- **Auto theme**: resolves light (7am–7pm) vs dark based on time of day — see `resolveTheme.ts`.
+- **Theme applied**: inline styles on provider wrapper, not CSS classes. All values in rem.
+- **State**: separate Zustand stores per domain. `partialize` persists only the key field; `merge` recalculates derived state on rehydration.
+- **SSR / hydration**: features using i18n or theme use `dynamic(..., { ssr: false })` to avoid server/client mismatches. Other pages use a `mounted` guard.
+- **Middleware**: skips all `/api/*` routes. Redirects unauthenticated users to `/login`; redirects authenticated users away from auth routes to `/`.
+- **PWA**: manifest + favicons configured in root layout.
 
 ## Conventions
 
 - New features go in `src/features/`
 - External API clients go in `src/services/`
 - Route Handlers go in `src/app/api/` and must stay thin
-- Reusable components go in `src/components/`
-- Constants are split by domain in `src/config/`
+- UI primitives go in `src/components/ui/`, layout wrappers in `src/components/layouts/`, shared non-UI in `src/components/common/`
+- Constants split by domain in `src/config/`
+- API responses always return `{ code: string }`, never hardcoded messages
+- All style values in rem — no px
+- Inline styles only — no Tailwind utility classes inside components
 - Follow the client provider pattern for global state
-
-## Installation
-
-```bash
-git clone <your-repo-url>
-cd popcorn
-npm install
-cp .env.local.example .env.local  # add your TMDB API key
-```
-
-```bash
-npm run dev         # development mode
-npm run build       # production build
-npm run lint        # check code
-npm run lint:fix    # auto-fix lint issues
-npm run format      # format code with Prettier
-```

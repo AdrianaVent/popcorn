@@ -1,4 +1,4 @@
-import { DUMMYJSON_LOGIN_URL, DUMMYJSON_REFRESH_URL } from '@/config/auth'
+import { DUMMYJSON_LOGIN_URL, DUMMYJSON_REFRESH_URL } from '@/services/auth/config'
 
 type LoginResponse = {
   accessToken: string
