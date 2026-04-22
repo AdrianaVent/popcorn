@@ -1,12 +1,9 @@
-import { lightTheme } from './light'
-import { darkTheme } from './dark'
 import type { ThemeMode } from './types'
 
-export function resolveTheme(mode: ThemeMode) {
-  if (mode === 'light') return lightTheme
-  if (mode === 'dark') return darkTheme
+export function resolveMode(mode: ThemeMode): 'light' | 'dark' {
+  if (mode === 'light') return 'light'
+  if (mode === 'dark') return 'dark'
 
-  // auto → depending on the system time
   const hour = new Date().getHours()
-  return hour >= 7 && hour < 19 ? lightTheme : darkTheme
+  return hour >= 7 && hour < 19 ? 'light' : 'dark'
 }

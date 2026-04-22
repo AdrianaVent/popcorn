@@ -74,12 +74,27 @@ src/
 - **TMDB**: Strictly a data provider (movies/series/search). Never used for user authentication.
 - **Error codes**: API responses return `{ code: string }` — never hardcoded text. Frontend translates via i18next (`auth.errors.*`, `tmdb.errors.*`).
 - **Auto theme**: resolves light (7am–7pm) vs dark based on time of day — see `resolveTheme.ts`.
-- **Theme applied**: inline styles on provider wrapper, not CSS classes. All style values in **rem**.
+- **Theme (pending migration)**: currently applied via inline styles on the ThemeProvider wrapper using Zustand `theme.*` tokens. Planned migration: CSS custom properties on `:root` / `[data-theme]` so Tailwind utility classes consume them instead of inline styles.
 - **State**: separate Zustand stores per domain (theme, language). `partialize` persists only the mode/language key; `merge` recalculates derived state on rehydration.
 - **Language detection**: on first visit (no `popcorn-lang-init` flag), browser language is detected via `navigator.language`. Stored in Zustand + synced to i18n via `onRehydrateStorage`.
 - **SSR / hydration**: features that use i18n or theme are loaded with `dynamic(..., { ssr: false })` to avoid server/client text mismatches. Pages that can't do this use a `mounted` guard.
-- **Middleware**: skips all `/api/*` routes. Redirects unauthenticated users to `/login`; redirects authenticated users away from auth routes to `/`.
+- **Middleware**: skips all `/api/*` routes. Redirects unauthenticated users to `/login`; redirects authenticated users away from auth routes to `/dashboard`.
 - **PWA**: manifest + favicons configured in root layout.
+
+## UI Design System
+
+Design tokens live in `src/styles/`:
+- `theme/colors.ts` — full color palette (`gray`, `red`, `yellow`, `green`, `cream`, `brown`)
+- `typography.ts` — text variants: `title`, `subtitle`, `body`, `small`, `caption` (size + weight + line-height)
+- `theme/light.ts` + `theme/dark.ts` — semantic tokens mapped from the palette
+
+**Rules — violations are bugs, not style preferences:**
+- **No hex/rgb values in JSX or CSS** — use design system tokens only
+- **No manual `font-size`, `font-weight`, `line-height` in components** — use `typography.ts` variants
+- **Tailwind utility classes** for all layout, spacing, and static styles
+- **Inline `style={{}}`** only for values computed at runtime (e.g., `top: tooltipY`, JS-driven animation values) — never for colors, typography, or static spacing
+- **No CSS Modules, styled-components, or CSS-in-JS**
+- **Target aesthetic**: SaaS-style — clean, minimal, easy to scan (Stripe / Linear / Notion)
 
 ## Conventions
 
@@ -91,9 +106,8 @@ src/
 - Shared non-UI components go in `src/components/common/`
 - Constants are split by domain in `src/config/`
 - API responses always return `{ code: string }`, never hardcoded messages
-- All style values in rem — no px (exception: `0.0625rem` borders/shadows where sub-pixel matters)
-- Inline styles only — no Tailwind utility classes inside components
 - Follow the client provider pattern for global state
+- User-facing strings always via `t()` — add keys to both `en.json` and `es.json`
 
 ## Git Workflow
 
