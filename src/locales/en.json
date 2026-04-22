@@ -19,7 +19,43 @@
       "emailInvalid": "Invalid email format",
       "passwordRequired": "Password is required",
       "passwordWeak": "Min. 8 characters, one uppercase, one number and one special character"
-    }
+    },
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset password",
+    "resetDescription": "Enter your email and we’ll send you a link to reset your password.",
+    "backLogin": "Back to sign in"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeAuto": "Auto"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "movies": "Movies",
+    "series": "Series",
+    "settings": "Settings"
+  },
+  "movies": {
+    "title": "Movies",
+    "comingSoon": "Coming soon"
+  },
+  "series": {
+    "title": "Series",
+    "comingSoon": "Coming soon"
+  },
+  "dashboard": {
+    "recentlyAdded": "Recently added",
+    "all": "All",
+    "movies": "Movies",
+    "series": "Series"
+  },
+  "topbar": {
+    "search": "Search...",
+    "logout": "Log out"
   },
   "tmdb": {
     "errors": {
@@ -42,6 +78,9 @@
       "LOGIN": "Login successful",
       "LOGOUT": "Logout successful",
       "REFRESH": "Session refreshed"
+    },
+    "reset": {
+      "messageSuccess": "A recovery email has been sent"
     }
   }
 }
