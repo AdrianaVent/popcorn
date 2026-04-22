@@ -19,7 +19,43 @@
       "emailInvalid": "El formato del correo no es válido",
       "passwordRequired": "La contraseña es obligatoria",
       "passwordWeak": "Mínimo 8 caracteres, una mayúscula, un número y un carácter especial"
-    }
+    },
+    "forgotPassword": "¿Contraseña olvidada?",
+    "resetPassword": "Recuperar contraseña",
+    "resetDescription": "Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.",
+    "backLogin": "Volver al inicio de sesión"
+  },
+  "settings": {
+    "title": "Configuración",
+    "language": "Idioma",
+    "theme": "Tema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "themeAuto": "Auto"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "movies": "Películas",
+    "series": "Series",
+    "settings": "Configuración"
+  },
+  "movies": {
+    "title": "Películas",
+    "comingSoon": "Próximamente"
+  },
+  "series": {
+    "title": "Series",
+    "comingSoon": "Próximamente"
+  },
+  "dashboard": {
+    "recentlyAdded": "Añadido recientemente",
+    "all": "Todo",
+    "movies": "Películas",
+    "series": "Series"
+  },
+  "topbar": {
+    "search": "Buscar...",
+    "logout": "Cerrar sesión"
   },
   "tmdb": {
     "errors": {
@@ -42,6 +78,9 @@
       "LOGIN": "Sesión iniciada correctamente",
       "LOGOUT": "Sesión cerrada correctamente",
       "REFRESH": "Sesión renovada correctamente"
+    },
+    "reset": {
+      "messageSuccess": "Correo de recuperación enviado"
     }
   }
 }

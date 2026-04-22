@@ -1,8 +1,7 @@
 'use client'
 
 import { ButtonHTMLAttributes, ReactNode } from 'react'
-import { useThemeStore } from '@/store/themeStore'
-import { textStyles } from '@/styles/typography'
+import clsx from 'clsx'
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode
@@ -15,32 +14,23 @@ export default function Button({
   loading = false,
   variant = 'primary',
   disabled,
-  style,
+  className,
   ...props
 }: ButtonProps) {
-  const { theme } = useThemeStore()
-
   const isPrimary = variant === 'primary'
   const isDisabled = disabled || loading
 
   return (
     <button
       disabled={isDisabled}
-      style={{
-        padding: '0.625rem 1rem',
-        borderRadius: '0.375rem',
-        border: isPrimary ? 'none' : `0.0625rem solid ${theme.border}`,
-        background: isPrimary ? theme.principal : 'transparent',
-        color: isPrimary ? theme.principalText : theme.text,
-        fontSize: textStyles.small.size,
-        fontWeight: 600,
-        lineHeight: textStyles.small.lineHeight,
-        cursor: isDisabled ? 'not-allowed' : 'pointer',
-        opacity: isDisabled ? 0.6 : 1,
-        width: '100%',
-        transition: 'opacity 0.2s',
-        ...style,
-      }}
+      className={clsx(
+        'w-full px-4 py-2.5 rounded-md text-small font-semibold transition-opacity duration-200 cursor-pointer',
+        isPrimary
+          ? 'bg-primary text-primary-foreground border-0'
+          : 'bg-transparent text-foreground border border-border',
+        isDisabled && 'opacity-60 cursor-not-allowed',
+        className,
+      )}
       {...props}
     >
       {loading ? '...' : children}

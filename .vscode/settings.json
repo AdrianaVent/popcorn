@@ -10,5 +10,6 @@
     "**/.next": true,
     "**/out": true,
     "**/dist": true
-  }
+  },
+  "editor.formatOnSave": true
 }
