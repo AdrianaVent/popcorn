@@ -1,8 +1,7 @@
 'use client'
 
 import { InputHTMLAttributes, ReactNode } from 'react'
-import { useThemeStore } from '@/store/themeStore'
-import { textStyles } from '@/styles/typography'
+import clsx from 'clsx'
 
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: string
@@ -10,68 +9,34 @@ type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   rightElement?: ReactNode
 }
 
-export default function Input({ label, error, id, rightElement, ...props }: InputProps) {
-  const { theme } = useThemeStore()
-
+export default function Input({ label, error, id, rightElement, className, ...props }: InputProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+    <div className="flex flex-col gap-1">
       {label && (
-        <label
-          htmlFor={id}
-          style={{
-            fontSize: textStyles.caption.size,
-            fontWeight: textStyles.caption.weight,
-            lineHeight: textStyles.caption.lineHeight,
-            color: theme.textSecondary,
-          }}
-        >
+        <label htmlFor={id} className="text-caption font-normal text-muted-foreground">
           {label}
         </label>
       )}
-      <div style={{ position: 'relative' }}>
+      <div className="relative">
         <input
           id={id}
-          style={{
-            padding: rightElement ? '0.625rem 2.5rem 0.625rem 0.75rem' : '0.625rem 0.75rem',
-            borderRadius: '0.375rem',
-            border: `0.0625rem solid ${error ? theme.error : theme.border}`,
-            fontSize: textStyles.small.size,
-            lineHeight: textStyles.small.lineHeight,
-            color: theme.text,
-            background: theme.cardBackground,
-            outline: 'none',
-            width: '100%',
-            boxSizing: 'border-box',
-          }}
+          className={clsx(
+            'w-full px-3 py-2.5 rounded-md border text-small text-foreground bg-card outline-none transition-colors',
+            rightElement && 'pr-10',
+            error ? 'border-destructive' : 'border-border',
+            className,
+          )}
           {...props}
         />
         {rightElement && (
-          <div
-            style={{
-              position: 'absolute',
-              right: '0.75rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
             {rightElement}
           </div>
         )}
       </div>
       {error && (
-        <span
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-            fontSize: '0.7rem',
-            lineHeight: '1rem',
-            color: theme.error,
-          }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+        <span className="flex items-center gap-1 text-[0.7rem] leading-4 text-destructive">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
             <circle cx="6" cy="6" r="5.5" stroke="currentColor" />
             <path d="M6 3.5V6.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
             <circle cx="6" cy="8.5" r="0.6" fill="currentColor" />
