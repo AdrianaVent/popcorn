@@ -5,7 +5,9 @@ import { useTranslation } from 'react-i18next'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/Text'
-import { useThemeStore } from '@/store/themeStore'
+import EyeSlashIcon from '@/components/icons/EyeSlashIcon'
+import EyeIcon from '@/components/icons/EyeIcon'
+import ResetPasswordForm from './ResetPasswordForm'
 
 type LoginFormProps = {
   form: { email: string; password: string }
@@ -14,24 +16,11 @@ type LoginFormProps = {
   fieldErrors: { email?: string; password?: string }
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onSubmit: (e: React.FormEvent) => void
+  onResetSubmit: (e: React.FormEvent) => Promise<void>
+  onResetError?: () => void
 }
 
-function EyeIcon({ visible }: { visible: boolean }) {
-  if (visible) {
-    return (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-        <circle cx="12" cy="12" r="3" />
-      </svg>
-    )
-  }
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-      <line x1="1" y1="1" x2="23" y2="23" />
-    </svg>
-  )
-}
+type Mode = 'login' | 'forgot'
 
 export default function LoginForm({
   form,
@@ -40,13 +29,59 @@ export default function LoginForm({
   fieldErrors,
   onChange,
   onSubmit,
+  onResetError,
+  onResetSubmit,
 }: LoginFormProps) {
   const { t } = useTranslation()
-  const { theme } = useThemeStore()
   const [showPassword, setShowPassword] = useState(false)
+  const [mode, setMode] = useState<Mode>('login')
+  const [successMessage, setSuccessMessage] = useState<boolean>(false)
 
+  /* ─── FORGOT PASSWORD ───────────────────── */
+  if (mode === 'forgot') {
+    return (
+      <ResetPasswordForm
+        email={form.email}
+        onChange={onChange}
+        onSubmit={async (e) => {
+          await onResetSubmit(e)
+          setSuccessMessage(true)
+          setMode('login')
+        }}
+        onBack={() => {
+          setMode('login')
+          onResetError?.()
+        }}
+        fieldErrors={fieldErrors}
+      />
+    )
+  }
+
+  /* ─── LOGIN ─────────────────────────────── */
   return (
-    <form onSubmit={onSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <form
+      onSubmit={async (e) => {
+        await onSubmit(e)
+        setSuccessMessage(false)}}
+        noValidate
+        className="flex flex-col gap-4"
+      >
+      {successMessage && (
+        <div className="mb-2 rounded-md bg-green-500/10 px-3 py-2 text-center">
+          <p className="text-caption text-green-600 font-medium">
+            {t('auth.reset.messageSuccess')}
+          </p>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="rounded-md bg-destructive/10 px-3 py-1.5">
+          <Text variant="caption" className="text-destructive font-medium leading-tight">
+            {errorMessage}
+          </Text>
+        </div>
+      )}
+
       <Input
         id="email"
         name="email"
@@ -57,6 +92,7 @@ export default function LoginForm({
         autoComplete="username"
         error={fieldErrors.email}
       />
+
       <Input
         id="password"
         name="password"
@@ -70,26 +106,25 @@ export default function LoginForm({
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-              color: theme.textSecondary,
-              display: 'flex',
-              alignItems: 'center',
-            }}
             aria-label={showPassword ? 'Hide password' : 'Show password'}
+            className="flex items-center bg-transparent border-0 cursor-pointer p-0 text-muted-foreground"
           >
-            <EyeIcon visible={showPassword} />
+            {showPassword ? <EyeIcon size={16} /> : <EyeSlashIcon size={16} />}
           </button>
         }
       />
-      {errorMessage && (
-        <Text variant="caption" color={theme.error}>
-          {errorMessage}
-        </Text>
-      )}
+
+      <button
+        type="button"
+        onClick={() => {
+          setMode('forgot')
+          setSuccessMessage(false)
+        }}
+        className="text-caption text-muted-foreground hover:text-foreground hover:underline self-end -mt-2 cursor-pointer"
+      >
+        {t('login.forgotPassword')}
+      </button>
+
       <Button type="submit" loading={loading}>
         {loading ? t('login.loading') : t('login.submit')}
       </Button>
