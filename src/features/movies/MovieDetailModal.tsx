@@ -12,6 +12,7 @@ import CollectionAccordion from './CollectionAccordion'
 import MovieMetaGrid from './MovieMetaGrid'
 import MovieDetailSkeleton from './MovieDetailSkeleton'
 import { getMovieUI } from '@/utils/getMovieUI'
+import { useLanguageStore } from '@/store/languageStore'
 
 type Props = {
   movieId: number
@@ -20,6 +21,7 @@ type Props = {
 
 export default function MovieDetailModal({ movieId, onClose }: Props) {
   const { t } = useTranslation()
+  const { language } = useLanguageStore()
   const [currentId, setCurrentId] = useState(movieId)
   const { detail, loading, error } = useMovieDetail(currentId)
 
@@ -79,7 +81,15 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
                     <span className="h-3 w-px bg-green-300/60 dark:bg-green-700/50" />
 
                     <span className="text-sm font-semibold text-green-700 dark:text-green-300">
-                      {ui.releaseYear ?? '—'}
+                      {detail.release_date
+                        ? (() => {
+                            const s = new Date(detail.release_date).toLocaleDateString(language, {
+                              month: 'long',
+                              year: 'numeric',
+                            })
+                            return s.charAt(0).toUpperCase() + s.slice(1)
+                          })()
+                        : '—'}
                     </span>
 
                   </div>

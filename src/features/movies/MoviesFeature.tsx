@@ -71,10 +71,14 @@ export default function MoviesFeature() {
     {
       key: 'release_date',
       header: t('movies.columns.releaseDate'),
-      render: (row) =>
-        row.release_date
-          ? new Date(row.release_date).toLocaleDateString(language)
-          : '—',
+      render: (row) => {
+        if (!row.release_date) return '—'
+        const date = new Date(row.release_date)
+        const day = String(date.getUTCDate()).padStart(2, '0')
+        const month = date.toLocaleDateString(language, { month: 'short' })
+        const year = date.getUTCFullYear()
+        return `${day} ${month} ${year}`
+      },
       width: 'md',
       align: 'center',
     },
