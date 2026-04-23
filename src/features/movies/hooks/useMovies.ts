@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAsync } from '@/hooks/useAsync'
-import { fetchMovies } from './movies.service'
+import { fetchMovies } from '@/features/movies/movies.service'
 import { useLanguageStore } from '@/store/languageStore'
 import type { MovieFilters, MovieRow } from '@/types/movie'
 import type { TMDBMovie } from '@/types/tmdb'
