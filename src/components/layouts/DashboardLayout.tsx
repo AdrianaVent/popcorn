@@ -12,7 +12,7 @@ type DashboardLayoutProps = {
 
 export default function DashboardLayout({ children, activeNav, onLogout }: DashboardLayoutProps) {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen">
       <Sidebar activeKey={activeNav} />
       <div className="flex flex-col flex-1 min-w-0">
         <Topbar onLogout={onLogout} />

@@ -3,6 +3,10 @@
     "accept": "Aceptar",
     "cancel": "Cancelar"
   },
+  "common": {
+    "prev": "Anterior",
+    "next": "Siguiente"
+  },
   "languageSwitcher": {
     "label": "Idioma actual: {{language}}"
   },
@@ -41,7 +45,39 @@
   },
   "movies": {
     "title": "Películas",
-    "comingSoon": "Próximamente"
+    "addMovie": "+ Añadir película",
+    "comingSoon": "Próximamente",
+    "empty": "No hay películas disponibles",
+    "error": "No se han podido cargar las películas",
+    "retry": "Reintentar",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "filters": {
+      "panel": "Filtros",
+      "title": "Título",
+      "ratingGte": "Valoración ≥",
+      "year": "Año"
+    },
+    "columns": {
+      "poster": "Póster",
+      "title": "Título",
+      "releaseDate": "Estreno",
+      "rating": "Valoración",
+      "votes": "Votos",
+      "language": "Idioma"
+    },
+    "detail": {
+      "overview": "Sinopsis",
+      "rating": "Valoración",
+      "votes": "Votos",
+      "runtime": "Duración",
+      "minutes": "min",
+      "year": "Año",
+      "genres": "Géneros",
+      "collection": "Saga",
+      "current": "Viendo",
+      "release": "Estreno"
+    }
   },
   "series": {
     "title": "Series",

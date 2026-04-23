@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       <div
         className="fixed inset-0 z-0 pointer-events-none bg-repeat"
         style={{
-          backgroundImage: "url('/icons/favicon-32x32.png')",
+          backgroundImage: 'url(\'/icons/favicon-32x32.png\')',
           backgroundSize: '3.25rem 3.25rem',
           opacity: 'var(--pattern-opacity)',
         }}
