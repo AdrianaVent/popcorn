@@ -15,23 +15,13 @@ export default function MovieMetaGrid({ detail, isUpcoming, releaseYear }: Props
   const { t } = useTranslation()
 
   const rows = useMemo(() => {
+    if (isUpcoming) return []
+
     return [
-      {
-        label: t('movies.detail.rating'),
-        value: `${detail.vote_average.toFixed(1)} / 10`,
-      },
-      {
-        label: t('movies.detail.votes'),
-        value: detail.vote_count.toLocaleString(),
-      },
-      detail.runtime && {
-        label: t('movies.detail.runtime'),
-        value: `${detail.runtime} min`,
-      },
-      !isUpcoming && {
-        label: t('movies.detail.year'),
-        value: releaseYear?.toString() ?? '—',
-      },
+      { label: t('movies.detail.rating'), value: `${detail.vote_average.toFixed(1)} / 10` },
+      { label: t('movies.detail.votes'), value: detail.vote_count.toLocaleString() },
+      detail.runtime && { label: t('movies.detail.runtime'), value: `${detail.runtime} min` },
+      { label: t('movies.detail.year'), value: releaseYear?.toString() ?? '—' },
     ].filter(Boolean) as Array<{ label: string; value: React.ReactNode }>
   }, [detail, isUpcoming, releaseYear, t])
 

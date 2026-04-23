@@ -3,6 +3,7 @@
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/layouts/DashboardLayout'
+import Text from '@/components/ui/Text'
 
 export default function SeriesFeature() {
   const { t } = useTranslation()
@@ -16,8 +17,8 @@ export default function SeriesFeature() {
   return (
     <DashboardLayout activeNav="series" onLogout={handleLogout}>
       <div className="p-8">
-        <h1 className="text-title font-bold text-foreground mb-2">{t('series.title')}</h1>
-        <p className="text-small text-muted-foreground">{t('series.comingSoon')}</p>
+        <Text variant="title" as="h1" className="mb-2">{t('series.title')}</Text>
+        <Text variant="small" className="text-muted-foreground">{t('series.comingSoon')}</Text>
       </div>
     </DashboardLayout>
   )
