@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import AccordionList from '@/components/ui/AccordionList'
-import MoviePoster from '@/components/common/MoviePoster'
+import MoviePoster from './MoviePoster'
 import Text from '@/components/ui/Text'
 import clsx from 'clsx'
-import { useCollectionDetail } from './useCollectionDetail'
+import { useCollectionDetail } from '@/features/movies/hooks/useCollectionDetail'
 import type { TMDBCollection } from '@/types/tmdb'
 
 type Props = {

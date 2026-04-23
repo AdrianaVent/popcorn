@@ -1,7 +1,7 @@
 'use client'
 
 import { useAsync } from '@/hooks/useAsync'
-import { fetchMovieDetail } from './movies.service'
+import { fetchMovieDetail } from '@/features/movies/movies.service'
 import { useLanguageStore } from '@/store/languageStore'
 import type { TMDBMovieDetail } from '@/types/tmdb'
 
