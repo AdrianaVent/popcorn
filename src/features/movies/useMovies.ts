@@ -9,7 +9,7 @@ import type { TMDBMovie } from '@/types/tmdb'
 
 type FetchResult = { movies: MovieRow[]; totalPages: number }
 
-function applyClientFilters(results: TMDBMovie[], filters: MovieFilters): MovieRow[] {
+export function applyClientFilters(results: TMDBMovie[], filters: MovieFilters): MovieRow[] {
   // vote_average_gte applied client-side only in search mode (title present) because
   // /search/movie doesn't support the vote_average.gte param
   if (!filters.title || !filters.vote_average_gte) return results as MovieRow[]
