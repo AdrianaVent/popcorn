@@ -3,6 +3,10 @@
     "accept": "Accept",
     "cancel": "Cancel"
   },
+  "common": {
+    "prev": "Previous",
+    "next": "Next"
+  },
   "languageSwitcher": {
     "label": "Current language: {{language}}"
   },
@@ -41,7 +45,39 @@
   },
   "movies": {
     "title": "Movies",
-    "comingSoon": "Coming soon"
+    "addMovie": "+ Add Movie",
+    "comingSoon": "Coming soon",
+    "empty": "No movies found",
+    "error": "Failed to load movies",
+    "retry": "Retry",
+    "prev": "Previous",
+    "next": "Next",
+    "filters": {
+      "panel": "Filters",
+      "title": "Title",
+      "ratingGte": "Rating ≥",
+      "year": "Year"
+    },
+    "columns": {
+      "poster": "Poster",
+      "title": "Title",
+      "releaseDate": "Release",
+      "rating": "Rating",
+      "votes": "Votes",
+      "language": "Language"
+    },
+    "detail": {
+      "overview": "Overview",
+      "rating": "Rating",
+      "votes": "Votes",
+      "runtime": "Runtime",
+      "minutes": "min",
+      "year": "Year",
+      "genres": "Genres",
+      "collection": "Collection",
+      "current": "Watching",
+      "release": "Release"
+    }
   },
   "series": {
     "title": "Series",
