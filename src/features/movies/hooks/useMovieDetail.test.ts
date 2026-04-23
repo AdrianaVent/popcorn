@@ -1,9 +1,9 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { useMovieDetail } from './useMovieDetail'
-import { fetchMovieDetail } from './movies.service'
+import { fetchMovieDetail } from '@/features/movies/movies.service'
 import type { TMDBMovieDetail } from '@/types/tmdb'
 
-jest.mock('./movies.service', () => ({
+jest.mock('@/features/movies/movies.service', () => ({
   fetchMovieDetail: jest.fn(),
 }))
 

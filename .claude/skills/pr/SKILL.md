@@ -11,6 +11,14 @@ Create a pull request for the current branch following the project conventions.
 1. Check current branch: `git branch --show-current`
 2. Check for uncommitted changes: `git status --short` — warn if any exist
 3. Review recent commits: `git log --oneline origin/dev..HEAD`
+4. **Performance review** — analyse the changed files and fix any issues found before opening the PR:
+   - **Unnecessary re-renders**: components that receive object/array/function props without stable references — wrap with `useMemo` / `useCallback` / `React.memo` where appropriate
+   - **Expensive inline computations**: any non-trivial derivation inside a render function that is not memoized — wrap with `useMemo`
+   - **Missing dependency arrays**: `useEffect` / `useMemo` / `useCallback` without deps or with stale deps
+   - **Unbounded lists**: list renders over large or unknown-length arrays without pagination or virtualization
+   - **Redundant fetches**: multiple hooks or effects triggering the same request — consolidate at the call site
+   - **Heavy imports**: newly added imports that pull in large libraries — prefer named imports or lighter alternatives
+   - If issues are found: fix them, re-run build-check, then open the PR. Report what was fixed in the PR summary.
 
 ## Conventions
 

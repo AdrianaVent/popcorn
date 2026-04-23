@@ -4,14 +4,14 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Modal from '@/components/ui/Modal'
-import MoviePoster from '@/components/common/MoviePoster'
+import MoviePoster from './MoviePoster'
 import Text from '@/components/ui/Text'
 
-import { useMovieDetail } from './useMovieDetail'
+import { useMovieDetail } from '@/features/movies/hooks/useMovieDetail'
 import CollectionAccordion from './CollectionAccordion'
 import MovieMetaGrid from './MovieMetaGrid'
 import MovieDetailSkeleton from './MovieDetailSkeleton'
-import { getMovieUI } from '@/utils/getMovieUI'
+import { getMovieUI } from '@/features/movies/getMovieUI'
 import { useLanguageStore } from '@/store/languageStore'
 
 type Props = {
