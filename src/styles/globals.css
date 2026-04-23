@@ -13,7 +13,7 @@
   --color-gray-800: #1F2937;
   --color-gray-900: #111827;
 
-  /* ─── RED (destructive) ───────────────────────── */
+  /* ─── RED ───────────────────────── */
   --color-red-100: #FDE2E1;
   --color-red-200: #FAC4C2;
   --color-red-300: #F7A5A3;
@@ -24,7 +24,7 @@
   --color-red-800: #4C1412;
   --color-red-900: #260A09;
 
-  /* ─── YELLOW (warning / cinema light) ─────────── */
+  /* ─── YELLOW ───────────────────────── */
   --color-yellow-100: #FEF6E0;
   --color-yellow-200: #FDF0B3;
   --color-yellow-300: #FCE883;
@@ -35,7 +35,7 @@
   --color-yellow-800: #4C3304;
   --color-yellow-900: #1F0E00;
 
-  /* ─── GREEN (success) ─────────────────────────── */
+  /* ─── GREEN ───────────────────────── */
   --color-green-100: #E3F6F2;
   --color-green-200: #C0E8DE;
   --color-green-300: #96D9C7;
@@ -46,7 +46,7 @@
   --color-green-800: #062D1E;
   --color-green-900: #03150F;
 
-  /* ─── CREAM (identity retro / cinema) ─────────── */
+  /* ─── CREAM ───────────────────────── */
   --color-cream-100: #FEF9F4;
   --color-cream-200: #FAF8F5;
   --color-cream-300: #F6F3EF;
@@ -74,10 +74,14 @@
   --text-caption--line-height: 1rem;
 }
 
-/* ─── Semantic tokens (Tailwind bridge) ─────────── */
+/* ─── Dark variant → data-theme attribute ────── */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ─── Semantic tokens ─────────────────────────── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-card: var(--card);
   --color-border: var(--border);
@@ -86,16 +90,20 @@
   --color-destructive: var(--destructive);
 }
 
-/* ─── Light (retro cinema soft neutral) ─────────── */
+/* ─── LIGHT (cream cinema system) ─────────── */
 :root {
-  --background:         #F6F3EF; /* soft warm gray */
+  --background:         #F6F3EF;
   --foreground:         #111827;
 
+  --muted-50:          #FAF8F5;
+  --muted-100:         #F6F3EF;
+  --muted-200:         #EDE7E0;
+
+  --muted:              var(--muted-100);
   --muted-foreground:   #4B5563;
 
-  /* layers */
-  --card:               #FAF8F5; /* sidebar / panels */
-  --surface:            #FFFFFF; /* content highlight */
+  --card:               #FAF8F5;
+  --surface:            #F6F3EF;
 
   --border:             #E6E1DA;
 
@@ -107,16 +115,20 @@
   --pattern-opacity: 0.04;
 }
 
-/* ─── Dark (cinema / retro night) ───────────────── */
+/* ─── DARK (cinema slate system coherente) ─────────── */
 [data-theme="dark"] {
-  --background:         #111827; /* deep cinematic dark */
+  --background:         #111827;
   --foreground:         #F3F4F6;
 
+  --muted-50:          #1A2333;
+  --muted-100:         #1F2937;
+  --muted-200:         #374151;
+
+  --muted:              var(--muted-100);
   --muted-foreground:   #D1D5DB;
 
-  /* layers */
-  --card:               #1F2937; /* sidebar */
-  --surface:            #374151; /* elevated content */
+  --card:               #1F2937;
+  --surface:            #374151;
 
   --border:             #374151;
 
@@ -128,7 +140,7 @@
   --pattern-opacity: 0.15;
 }
 
-/* ─── Base ────────────────────────────────────────── */
+/* ─── BASE ────────────────────────────────────────── */
 html {
   font-family: var(--font-open-sans), system-ui, -apple-system,
     BlinkMacSystemFont, 'Segoe UI', sans-serif;

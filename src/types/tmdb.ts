@@ -41,3 +41,35 @@ export type TMDBGenre = {
   id: number
   name: string
 }
+
+export type TMDBCollection = {
+  id: number
+  name: string
+  poster_path: string | null
+  backdrop_path: string | null
+}
+
+export type TMDBCollectionPart = {
+  id: number
+  title: string
+  poster_path: string | null
+  release_date: string
+  vote_average: number
+  overview: string
+}
+
+export type TMDBCollectionDetail = TMDBCollection & {
+  overview: string
+  parts: TMDBCollectionPart[]
+}
+
+export type TMDBMovieDetail = TMDBMovie & {
+  tagline: string
+  runtime: number | null
+  status: string
+  genres: TMDBGenre[]
+  belongs_to_collection: TMDBCollection | null
+  budget: number
+  revenue: number
+  homepage: string | null
+}

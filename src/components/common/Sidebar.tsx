@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
-import { GridIcon, FilmIcon, TvIcon, GearIcon, MenuIcon } from '@/components/icons'
+import { FilmIcon, TvIcon, GearIcon, MenuIcon } from '@/components/icons'
 import SettingsModal from './SettingsModal'
 import Image from 'next/image'
 
@@ -42,10 +42,9 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
   }, [])
 
   const navItems: NavItem[] = [
-    { key: 'dashboard', labelKey: 'nav.dashboard', icon: <GridIcon size={16} />, href: '/dashboard' },
-    { key: 'movies',    labelKey: 'nav.movies',    icon: <FilmIcon size={16} />, href: '/movies' },
-    { key: 'series',    labelKey: 'nav.series',    icon: <TvIcon size={16} />,   href: '/series' },
-    { key: 'settings',  labelKey: 'nav.settings',  icon: <GearIcon size={16} />, onClick: () => setSettingsOpen(true) },
+    { key: 'movies',   labelKey: 'nav.movies',   icon: <FilmIcon size={16} />, href: '/movies' },
+    { key: 'series',   labelKey: 'nav.series',   icon: <TvIcon size={16} />,   href: '/series' },
+    { key: 'settings', labelKey: 'nav.settings', icon: <GearIcon size={16} />, onClick: () => setSettingsOpen(true) },
   ]
 
   const handleMouseEnter = (key: string, e: React.MouseEvent) => {
@@ -90,6 +89,7 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
                 width={200}
                 height={54}
                 className="h-9 w-auto"
+                loading="eager"
               />
             </div>
           )}
