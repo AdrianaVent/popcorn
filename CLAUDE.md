@@ -30,7 +30,7 @@ src/
 │   ├── dashboard/page.tsx          # Dashboard placeholder
 │   └── page.tsx                    # → redirects to /movies
 ├── components/
-│   ├── common/                     # FiltersPanel, MoviePoster, MetaRow, Sidebar, Topbar, SettingsModal
+│   ├── common/                     # FiltersPanel, MetaRow, Sidebar, Topbar, SettingsModal
 │   ├── layouts/                    # AuthLayout, DashboardLayout
 │   └── ui/                         # Button, Input, Text (polymorphic), Modal, Header, AccordionList, Table/
 ├── config/                         # App constants split by domain
@@ -40,10 +40,16 @@ src/
 │   └── tmdb.ts                     # TMDB_LANGUAGE mapping (en/es → TMDB locale codes)
 ├── features/
 │   ├── auth/login/                 # LoginFeature, LoginForm, useLogin, login.service.ts
-│   ├── dashboard/                  # Placeholder — not yet implemented
-│   ├── movies/                     # MoviesFeature, useMovies, useMovieDetail, useCollectionDetail
-│   │                               # MovieDetailModal, CollectionAccordion, MovieMetaGrid
-│   │                               # movies.service.ts, movieFilters.schema.ts, MovieDetailSkeleton
+│   ├── dashboard/                  # DashboardFeature (placeholder — not yet implemented)
+│   ├── movies/
+│   │   ├── components/             # MovieDetailModal, MovieDetailSkeleton, MovieMetaGrid,
+│   │   │                           # CollectionAccordion, MoviePoster
+│   │   ├── hooks/                  # useMovies, useMovieDetail, useCollectionDetail
+│   │   ├── MoviesFeature.tsx       # Page-level feature component
+│   │   ├── movies.service.ts       # fetchMovies, fetchMovieDetail, fetchCollectionDetail
+│   │   ├── movieFilters.schema.ts  # Filter field definitions
+│   │   ├── getMovieUI.ts           # isUpcoming + releaseYear from TMDBMovieDetail
+│   │   └── index.ts
 │   └── series/                     # SeriesFeature (coming soon placeholder)
 ├── hooks/                          # useAsync (generic), useFilters, useTranslation
 ├── locales/                        # en.json, es.json
@@ -59,7 +65,6 @@ src/
 ├── types/                          # tmdb.ts, movie.ts, table.ts, languageTypes.ts
 └── utils/
     ├── tmdb.ts                     # getTMDBImageUrl(path, size)
-    ├── getMovieUI.ts               # isUpcoming + releaseYear from TMDBMovieDetail
     └── updateFilterValue.ts        # immutable filter key update helper
 ```
 
@@ -137,6 +142,7 @@ Coverage areas:
 - Follow the client provider pattern for global state
 - User-facing strings always via `t()` — add keys to both `en.json` and `es.json`
 - Tests co-located with source files — `*.test.ts` / `*.test.tsx`
+- **Import paths**: use `@/` alias for any import that crosses a directory boundary upward; use `./` only within the same folder or into a subfolder. Never use `../`
 
 ## Git Workflow
 

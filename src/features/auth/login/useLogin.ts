@@ -80,7 +80,7 @@ export function useLogin(): UseLoginReturn {
       const { ok, code } = await loginRequest(form)
 
       if (ok) {
-        router.push('/dashboard')
+        router.push('/movies')
         return
       }
 
