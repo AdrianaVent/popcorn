@@ -19,8 +19,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
   const themeModes: { key: ThemeMode; labelKey: string }[] = [
     { key: 'light', labelKey: 'settings.themeLight' },
-    { key: 'dark',  labelKey: 'settings.themeDark' },
-    { key: 'auto',  labelKey: 'settings.themeAuto' },
+    { key: 'dark', labelKey: 'settings.themeDark' },
+    { key: 'auto', labelKey: 'settings.themeAuto' },
   ]
 
   const languages: { key: Language; label: string }[] = [
@@ -28,52 +28,69 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     { key: 'es', label: 'Español' },
   ]
 
+  const sectionTitle =
+    'text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'
+
+  const optionBase =
+    'flex-1 py-2 rounded-md text-small cursor-pointer transition-all duration-150'
+
+  const optionActive =
+    'bg-primary text-primary-foreground shadow-sm'
+
+  const optionInactive =
+    'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40'
+
+  const container =
+    'flex gap-1 p-1 border border-border rounded-lg bg-card'
+
   return (
     <Modal title={t('settings.title')} onClose={onClose}>
-      {/* Language */}
-      <div className="flex flex-col gap-2.5">
-        <p className="text-caption font-semibold text-muted-foreground uppercase tracking-wide">
-          {t('settings.language')}
-        </p>
-        <div className="flex gap-1 bg-background border border-border rounded-lg p-1">
-          {languages.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setLanguage(key)}
-              className={clsx(
-                'flex-1 py-1.5 rounded-md border-0 text-small cursor-pointer transition-colors',
-                language === key
-                  ? 'bg-primary text-primary-foreground font-semibold'
-                  : 'bg-transparent text-muted-foreground font-normal',
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div className="flex flex-col gap-6">
 
-      {/* Theme */}
-      <div className="flex flex-col gap-2.5">
-        <p className="text-caption font-semibold text-muted-foreground uppercase tracking-wide">
-          {t('settings.theme')}
-        </p>
-        <div className="flex gap-1 bg-background border border-border rounded-lg p-1">
-          {themeModes.map(({ key, labelKey }) => (
-            <button
-              key={key}
-              onClick={() => setMode(key)}
-              className={clsx(
-                'flex-1 py-1.5 rounded-md border-0 text-small cursor-pointer transition-colors',
-                mode === key
-                  ? 'bg-primary text-primary-foreground font-semibold'
-                  : 'bg-transparent text-muted-foreground font-normal',
-              )}
-            >
-              {t(labelKey)}
-            </button>
-          ))}
+        {/* LANGUAGE */}
+        <div className="flex flex-col gap-2.5">
+          <p className={sectionTitle}>
+            {t('settings.language')}
+          </p>
+
+          <div className={container}>
+            {languages.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setLanguage(key)}
+                className={clsx(
+                  optionBase,
+                  language === key ? optionActive : optionInactive
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* THEME */}
+        <div className="flex flex-col gap-2.5">
+          <p className={sectionTitle}>
+            {t('settings.theme')}
+          </p>
+
+          <div className={container}>
+            {themeModes.map(({ key, labelKey }) => (
+              <button
+                key={key}
+                onClick={() => setMode(key)}
+                className={clsx(
+                  optionBase,
+                  mode === key ? optionActive : optionInactive
+                )}
+              >
+                {t(labelKey)}
+              </button>
+            ))}
+          </div>
+        </div>
+
       </div>
     </Modal>
   )
