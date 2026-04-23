@@ -9,9 +9,16 @@ type ModalProps = {
   maxWidth?: string
 }
 
-export default function Modal({ title, onClose, children, maxWidth = '22rem' }: ModalProps) {
+export default function Modal({
+  title,
+  onClose,
+  children,
+  maxWidth = '48rem',
+}: ModalProps) {
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
@@ -22,24 +29,64 @@ export default function Modal({ title, onClose, children, maxWidth = '22rem' }: 
       aria-modal="true"
       aria-label={title}
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45"
+      className="
+        fixed inset-0 z-50
+        flex items-center justify-center
+        bg-black/50
+        backdrop-blur-sm
+        p-4
+      "
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="flex flex-col gap-6 w-full bg-card border border-border rounded-2xl p-7 shadow-2xl"
         style={{ maxWidth }}
+        className="
+          w-full
+          max-h-[90vh]
+          overflow-hidden
+          flex flex-col
+          bg-card
+          border border-border
+          rounded-2xl
+          shadow-2xl
+          animate-in fade-in zoom-in-95
+        "
       >
-        <div className="flex items-center justify-between">
-          <h2 className="text-small font-bold text-foreground">{title}</h2>
+        {/* HEADER */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2
+            className="
+              text-[13px]
+              font-semibold
+              uppercase
+              tracking-[0.12em]
+              text-foreground
+              truncate
+            "
+          >
+            {title}
+          </h2>
+
           <button
             onClick={onClose}
             aria-label="Close modal"
-            className="text-muted-foreground text-xl leading-none p-1 bg-transparent border-0 cursor-pointer"
+            className="
+              text-muted-foreground
+              hover:text-red-500
+              transition-colors
+              text-xl leading-none
+              px-2
+              rounded-md
+            "
           >
             ×
           </button>
         </div>
-        {children}
+
+        {/* CONTENT */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {children}
+        </div>
       </div>
     </div>
   )
