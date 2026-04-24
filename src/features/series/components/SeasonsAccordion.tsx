@@ -1,0 +1,283 @@
+'use client'
+
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import clsx from 'clsx'
+import MediaPoster from '@/components/common/MediaPoster'
+import Text from '@/components/ui/Text'
+import AccordionList from '@/components/ui/AccordionList'
+import { fetchSeasonDetail } from '@/features/series/series.service'
+import { useLanguageStore } from '@/store/languageStore'
+import { useWatchedStore } from '@/store/watchedStore'
+import { useUserStore } from '@/store/userStore'
+import type { StoredSeries } from '@/store/watchedStore'
+import type { TMDBSeason, TMDBEpisode } from '@/types/tmdb'
+
+function WatchedEpisodeButton({
+  episodeId,
+  seriesId,
+  userId,
+  seasonNumber,
+  seriesSnapshot,
+}: {
+  episodeId: number
+  seriesId: number
+  userId: string
+  seasonNumber: number
+  seriesSnapshot?: StoredSeries
+}) {
+  const watched = useWatchedStore((s) => !!s.episodes[userId]?.[seriesId]?.[episodeId])
+  const toggleEpisode = useWatchedStore((s) => s.toggleEpisode)
+
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); toggleEpisode(userId, seriesId, episodeId, seasonNumber, seriesSnapshot) }}
+      className={clsx(
+        'shrink-0 w-5 h-5 rounded-full border flex items-center justify-center transition-colors',
+        watched
+          ? 'bg-green-500 border-green-500 text-white'
+          : 'border-muted-foreground/50 text-transparent hover:border-green-400 hover:bg-green-400/10'
+      )}
+    >
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+        <path d="M2 5L4.2 7.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  )
+}
+
+function EpisodeRow({
+  episode,
+  seriesId,
+  userId,
+  seasonNumber,
+  seriesSnapshot,
+}: {
+  episode: TMDBEpisode
+  seriesId: number
+  userId: string
+  seasonNumber: number
+  seriesSnapshot?: StoredSeries
+}) {
+  const watched = useWatchedStore((s) => !!s.episodes[userId]?.[seriesId]?.[episode.id])
+  const num = String(episode.episode_number).padStart(2, '0')
+
+  return (
+    <div className={clsx(
+      'flex items-center gap-2 px-4 py-1.5 transition-colors',
+      watched ? 'bg-green-500/5' : 'hover:bg-muted/30'
+    )}>
+      <span className="text-[11px] font-mono text-muted-foreground shrink-0 w-7">E{num}</span>
+      <span className={clsx(
+        'text-[12px] truncate flex-1 min-w-0 transition-colors',
+        watched ? 'text-muted-foreground line-through decoration-muted-foreground/40' : 'text-foreground'
+      )}>
+        {episode.name}
+      </span>
+      {episode.runtime != null && (
+        <span className="text-[11px] text-muted-foreground shrink-0">{episode.runtime} min</span>
+      )}
+      <WatchedEpisodeButton
+        episodeId={episode.id}
+        seriesId={seriesId}
+        userId={userId}
+        seasonNumber={seasonNumber}
+        seriesSnapshot={seriesSnapshot}
+      />
+    </div>
+  )
+}
+
+type SeasonItemProps = {
+  season: TMDBSeason
+  seriesId: number
+  isOpen: boolean
+  onToggle: () => void
+  userId: string
+  seriesSnapshot?: StoredSeries
+}
+
+function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot }: SeasonItemProps) {
+  const { t } = useTranslation()
+  const { language } = useLanguageStore()
+  const [episodes, setEpisodes] = useState<TMDBEpisode[] | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  // Compute watched count from store directly — no need to expand the season first
+  const watchedForSeason = useWatchedStore((s) => {
+    const eps = s.episodes[userId]?.[seriesId]
+    if (!eps) return 0
+    return Object.values(eps).filter((ep) => ep.seasonNumber === season.season_number).length
+  })
+
+  const totalCount = season.episode_count
+  const allWatched = totalCount > 0 && watchedForSeason >= totalCount
+  const year = season.air_date ? new Date(season.air_date).getFullYear() : null
+
+  const handleToggle = async () => {
+    if (!isOpen && episodes === null) {
+      setLoading(true)
+      try {
+        const detail = await fetchSeasonDetail(seriesId, season.season_number, language)
+        setEpisodes(detail.episodes)
+      } catch {
+        setEpisodes([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    onToggle()
+  }
+
+  return (
+    <div className={clsx(
+      'border-b border-border/50 last:border-0 transition-colors',
+      isOpen && 'border-l-2 border-primary bg-cream-300 dark:bg-gray-700'
+    )}>
+      <button
+        onClick={handleToggle}
+        className="w-full flex items-center gap-3 px-4 py-3 transition-colors text-left hover:bg-muted/20"
+      >
+        <MediaPoster posterPath={season.poster_path} title={season.name} variant="sm" />
+
+        <div className="flex flex-col min-w-0 flex-1 gap-2">
+          <Text
+            variant="small"
+            className={clsx('truncate font-medium', allWatched ? 'text-muted-foreground' : 'text-foreground')}
+          >
+            {season.name}
+          </Text>
+
+          <div className="flex items-center gap-4">
+            <span className={clsx(
+              'text-[11px] px-1.5 py-0.5 rounded border whitespace-nowrap transition-colors',
+              allWatched
+                ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400'
+                : 'bg-muted text-muted-foreground border-border/50'
+            )}>
+              {watchedForSeason} / {totalCount} ep.
+            </span>
+
+            {year && (
+              <Text variant="caption" className="text-muted-foreground">{year}</Text>
+            )}
+
+            {allWatched && (
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-green-600 dark:text-green-400">
+                {t('series.detail.watched')}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <svg
+          width="14" height="14" viewBox="0 0 14 14" fill="none"
+          className={clsx('text-muted-foreground transition-transform duration-200 shrink-0', isOpen && 'rotate-180')}
+        >
+          <path d="M2.5 5L7 9.5L11.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="border-t border-border/30">
+          {loading && (
+            <div className="flex flex-col gap-1 px-4 py-2">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-4 rounded bg-border/50 animate-pulse" />
+              ))}
+            </div>
+          )}
+          {!loading && episodes !== null && episodes.length === 0 && (
+            <Text variant="caption" className="text-muted-foreground px-4 py-2">
+              {t('series.detail.noEpisodes')}
+            </Text>
+          )}
+          {!loading && episodes !== null && episodes.length > 0 && (
+            <div className="py-1">
+              {episodes.map((ep) => (
+                <EpisodeRow
+                  key={ep.id}
+                  episode={ep}
+                  seriesId={seriesId}
+                  userId={userId}
+                  seasonNumber={season.season_number}
+                  seriesSnapshot={seriesSnapshot}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+type Props = {
+  seasons: TMDBSeason[]
+  seriesName: string
+  seriesId: number
+  seriesSnapshot?: StoredSeries
+}
+
+export default function SeasonsAccordion({ seasons, seriesName, seriesId, seriesSnapshot }: Props) {
+  const { t } = useTranslation()
+  const [openSeasonId, setOpenSeasonId] = useState<number | null>(null)
+  const userId = useUserStore((s) => s.userId)
+  const userKey = String(userId ?? 'guest')
+
+  const mainSeasons = seasons.filter((s) => s.season_number > 0)
+  const specials    = seasons.filter((s) => s.season_number === 0)
+  const allItems    = [...mainSeasons, ...specials]
+
+  const totalEpisodes = mainSeasons.reduce((sum, s) => sum + s.episode_count, 0)
+  const watchedEpisodesCount = useWatchedStore(
+    (s) => Object.keys(s.episodes[userKey]?.[seriesId] ?? {}).length
+  )
+  const allSeriesWatched = totalEpisodes > 0 && watchedEpisodesCount >= totalEpisodes
+
+  return (
+    <AccordionList
+      title={
+        <div className="flex items-center gap-2">
+          <Text variant="small" className="text-muted-foreground">
+            {t('series.detail.seasonsAccordion')}
+          </Text>
+          <Text variant="small" className="text-foreground font-medium">
+            {seriesName}
+          </Text>
+          <span className="text-[11px] px-1.5 py-0.5 rounded bg-background text-muted-foreground border border-border/50">
+            {mainSeasons.length}
+          </span>
+        </div>
+      }
+      actions={allSeriesWatched ? (
+        <span className="flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400 whitespace-nowrap">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M2 5L4.2 7.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {t('series.detail.seriesWatched')}
+        </span>
+      ) : undefined}
+      items={allItems}
+      renderItem={(season) => (
+        <div key={season.id}>
+          {season.season_number === 0 && mainSeasons.length > 0 && (
+            <div className="px-3 py-1 bg-muted/30 border-t border-border/50">
+              <Text variant="caption" className="text-muted-foreground uppercase tracking-wide">
+                Specials
+              </Text>
+            </div>
+          )}
+          <SeasonItem
+            season={season}
+            seriesId={seriesId}
+            isOpen={openSeasonId === season.id}
+            onToggle={() => setOpenSeasonId((prev) => prev === season.id ? null : season.id)}
+            userId={userKey}
+            seriesSnapshot={seriesSnapshot}
+          />
+        </div>
+      )}
+    />
+  )
+}

@@ -115,6 +115,25 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
                   />
                 )}
 
+                {field.type === 'select' && field.options && (
+                  <select
+                    value={typeof value === 'string' ? value : ''}
+                    onChange={(e) =>
+                      onChange(
+                        updateFilterValue(filters, field.key, (e.target.value || undefined) as T[keyof T])
+                      )
+                    }
+                    className="px-2 py-1 text-sm border border-border rounded-md bg-background text-foreground outline-none focus:border-primary/50 transition-colors cursor-pointer"
+                  >
+                    <option value="">{t('common.all')}</option>
+                    {field.options.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {t(String(opt.label))}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
                 {index < schema.length - 1 && (
                   <div className="w-px h-6 bg-border mx-2" />
                 )}
