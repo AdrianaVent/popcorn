@@ -43,26 +43,38 @@ src/
 │   ├── dashboard/                  # DashboardFeature (placeholder — not yet implemented)
 │   ├── movies/
 │   │   ├── components/             # MovieDetailModal, MovieDetailSkeleton, MovieMetaGrid,
-│   │   │                           # CollectionAccordion, MoviePoster
+│   │   │                           # CollectionAccordion, MediaPoster
 │   │   ├── hooks/                  # useMovies, useMovieDetail, useCollectionDetail
 │   │   ├── MoviesFeature.tsx       # Page-level feature component
 │   │   ├── movies.service.ts       # fetchMovies, fetchMovieDetail, fetchCollectionDetail
 │   │   ├── movieFilters.schema.ts  # Filter field definitions
 │   │   ├── getMovieUI.ts           # isUpcoming + releaseYear from TMDBMovieDetail
 │   │   └── index.ts
-│   └── series/                     # SeriesFeature (coming soon placeholder)
-├── hooks/                          # useAsync (generic), useFilters, useTranslation
+│   └── series/
+│       ├── components/             # SeriesDetailModal, SeriesDetailSkeleton, SeriesMetaGrid,
+│       │                           # SeasonsAccordion
+│       ├── hooks/                  # useSeries, useSeriesDetail
+│       ├── SeriesFeature.tsx       # Page-level feature component
+│       ├── series.service.ts       # fetchSeries, fetchSeriesDetail, fetchSeasonDetail
+│       ├── seriesFilters.schema.ts # Filter field definitions
+│       ├── getSeriesUI.ts          # status badge config from TMDB status string
+│       └── index.ts
+├── hooks/                          # useAsync (generic), useFilters
 ├── locales/                        # en.json, es.json
 ├── middleware.ts                   # Route protection — skips /api/*, redirects based on token cookie
 ├── providers/                      # GlobalProvider, ThemeProvider, LanguageProvider (client)
 ├── services/
 │   ├── auth/                       # DummyJSON client — login(), refresh(); config.ts
 │   └── tmdb/                       # TMDB client — movies, series, search; client.ts; config.ts
-├── store/                          # themeStore, languageStore (Zustand + persist)
+├── store/
+│   ├── themeStore.ts               # Zustand + persist — light/dark/auto mode
+│   ├── languageStore.ts            # Zustand + persist — en/es selection
+│   ├── userStore.ts                # Zustand + persist — userId from login response
+│   └── watchedStore.ts             # Zustand + persist (v3) — movies Map, episodes Map (with seasonNumber), seriesData Map
 ├── styles/
 │   ├── theme/                      # resolveTheme.ts (auto mode logic), types.ts
 │   └── globals.css                 # Tailwind @theme tokens, semantic light/dark CSS vars
-├── types/                          # tmdb.ts, movie.ts, table.ts, languageTypes.ts
+├── types/                          # tmdb.ts, movie.ts, series.ts, table.ts, languageTypes.ts
 └── utils/
     ├── tmdb.ts                     # getTMDBImageUrl(path, size)
     └── updateFilterValue.ts        # immutable filter key update helper
@@ -79,9 +91,10 @@ src/
 | TMDB service (movies/series/search) | Done |
 | Login UI | Done |
 | Movies page (list, filters, detail modal, sagas) | Done |
+| Series page (list, filters, detail modal, seasons/episodes) | Done |
+| Watched tracking (movies + episodes, per-user, persisted) | Done |
 | Unit & integration tests (Jest) | Done |
 | Dashboard UI | Not started |
-| Series page | Not started |
 
 ## Architecture Decisions
 
@@ -98,6 +111,9 @@ src/
 - **SSR / hydration**: features that use i18n or theme are loaded with `dynamic(..., { ssr: false })` to avoid server/client text mismatches.
 - **Middleware**: skips all `/api/*` routes. Redirects unauthenticated users to `/login`; redirects authenticated users away from auth routes to `/movies`.
 - **useAsync**: generic hook `useAsync<T>(fetcher, deps)` centralises loading/error/data state for all data-fetching hooks. `fetcher` returning `null` skips the fetch (conditional fetches).
+- **Watched store (v3)**: `watchedStore` persists per-user watched state. Movies stored as full `StoredMovie` snapshots. Episodes stored as `Record<episodeId, { seasonNumber }>` — the `seasonNumber` enables per-season watched counts without loading season episode lists from TMDB. Series stored as `StoredSeries` snapshots on first episode mark. When `filters.watched === 'watched'`, features bypass TMDB entirely and serve local store data with local pagination.
+- **Series background enrichment**: `SeriesFeature` runs `Promise.allSettled` after list loads to fetch `status` and `number_of_episodes` per series. Cancelled via `AbortController` on cleanup. Results stored in `Map<id, value>` component state — not in Zustand.
+- **Language filter**: `ALLOWED_ORIGINAL_LANGUAGES` in `src/config/constants.ts` defines accepted `original_language` values (`en`, `es`). Applied client-side in `applyClientFilters` when a title search is active (TMDB search endpoints ignore `with_original_language`).
 - **PWA**: manifest + favicons configured in root layout.
 
 ## UI Design System
@@ -124,10 +140,11 @@ npm run test:watch  # watch mode
 ```
 
 Coverage areas:
-- **Pure functions**: `getMovieUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`
-- **Business logic**: `applyClientFilters`, `tmdbFetch` error mapping
-- **Hooks**: `useAsync` (state machine, cancellation), `useMovieDetail` (conditional fetch)
-- **Components**: `Button`, `Modal`, `FiltersPanel` (interactions, badge count)
+- **Pure functions**: `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`
+- **Business logic**: `applyClientFilters` (movies + series, including language filter), `tmdbFetch` error mapping
+- **Store**: `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation
+- **Hooks**: `useAsync` (state machine, cancellation), `useMovieDetail`, `useSeriesDetail` (conditional fetch)
+- **Components**: `Button`, `Modal`, `FiltersPanel` (interactions, badge count), `SeriesMetaGrid`
 
 ## Conventions
 

@@ -10,9 +10,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ code: 'MISSING_CREDENTIALS' }, { status: 400 })
     }
 
-    const { accessToken, refreshToken } = await authService.login(username, password)
+    const { accessToken, refreshToken, id: userId } = await authService.login(username, password)
 
-    const response = NextResponse.json({ code: 'LOGIN' })
+    const response = NextResponse.json({ code: 'LOGIN', userId })
 
     const cookieOptions = {
       httpOnly: true,

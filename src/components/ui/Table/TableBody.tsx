@@ -7,6 +7,7 @@ type TableBodyProps<T extends Record<string, unknown>> = {
   columns: Column<T>[]
   getRowKey: (row: T) => string | number
   onRowClick?: (row: T) => void
+  rowClassName?: (row: T) => string
 }
 
 export default function TableBody<
@@ -16,6 +17,7 @@ export default function TableBody<
   columns,
   getRowKey,
   onRowClick,
+  rowClassName,
 }: TableBodyProps<T>) {
   return (
     <tbody>
@@ -24,19 +26,13 @@ export default function TableBody<
           key={getRowKey(row)}
           onClick={() => onRowClick?.(row)}
           className={clsx(
-            `
-            border-b border-border
-            transition-colors
-            `,
-            // ─── ZEBRA ───
+            'border-b border-border transition-colors',
             index % 2 === 0
               ? 'bg-cream-100 dark:bg-gray-900'
               : 'bg-cream-300 dark:bg-gray-800',
-
-            // ─── HOVER ───
             'hover:bg-cream-400 dark:hover:bg-gray-700/60',
-
-            onRowClick && 'cursor-pointer'
+            onRowClick && 'cursor-pointer',
+            rowClassName?.(row)
           )}
         >
           {columns.map((col) => (

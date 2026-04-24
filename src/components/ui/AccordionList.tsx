@@ -10,6 +10,7 @@ type AccordionListProps<T> = {
   defaultOpen?: boolean
   loading?: boolean
   maxHeight?: string
+  actions?: ReactNode
 }
 
 function Chevron({ open }: { open: boolean }) {
@@ -20,7 +21,7 @@ function Chevron({ open }: { open: boolean }) {
       viewBox="0 0 14 14"
       fill="none"
       className={clsx(
-        'text-muted-foreground transition-transform duration-200',
+        'text-muted-foreground transition-transform duration-200 shrink-0',
         open && 'rotate-180'
       )}
     >
@@ -42,34 +43,36 @@ export default function AccordionList<T>({
   defaultOpen = false,
   loading = false,
   maxHeight = '16rem',
+  actions,
 }: AccordionListProps<T>) {
   const [open, setOpen] = useState(defaultOpen)
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-card/50">
+    <div className="border border-border rounded-lg overflow-hidden">
 
       {/* HEADER */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="
-          w-full flex items-center justify-between
-          px-3 py-2.5
-          text-left
-          transition-colors
-          hover:bg-cream-200 dark:hover:bg-muted
-        "
-      >
-        <div className="min-w-0 truncate">
-          {title}
-        </div>
+      <div className="flex items-center justify-between bg-muted/40 border-b border-border px-3 py-2">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-2 min-w-0 flex-1 text-left"
+        >
+          <Chevron open={open} />
+          <div className="min-w-0 truncate">
+            {title}
+          </div>
+        </button>
 
-        <Chevron open={open} />
-      </button>
+        {actions && (
+          <div className="flex items-center gap-2 shrink-0 ml-2">
+            {actions}
+          </div>
+        )}
+      </div>
 
       {/* CONTENT */}
       {open && (
         <div
-          className="border-t border-border overflow-y-auto"
+          className="overflow-y-auto bg-card/50"
           style={{ maxHeight }}
         >
           {loading && (

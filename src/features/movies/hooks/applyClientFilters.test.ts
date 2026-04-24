@@ -53,4 +53,33 @@ describe('applyClientFilters', () => {
     // Without a title, we are in discover mode — TMDB handles the rating filter server-side
     expect(applyClientFilters(movies, { vote_average_gte: 9 })).toHaveLength(3)
   })
+
+  it('filters out non-en/es languages when title filter is active', () => {
+    const mixed = [
+      movie(1, 8.5),
+      { ...movie(2, 6.0), original_language: 'ja' },
+      { ...movie(3, 7.2), original_language: 'es' },
+    ]
+    const result = applyClientFilters(mixed, { title: 'Movie' })
+    expect(result).toHaveLength(2)
+    expect(result.map((m) => m.id)).toEqual([1, 3])
+  })
+
+  it('does not apply language filter when no title is set', () => {
+    const mixed = [
+      movie(1, 8.5),
+      { ...movie(2, 6.0), original_language: 'ja' },
+    ]
+    expect(applyClientFilters(mixed, {})).toHaveLength(2)
+  })
+
+  it('always filters out movies without a release date', () => {
+    const noDate = { ...movie(1, 8.5), release_date: '' }
+    expect(applyClientFilters([noDate, movie(2, 7.0)], {})).toHaveLength(1)
+  })
+
+  it('filters out undated movies even when title and rating filters are active', () => {
+    const noDate = { ...movie(1, 8.5), release_date: '' }
+    expect(applyClientFilters([noDate], { title: 'Movie', vote_average_gte: 7 })).toHaveLength(0)
+  })
 })
