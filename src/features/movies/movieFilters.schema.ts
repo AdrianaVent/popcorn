@@ -8,13 +8,22 @@ export const movieFiltersSchema: FiltersSchema<MovieFilters> = [
     type: 'text',
   },
   {
+    key: 'release_year',
+    label: 'movies.filters.year',
+    type: 'number',
+  },
+  {
     key: 'vote_average_gte',
     label: 'movies.filters.ratingGte',
     type: 'number',
   },
   {
-    key: 'release_year',
-    label: 'movies.filters.year',
-    type: 'number',
+    key: 'watched',
+    label: 'movies.filters.watched',
+    type: 'select',
+    options: [
+      { value: 'watched', label: 'common.watchedOnly' },
+      { value: 'unwatched', label: 'common.unwatchedOnly' },
+    ],
   },
 ]

@@ -11,6 +11,7 @@ type TableProps<T extends Record<string, unknown>> = {
   getRowKey: (row: T) => string | number
   footer?: React.ComponentProps<typeof TableFooter>
   onRowClick?: (row: T) => void
+  rowClassName?: (row: T) => string
 }
 
 export const widthMap = {
@@ -27,6 +28,7 @@ export default function Table<T extends Record<string, unknown>>({
   getRowKey,
   footer,
   onRowClick,
+  rowClassName,
 }: TableProps<T>) {
   return (
     <div
@@ -47,6 +49,7 @@ export default function Table<T extends Record<string, unknown>>({
             columns={columns}
             getRowKey={getRowKey}
             onRowClick={onRowClick}
+            rowClassName={rowClassName}
           />
         </table>
       </div>

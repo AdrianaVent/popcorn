@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Modal from '@/components/ui/Modal'
-import MoviePoster from './MoviePoster'
+import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 
 import { useMovieDetail } from '@/features/movies/hooks/useMovieDetail'
@@ -13,6 +13,9 @@ import MovieMetaGrid from './MovieMetaGrid'
 import MovieDetailSkeleton from './MovieDetailSkeleton'
 import { getMovieUI } from '@/features/movies/getMovieUI'
 import { useLanguageStore } from '@/store/languageStore'
+import { useWatchedStore } from '@/store/watchedStore'
+import { useUserStore } from '@/store/userStore'
+import clsx from 'clsx'
 
 type Props = {
   movieId: number
@@ -24,6 +27,12 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
   const { language } = useLanguageStore()
   const [currentId, setCurrentId] = useState(movieId)
   const { detail, loading, error } = useMovieDetail(currentId)
+
+  const userId = useUserStore((s) => s.userId)
+  const userKey = String(userId ?? 'guest')
+  const watchedMovies = useWatchedStore((s) => s.movies[userKey])
+  const toggleMovie = useWatchedStore((s) => s.toggleMovie)
+  const isWatched = !!watchedMovies?.[currentId]
 
   const ui = getMovieUI(detail)
 
@@ -46,7 +55,7 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
           {/* HEADER */}
           <div className="flex gap-6 items-start">
 
-            <MoviePoster
+            <MediaPoster
               posterPath={detail.poster_path}
               title={detail.title}
               variant="md"
@@ -55,13 +64,37 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
 
             <div className="flex flex-col gap-3 min-w-0 flex-1">
 
-              <Text
-                variant="subtitle"
-                as="h2"
-                className="text-foreground leading-tight text-[1.4rem]"
-              >
-                {detail.title}
-              </Text>
+              <div className="flex items-start justify-between gap-3">
+                <Text
+                  variant="subtitle"
+                  as="h2"
+                  className="text-foreground leading-tight text-[1.4rem]"
+                >
+                  {detail.title}
+                </Text>
+                <button
+                  onClick={() => toggleMovie(userKey, {
+                    id: detail.id,
+                    title: detail.title,
+                    release_date: detail.release_date,
+                    vote_average: detail.vote_average,
+                    vote_count: detail.vote_count,
+                    poster_path: detail.poster_path,
+                    original_language: detail.original_language,
+                  })}
+                  className={clsx(
+                    'shrink-0 mt-1 flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md border transition-colors whitespace-nowrap',
+                    isWatched
+                      ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400 hover:bg-green-500/20'
+                      : 'bg-muted border-border/50 text-muted-foreground hover:border-green-400 hover:text-green-600'
+                  )}
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M2 5L4.2 7.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {isWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
+                </button>
+              </div>
 
               {detail.tagline && (
                 <Text variant="small" className="text-muted-foreground italic">
@@ -122,7 +155,7 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
                 {t('movies.detail.overview')}
               </Text>
 
-              <Text variant="body" className="text-foreground leading-relaxed">
+              <Text variant="small" className="text-foreground leading-relaxed">
                 {detail.overview}
               </Text>
             </div>

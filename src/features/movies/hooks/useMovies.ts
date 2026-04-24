@@ -4,16 +4,23 @@ import { useState } from 'react'
 import { useAsync } from '@/hooks/useAsync'
 import { fetchMovies } from '@/features/movies/movies.service'
 import { useLanguageStore } from '@/store/languageStore'
+import { ALLOWED_ORIGINAL_LANGUAGES } from '@/config/constants'
 import type { MovieFilters, MovieRow } from '@/types/movie'
 import type { TMDBMovie } from '@/types/tmdb'
 
 type FetchResult = { movies: MovieRow[]; totalPages: number }
 
 export function applyClientFilters(results: TMDBMovie[], filters: MovieFilters): MovieRow[] {
-  // vote_average_gte applied client-side only in search mode (title present) because
-  // /search/movie doesn't support the vote_average.gte param
-  if (!filters.title || !filters.vote_average_gte) return results as MovieRow[]
-  return results.filter((m) => m.vote_average >= (filters.vote_average_gte ?? 0)) as MovieRow[]
+  let items = results.filter((m) => m.release_date)
+  // /search/movie ignores with_original_language — filter client-side
+  if (filters.title) {
+    items = items.filter((m) => ALLOWED_ORIGINAL_LANGUAGES.has(m.original_language))
+  }
+  // vote_average_gte not supported by /search/movie
+  if (filters.title && filters.vote_average_gte) {
+    items = items.filter((m) => m.vote_average >= (filters.vote_average_gte ?? 0))
+  }
+  return items as MovieRow[]
 }
 
 export function useMovies(filters: MovieFilters) {
@@ -22,11 +29,13 @@ export function useMovies(filters: MovieFilters) {
   const [retryCount, setRetryCount] = useState(0)
 
   const { data, loading, error } = useAsync<FetchResult>(
-    () =>
-      fetchMovies(page, language, filters).then((raw) => ({
+    () => {
+      if (filters.watched === 'watched') return null
+      return fetchMovies(page, language, filters).then((raw) => ({
         movies: applyClientFilters(raw.results ?? [], filters),
         totalPages: raw.total_pages ?? 1,
-      })),
+      }))
+    },
     [page, language, filters, retryCount],
   )
 
