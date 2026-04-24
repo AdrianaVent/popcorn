@@ -73,3 +73,55 @@ export type TMDBMovieDetail = TMDBMovie & {
   revenue: number
   homepage: string | null
 }
+
+export type TMDBCreator = {
+  id: number
+  name: string
+  profile_path: string | null
+}
+
+export type TMDBNetwork = {
+  id: number
+  name: string
+  logo_path: string | null
+  origin_country: string
+}
+
+export type TMDBSeason = {
+  id: number
+  name: string
+  season_number: number
+  episode_count: number
+  air_date: string | null
+  poster_path: string | null
+  overview: string
+}
+
+export type TMDBEpisode = {
+  id: number
+  name: string
+  episode_number: number
+  runtime: number | null
+  air_date: string | null
+  overview: string
+  still_path: string | null
+}
+
+export type TMDBSeasonDetail = TMDBSeason & {
+  episodes: TMDBEpisode[]
+}
+
+export type TMDBSeriesDetail = TMDBSeries & {
+  tagline: string
+  status: string
+  genres: TMDBGenre[]
+  number_of_seasons: number
+  number_of_episodes: number
+  episode_run_time: number[]
+  last_air_date: string
+  in_production: boolean
+  networks: TMDBNetwork[]
+  created_by: TMDBCreator[]
+  seasons: TMDBSeason[]
+  next_episode_to_air: { air_date: string } | null
+}

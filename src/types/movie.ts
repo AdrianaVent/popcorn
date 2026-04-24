@@ -9,4 +9,5 @@ export type MovieFilters = {
   title?: string
   vote_average_gte?: number
   release_year?: number
+  watched?: 'watched' | 'unwatched'
 }

@@ -5,7 +5,10 @@
   },
   "common": {
     "prev": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "all": "All",
+    "watchedOnly": "Watched",
+    "unwatchedOnly": "Unwatched"
   },
   "languageSwitcher": {
     "label": "Current language: {{language}}"
@@ -56,7 +59,8 @@
       "panel": "Filters",
       "title": "Title",
       "ratingGte": "Rating ≥",
-      "year": "Year"
+      "year": "Year",
+      "watched": "Seen"
     },
     "columns": {
       "poster": "Poster",
@@ -76,12 +80,57 @@
       "genres": "Genres",
       "collection": "Collection",
       "current": "Watching",
-      "release": "Release"
+      "release": "Release",
+      "watched": "Watched",
+      "markWatched": "Mark as watched"
     }
   },
   "series": {
     "title": "Series",
-    "comingSoon": "Coming soon"
+    "empty": "No series found",
+    "error": "Failed to load series",
+    "retry": "Retry",
+    "filters": {
+      "panel": "Filters",
+      "title": "Title",
+      "ratingGte": "Rating ≥",
+      "year": "Year",
+      "status": "Status"
+    },
+    "columns": {
+      "poster": "Poster",
+      "name": "Name",
+      "firstAirDate": "First aired",
+      "rating": "Rating",
+      "votes": "Votes",
+      "status": "Status",
+      "watched": "Seen"
+    },
+    "detail": {
+      "overview": "Overview",
+      "rating": "Rating",
+      "votes": "Votes",
+      "seasons": "Seasons",
+      "episodes": "Episodes",
+      "runtime": "Ep. runtime",
+      "year": "Year",
+      "genres": "Genres",
+      "seasonsAccordion": "Seasons",
+      "episodesCount": "{{count}} ep.",
+      "statusBadge": "Status",
+      "noEpisodes": "No episodes available",
+      "watched": "Watched",
+      "seriesWatched": "Watched",
+      "markSeriesWatched": "Mark as watched"
+    },
+    "status": {
+      "returning": "Returning",
+      "inProduction": "In production",
+      "planned": "Planned",
+      "ended": "Ended",
+      "canceled": "Canceled",
+      "pilot": "Pilot"
+    }
   },
   "dashboard": {
     "recentlyAdded": "Recently added",
