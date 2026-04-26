@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { loginRequest } from './login.service'
+import { useUserStore } from '@/store/userStore'
 
 type LoginForm = {
   email: string
@@ -29,6 +30,7 @@ type UseLoginReturn = {
 export function useLogin(): UseLoginReturn {
   const router = useRouter()
   const { t } = useTranslation()
+  const setUserId = useUserStore((s) => s.setUserId)
 
   const [form, setForm] = useState<LoginForm>({
     email: '',
@@ -77,10 +79,11 @@ export function useLogin(): UseLoginReturn {
     setErrorMessage(null)
 
     try {
-      const { ok, code } = await loginRequest(form)
+      const { ok, code, userId } = await loginRequest(form)
 
       if (ok) {
-        router.push('/dashboard')
+        if (userId) setUserId(userId)
+        router.push('/movies')
         return
       }
 

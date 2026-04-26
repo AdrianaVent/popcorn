@@ -7,12 +7,15 @@ export type Column<T extends Record<string, unknown>> = {
   width?: 'xs' | 'sm' | 'md' | 'lg' | 'flex'
 }
 
-export type FilterFieldType = 'text' | 'number' | 'boolean'
+export type FilterFieldType = 'text' | 'number' | 'boolean' | 'select'
+
+export type FilterOption = { value: string | number; label: string }
 
 export type FilterField<T> = {
   key: keyof T
   label: string
   type: FilterFieldType
+  options?: FilterOption[]
 }
 
 export type FiltersSchema<T> = FilterField<T>[]

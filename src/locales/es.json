@@ -5,7 +5,10 @@
   },
   "common": {
     "prev": "Anterior",
-    "next": "Siguiente"
+    "next": "Siguiente",
+    "all": "Todas",
+    "watchedOnly": "Vistos",
+    "unwatchedOnly": "No vistos"
   },
   "languageSwitcher": {
     "label": "Idioma actual: {{language}}"
@@ -56,7 +59,8 @@
       "panel": "Filtros",
       "title": "Título",
       "ratingGte": "Valoración ≥",
-      "year": "Año"
+      "year": "Año",
+      "watched": "Visto"
     },
     "columns": {
       "poster": "Póster",
@@ -76,12 +80,57 @@
       "genres": "Géneros",
       "collection": "Saga",
       "current": "Viendo",
-      "release": "Estreno"
+      "release": "Estreno",
+      "watched": "Visto",
+      "markWatched": "Marcar como visto"
     }
   },
   "series": {
     "title": "Series",
-    "comingSoon": "Próximamente"
+    "empty": "No hay series disponibles",
+    "error": "No se han podido cargar las series",
+    "retry": "Reintentar",
+    "filters": {
+      "panel": "Filtros",
+      "title": "Título",
+      "ratingGte": "Valoración ≥",
+      "year": "Año",
+      "status": "Estado",
+      "watched": "Visto"
+    },
+    "columns": {
+      "poster": "Póster",
+      "name": "Nombre",
+      "firstAirDate": "Estreno",
+      "rating": "Valoración",
+      "votes": "Votos",
+      "status": "Estado"
+    },
+    "detail": {
+      "overview": "Sinopsis",
+      "rating": "Valoración",
+      "votes": "Votos",
+      "seasons": "Temporadas",
+      "episodes": "Episodios",
+      "runtime": "Dur. episodio",
+      "year": "Año",
+      "genres": "Géneros",
+      "seasonsAccordion": "Temporadas",
+      "episodesCount": "{{count}} ep.",
+      "statusBadge": "Estado",
+      "noEpisodes": "No hay episodios disponibles",
+      "watched": "Visto",
+      "seriesWatched": "Visto",
+      "markSeriesWatched": "Marcar como visto"
+    },
+    "status": {
+      "returning": "En emisión",
+      "inProduction": "En producción",
+      "planned": "Planificada",
+      "ended": "Finalizada",
+      "canceled": "Cancelada",
+      "pilot": "Piloto"
+    }
   },
   "dashboard": {
     "recentlyAdded": "Añadido recientemente",

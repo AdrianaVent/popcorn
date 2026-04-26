@@ -3,37 +3,25 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import MetaRow from '@/components/common/MetaRow'
-import type { TMDBMovieDetail } from '@/types/tmdb'
+import type { TMDBSeriesDetail } from '@/types/tmdb'
 
 type Props = {
-  detail: TMDBMovieDetail
-  isUpcoming: boolean
-  releaseYear: number | null
+  detail: TMDBSeriesDetail
+  firstAirYear: number | null
+  avgRuntime: number | null
 }
 
-export default function MovieMetaGrid({ detail, isUpcoming, releaseYear }: Props) {
+export default function SeriesMetaGrid({ detail, firstAirYear, avgRuntime }: Props) {
   const { t } = useTranslation()
 
-  const rows = useMemo(() => {
-    return [
-      {
-        label: t('movies.detail.rating'),
-        value: `${detail.vote_average.toFixed(1)} / 10`,
-      },
-      {
-        label: t('movies.detail.votes'),
-        value: detail.vote_count.toLocaleString(),
-      },
-      detail.runtime && {
-        label: t('movies.detail.runtime'),
-        value: `${detail.runtime} min`,
-      },
-      !isUpcoming && {
-        label: t('movies.detail.year'),
-        value: releaseYear?.toString() ?? '—',
-      },
-    ].filter(Boolean) as Array<{ label: string; value: React.ReactNode }>
-  }, [detail, isUpcoming, releaseYear, t])
+  const rows = useMemo(() => [
+    { label: t('series.detail.rating'),   value: `${detail.vote_average.toFixed(1)} / 10` },
+    { label: t('series.detail.votes'),    value: detail.vote_count.toLocaleString() },
+    { label: t('series.detail.seasons'),  value: detail.number_of_seasons.toString() },
+    { label: t('series.detail.episodes'), value: detail.number_of_episodes.toString() },
+    avgRuntime && { label: t('series.detail.runtime'), value: `${avgRuntime} min` },
+    firstAirYear && { label: t('series.detail.year'), value: firstAirYear.toString() },
+  ].filter(Boolean) as Array<{ label: string; value: string }>, [detail, firstAirYear, avgRuntime, t])
 
   return (
     <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-2">
@@ -44,7 +32,7 @@ export default function MovieMetaGrid({ detail, isUpcoming, releaseYear }: Props
       {detail.genres.length > 0 && (
         <div className="col-span-2 flex items-start gap-3 mt-1">
           <span className="text-muted-foreground shrink-0 w-24 text-small">
-            {t('movies.detail.genres')}
+            {t('series.detail.genres')}
           </span>
           <div className="flex flex-wrap gap-1.5 flex-1 justify-end">
             {detail.genres.map((g) => (
