@@ -7,6 +7,8 @@ const AUTH_ROUTES = ['/login', '/register']
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
+  // API routes handle their own auth — skipping here avoids an extra jwtVerify
+  // on every internal fetch and prevents the middleware from blocking refresh calls.
   if (pathname.startsWith('/api/')) return NextResponse.next()
 
   const token = req.cookies.get('token')?.value
@@ -20,6 +22,8 @@ export async function middleware(req: NextRequest) {
   try {
     await jwtVerify(token, JWT_SECRET_BYTES)
   } catch {
+    // Expired or tampered token: clear both cookies before redirecting so the
+    // login page does not immediately bounce back due to the stale cookie.
     const response = NextResponse.redirect(new URL('/login', req.url))
     response.cookies.set('token', '', { path: '/', maxAge: 0 })
     response.cookies.set('refresh_token', '', { path: '/', maxAge: 0 })

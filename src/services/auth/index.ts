@@ -24,6 +24,9 @@ async function signAccessToken(userId: string, username: string, role: UserRole)
     .sign(JWT_SECRET_BYTES)
 }
 
+// Refresh token payload is intentionally minimal — only sub (userId).
+// Role is re-read from the DB on every refresh, so a role change takes effect
+// at the next refresh without needing to invalidate existing tokens.
 async function signRefreshToken(userId: string): Promise<string> {
   return new SignJWT({})
     .setProtectedHeader({ alg: 'HS256' })
