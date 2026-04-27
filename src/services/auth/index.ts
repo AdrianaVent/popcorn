@@ -1,49 +1,66 @@
-import { DUMMYJSON_LOGIN_URL, DUMMYJSON_REFRESH_URL } from '@/services/auth/config'
+import { SignJWT, jwtVerify } from 'jose'
+import bcrypt from 'bcryptjs'
+import { usersDb, type UserRole } from '@/db/users'
+import { JWT_SECRET_BYTES, TOKEN_MAX_TIME, REFRESH_TOKEN_MAX_TIME } from '@/config/auth'
 
-type LoginResponse = {
+export type LoginResult = {
   accessToken: string
   refreshToken: string
-  id: number
-  username: string
-  email: string
-  firstName: string
-  lastName: string
-  image: string
+  userId: string
+  role: UserRole
 }
 
-type RefreshResponse = {
+export type RefreshResult = {
   accessToken: string
   refreshToken: string
+}
+
+async function signAccessToken(userId: string, username: string, role: UserRole): Promise<string> {
+  return new SignJWT({ username, role })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(userId)
+    .setIssuedAt()
+    .setExpirationTime(`${TOKEN_MAX_TIME}s`)
+    .sign(JWT_SECRET_BYTES)
+}
+
+async function signRefreshToken(userId: string): Promise<string> {
+  return new SignJWT({})
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(userId)
+    .setIssuedAt()
+    .setExpirationTime(`${REFRESH_TOKEN_MAX_TIME}s`)
+    .sign(JWT_SECRET_BYTES)
 }
 
 export const authService = {
-  login: async (username: string, password: string): Promise<LoginResponse> => {
-    const res = await fetch(DUMMYJSON_LOGIN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, expiresInMins: 60 }),
-    })
+  login: async (username: string, password: string): Promise<LoginResult> => {
+    const user = usersDb.findByUsername(username)
+    if (!user) throw new Error('Invalid credentials')
 
-    if (!res.ok) {
-      const error = await res.json()
-      throw new Error(error.message ?? 'Invalid credentials')
-    }
+    const valid = await bcrypt.compare(password, user.password)
+    if (!valid) throw new Error('Invalid credentials')
 
-    return res.json()
+    const [accessToken, refreshToken] = await Promise.all([
+      signAccessToken(user.id, user.username, user.role),
+      signRefreshToken(user.id),
+    ])
+
+    return { accessToken, refreshToken, userId: user.id, role: user.role }
   },
 
-  refresh: async (refreshToken: string): Promise<RefreshResponse> => {
-    const res = await fetch(DUMMYJSON_REFRESH_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken, expiresInMins: 60 }),
-    })
+  refresh: async (refreshToken: string): Promise<RefreshResult> => {
+    const { payload } = await jwtVerify(refreshToken, JWT_SECRET_BYTES)
+    const userId = payload.sub as string
 
-    if (!res.ok) {
-      const error = await res.json()
-      throw new Error(error.message ?? 'Session expired')
-    }
+    const user = usersDb.findById(userId)
+    if (!user) throw new Error('User not found')
 
-    return res.json()
+    const [accessToken, newRefreshToken] = await Promise.all([
+      signAccessToken(user.id, user.username, user.role),
+      signRefreshToken(user.id),
+    ])
+
+    return { accessToken, refreshToken: newRefreshToken }
   },
 }

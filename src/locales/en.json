@@ -29,7 +29,7 @@
       "emailRequired": "Username is required",
       "emailInvalid": "Invalid email format",
       "passwordRequired": "Password is required",
-      "passwordWeak": "Min. 8 characters, one uppercase, one number and one special character"
+      "passwordInvalid": "Invalid password"
     },
     "forgotPassword": "Forgot password?",
     "resetPassword": "Reset password",

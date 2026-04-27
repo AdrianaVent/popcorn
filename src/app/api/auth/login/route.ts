@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authService } from '@/services/auth'
-import { TOKEN_MAX_TIME, REFRESH_TOKEN_MAX_TIME } from '@/config/auth'
+import { setAuthCookies } from '@/services/auth/cookies'
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,27 +10,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ code: 'MISSING_CREDENTIALS' }, { status: 400 })
     }
 
-    const { accessToken, refreshToken, id: userId } = await authService.login(username, password)
+    const { accessToken, refreshToken, userId, role } = await authService.login(username, password)
 
-    const response = NextResponse.json({ code: 'LOGIN', userId })
-
-    const cookieOptions = {
-      httpOnly: true,
-      sameSite: 'lax' as const,
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-    }
-
-    response.cookies.set('token', accessToken, {
-      ...cookieOptions,
-      maxAge: TOKEN_MAX_TIME,
-    })
-
-    response.cookies.set('refresh_token', refreshToken, {
-      ...cookieOptions,
-      maxAge: REFRESH_TOKEN_MAX_TIME,
-    })
-
+    const response = NextResponse.json({ code: 'LOGIN', userId, role })
+    setAuthCookies(response, { accessToken, refreshToken })
     return response
   } catch {
     return NextResponse.json({ code: 'INVALID_CREDENTIALS' }, { status: 401 })
