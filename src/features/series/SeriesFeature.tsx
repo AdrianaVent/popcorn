@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 
@@ -11,18 +11,37 @@ import Text from '@/components/ui/Text'
 import Header from '@/components/ui/Header'
 import MediaPoster from '@/components/common/MediaPoster'
 import FiltersPanel from '@/components/common/FiltersPanel'
+import ExportButton from '@/components/common/ExportButton'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 import SeriesDetailModal from './components/SeriesDetailModal'
 
-import { useSeries } from './hooks/useSeries'
-import { fetchSeriesDetail } from './series.service'
+import { useSeries, applyClientFilters } from './hooks/useSeries'
+import { fetchSeries, fetchSeriesDetail } from './series.service'
 import { getStatusConfig } from './getSeriesUI'
+import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
 import { useLanguageStore } from '@/store/languageStore'
 import { useUserStore } from '@/store/userStore'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useFilters } from '@/hooks/useFilters'
 import { seriesFiltersSchema } from './seriesFilters.schema'
+import { formatVoteCount } from '@/utils/formatNumber'
+import { formatShortDate } from '@/utils/formatDate'
 import type { Column } from '@/types/table'
 import type { SeriesRow, SeriesFilters } from '@/types/series'
+
+type SeriesExportRow = SeriesRow & { status: string }
+
+type SeriesCSVRow = {
+  name: string
+  first_air_date: string
+  vote_average: string
+  vote_count: string
+  original_language: string
+  status: string
+}
+const SERIES_CSV_FIELDS: (keyof SeriesCSVRow)[] = [
+  'name', 'first_air_date', 'vote_average', 'vote_count', 'original_language', 'status',
+]
 
 const initialFilters: SeriesFilters = {}
 
@@ -32,6 +51,7 @@ export default function SeriesFeature() {
   const { language } = useLanguageStore()
 
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
   const [statuses, setStatuses] = useState<Map<number, string>>(new Map())
   const [totals, setTotals] = useState<Map<number, number>>(new Map())
   const { filters, setFilters } = useFilters<SeriesFilters>(initialFilters)
@@ -108,6 +128,78 @@ export default function SeriesFeature() {
     router.push('/login')
   }
 
+  const handleExport = useCallback(async (format: 'json' | 'csv') => {
+    setIsExporting(true)
+    try {
+      const date = new Date().toISOString().split('T')[0]
+      let baseRows: SeriesRow[]
+
+      if (filters.watched === 'watched') {
+        baseRows = watchedModeItems
+      } else {
+        const pageCount = Math.min(totalPages, 20)
+        const pages = await Promise.all(
+          Array.from({ length: pageCount }, (_, i) =>
+            fetchSeries(i + 1, language, filters).then((raw) =>
+              applyClientFilters(raw.results ?? [], filters)
+            )
+          )
+        )
+        baseRows = pages.flat()
+        if (filters.watched === 'unwatched') {
+          baseRows = baseRows.filter((s) => {
+            const total = totals.get(s.id) ?? 0
+            const watched = Object.keys(seriesEpisodes?.[s.id] ?? {}).length
+            return !(total > 0 && watched >= total)
+          })
+        }
+      }
+
+      const detailResults = await Promise.allSettled(
+        baseRows.map((s) => fetchSeriesDetail(s.id, language))
+      )
+      const exportStatuses = new Map<number, string>()
+      detailResults.forEach((result, i) => {
+        if (result.status === 'fulfilled' && result.value?.status) {
+          exportStatuses.set(baseRows[i].id, result.value.status)
+        }
+      })
+
+      const jsonData: SeriesExportRow[] = baseRows.map((s) => ({
+        ...s,
+        status: exportStatuses.get(s.id) ?? statuses.get(s.id) ?? '',
+      }))
+
+      if (format === 'json') {
+        exportAsJSON(jsonData, `series-${date}.json`)
+      } else {
+        const langDisplay = new Intl.DisplayNames([language], { type: 'language' })
+        const csvData: SeriesCSVRow[] = jsonData.map((s) => {
+          const cfg = getStatusConfig(s.status)
+          return {
+            name: s.name,
+            first_air_date: s.first_air_date ? formatShortDate(s.first_air_date, language) : '',
+            vote_average: `${s.vote_average.toFixed(1)} / 10`,
+            vote_count: formatVoteCount(s.vote_count, language),
+            original_language: langDisplay.of(s.original_language) ?? s.original_language,
+            status: cfg ? t(cfg.labelKey) : s.status,
+          }
+        })
+        const headers = [
+          t('series.columns.name'),
+          t('series.columns.firstAirDate'),
+          t('series.columns.rating'),
+          t('series.columns.votes'),
+          t('series.columns.language'),
+          t('series.columns.status'),
+        ]
+        exportAsCSV(csvData, SERIES_CSV_FIELDS, `series-${date}.csv`, headers)
+      }
+    } finally {
+      setIsExporting(false)
+    }
+  }, [filters, totalPages, language, watchedModeItems, seriesEpisodes, totals, statuses, t])
+
   const columns: Column<SeriesRow>[] = [
     {
       key: 'poster_path',
@@ -144,14 +236,7 @@ export default function SeriesFeature() {
     {
       key: 'first_air_date',
       header: t('series.columns.firstAirDate'),
-      render: (row) => {
-        if (!row.first_air_date) return null
-        const date = new Date(row.first_air_date)
-        const day = String(date.getUTCDate()).padStart(2, '0')
-        const month = date.toLocaleDateString(language, { month: 'short' })
-        const year = date.getUTCFullYear()
-        return `${day} ${month} ${year}`
-      },
+      render: (row) => row.first_air_date ? formatShortDate(row.first_air_date, language) : null,
       width: 'md',
       align: 'center',
     },
@@ -165,7 +250,7 @@ export default function SeriesFeature() {
     {
       key: 'vote_count',
       header: t('series.columns.votes'),
-      render: (row) => row.vote_count.toLocaleString(),
+      render: (row) => formatVoteCount(row.vote_count, language),
       width: 'sm',
       align: 'center',
     },
@@ -196,7 +281,7 @@ export default function SeriesFeature() {
     <DashboardLayout activeNav="series" onLogout={handleLogout}>
       <div className="h-full flex flex-col gap-4 p-4">
 
-        <Header title={t('series.title')} />
+        <Header title={t('series.title')} end={<ExportButton onExport={handleExport} />} />
 
         <FiltersPanel
           schema={seriesFiltersSchema}
@@ -256,6 +341,8 @@ export default function SeriesFeature() {
           onClose={() => setSelectedId(null)}
         />
       )}
+
+      {isExporting && <LoadingOverlay message={t('export.loading')} />}
     </DashboardLayout>
   )
 }

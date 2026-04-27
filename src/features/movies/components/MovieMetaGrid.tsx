@@ -3,6 +3,8 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import MetaRow from '@/components/common/MetaRow'
+import { useLanguageStore } from '@/store/languageStore'
+import { formatVoteCount } from '@/utils/formatNumber'
 import type { TMDBMovieDetail } from '@/types/tmdb'
 
 type Props = {
@@ -13,17 +15,18 @@ type Props = {
 
 export default function MovieMetaGrid({ detail, isUpcoming, releaseYear }: Props) {
   const { t } = useTranslation()
+  const { language } = useLanguageStore()
 
   const rows = useMemo(() => {
     if (isUpcoming) return []
 
     return [
       { label: t('movies.detail.rating'), value: `${detail.vote_average.toFixed(1)} / 10` },
-      { label: t('movies.detail.votes'), value: detail.vote_count.toLocaleString() },
+      { label: t('movies.detail.votes'), value: formatVoteCount(detail.vote_count, language) },
       detail.runtime && { label: t('movies.detail.runtime'), value: `${detail.runtime} min` },
       { label: t('movies.detail.year'), value: releaseYear?.toString() ?? '—' },
     ].filter(Boolean) as Array<{ label: string; value: React.ReactNode }>
-  }, [detail, isUpcoming, releaseYear, t])
+  }, [detail, isUpcoming, releaseYear, language, t])
 
   return (
     <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-2">
