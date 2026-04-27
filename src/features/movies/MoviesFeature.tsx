@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 
@@ -12,8 +12,12 @@ import Header from '@/components/ui/Header'
 import MovieDetailModal from './components/MovieDetailModal'
 import MediaPoster from '@/components/common/MediaPoster'
 import FiltersPanel from '@/components/common/FiltersPanel'
+import ExportButton from '@/components/common/ExportButton'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
-import { useMovies } from './hooks/useMovies'
+import { useMovies, applyClientFilters } from './hooks/useMovies'
+import { fetchMovies } from './movies.service'
+import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
 import type { Column } from '@/types/table'
 import type { MovieRow, MovieFilters } from '@/types/movie'
 import { useLanguageStore } from '@/store/languageStore'
@@ -22,6 +26,19 @@ import { useWatchedStore } from '@/store/watchedStore'
 import { useFilters } from '@/hooks/useFilters'
 
 import { movieFiltersSchema } from './movieFilters.schema'
+import { formatVoteCount } from '@/utils/formatNumber'
+import { formatShortDate } from '@/utils/formatDate'
+
+type MovieCSVRow = {
+  title: string
+  release_date: string
+  vote_average: string
+  vote_count: string
+  original_language: string
+}
+const MOVIE_CSV_FIELDS: (keyof MovieCSVRow)[] = [
+  'title', 'release_date', 'vote_average', 'vote_count', 'original_language',
+]
 
 const initialFilters: MovieFilters = {}
 
@@ -31,6 +48,7 @@ export default function MoviesFeature() {
   const { language } = useLanguageStore()
 
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
 
   const { filters, setFilters } = useFilters<MovieFilters>(initialFilters)
 
@@ -78,6 +96,54 @@ export default function MoviesFeature() {
     router.push('/login')
   }
 
+  const handleExport = useCallback(async (format: 'json' | 'csv') => {
+    setIsExporting(true)
+    try {
+      const date = new Date().toISOString().split('T')[0]
+      let allMovies: MovieRow[]
+
+      if (filters.watched === 'watched') {
+        allMovies = watchedModeItems ?? []
+      } else {
+        const pageCount = Math.min(totalPages, 20)
+        const pages = await Promise.all(
+          Array.from({ length: pageCount }, (_, i) =>
+            fetchMovies(i + 1, language, filters).then((raw) =>
+              applyClientFilters(raw.results ?? [], filters)
+            )
+          )
+        )
+        allMovies = pages.flat()
+        if (filters.watched === 'unwatched') {
+          allMovies = allMovies.filter((m) => !watchedMovies?.[m.id])
+        }
+      }
+
+      if (format === 'json') {
+        exportAsJSON(allMovies, `movies-${date}.json`)
+      } else {
+        const langDisplay = new Intl.DisplayNames([language], { type: 'language' })
+        const csvRows: MovieCSVRow[] = allMovies.map((m) => ({
+          title: m.title,
+          release_date: m.release_date ? formatShortDate(m.release_date, language) : '',
+          vote_average: `${m.vote_average.toFixed(1)} / 10`,
+          vote_count: formatVoteCount(m.vote_count, language),
+          original_language: langDisplay.of(m.original_language) ?? m.original_language,
+        }))
+        const headers = [
+          t('movies.columns.title'),
+          t('movies.columns.releaseDate'),
+          t('movies.columns.rating'),
+          t('movies.columns.votes'),
+          t('movies.columns.language'),
+        ]
+        exportAsCSV(csvRows, MOVIE_CSV_FIELDS, `movies-${date}.csv`, headers)
+      }
+    } finally {
+      setIsExporting(false)
+    }
+  }, [filters, totalPages, language, watchedModeItems, watchedMovies, t])
+
   const columns: Column<MovieRow>[] = [
     {
       key: 'poster_path',
@@ -111,14 +177,7 @@ export default function MoviesFeature() {
     {
       key: 'release_date',
       header: t('movies.columns.releaseDate'),
-      render: (row) => {
-        if (!row.release_date) return null
-        const date = new Date(row.release_date)
-        const day = String(date.getUTCDate()).padStart(2, '0')
-        const month = date.toLocaleDateString(language, { month: 'short' })
-        const year = date.getUTCFullYear()
-        return `${day} ${month} ${year}`
-      },
+      render: (row) => row.release_date ? formatShortDate(row.release_date, language) : null,
       width: 'md',
       align: 'center',
     },
@@ -132,7 +191,7 @@ export default function MoviesFeature() {
     {
       key: 'vote_count',
       header: t('movies.columns.votes'),
-      render: (row) => row.vote_count.toLocaleString(),
+      render: (row) => formatVoteCount(row.vote_count, language),
       width: 'sm',
       align: 'center',
     },
@@ -142,7 +201,7 @@ export default function MoviesFeature() {
     <DashboardLayout activeNav="movies" onLogout={handleLogout}>
       <div className="h-full flex flex-col gap-4 p-4">
 
-        <Header title={t('movies.title')} />
+        <Header title={t('movies.title')} end={<ExportButton onExport={handleExport} />} />
 
         <FiltersPanel
           schema={movieFiltersSchema}
@@ -197,6 +256,8 @@ export default function MoviesFeature() {
           onClose={() => setSelectedId(null)}
         />
       )}
+
+      {isExporting && <LoadingOverlay message={t('export.loading')} />}
     </DashboardLayout>
   )
 }

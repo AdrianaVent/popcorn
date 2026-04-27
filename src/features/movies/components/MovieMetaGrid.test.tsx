@@ -6,6 +6,10 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }))
 
+jest.mock('@/store/languageStore', () => ({
+  useLanguageStore: () => ({ language: 'en' }),
+}))
+
 const detail: Partial<TMDBMovieDetail> = {
   vote_average: 8.4,
   vote_count: 35000,
