@@ -3,6 +3,10 @@
     "accept": "Aceptar",
     "cancel": "Cancelar"
   },
+  "export": {
+    "button": "Exportar",
+    "loading": "Exportando datos..."
+  },
   "common": {
     "prev": "Anterior",
     "next": "Siguiente",
@@ -104,6 +108,7 @@
       "firstAirDate": "Estreno",
       "rating": "Valoración",
       "votes": "Votos",
+      "language": "Idioma",
       "status": "Estado"
     },
     "detail": {
