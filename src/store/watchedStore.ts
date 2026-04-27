@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-// Minimal snapshots stored at mark-time so the "watched" filter can show them without TMDB
+// Minimal snapshots stored at mark-time so the "watched" filter can render rows
+// without any TMDB call. Only the fields needed for the table/modal are kept.
 export type StoredMovie = {
   id: number
   title: string
@@ -23,7 +24,9 @@ export type StoredSeries = {
   number_of_episodes: number
 }
 
-// episodes: userId -> seriesId -> episodeId -> { seasonNumber }
+// seasonNumber is stored per episode so per-season watched counts can be derived
+// without fetching the full episode list from TMDB on every render.
+// Shape: userId -> seriesId -> episodeId -> { seasonNumber }
 export type EpisodeData = { seasonNumber: number }
 type EpisodesMap = Record<string, Record<number, Record<number, EpisodeData>>>
 type MoviesMap   = Record<string, Record<number, StoredMovie>>
@@ -67,7 +70,8 @@ export const useWatchedStore = create<WatchedState>()(
           }
           userEps[seriesId] = seriesEps
 
-          // Store series snapshot on first mark (or update if provided)
+          // Series snapshot is only written on the first episode mark to avoid
+          // overwriting with stale data if the series details change later.
           const userSeries = { ...s.seriesData[userId] }
           if (series && !userSeries[seriesId]) {
             userSeries[seriesId] = series
