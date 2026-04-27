@@ -60,6 +60,10 @@ export default function SeriesFeature() {
 
   const abortRef = useRef<AbortController | null>(null)
 
+  // Background enrichment: fetch status and episode count for each visible series.
+  // allSettled (not all) so a single failed detail request doesn't abort the whole batch.
+  // AbortController cancels the .then callback when the component unmounts or deps change
+  // — the in-flight fetches are not cancellable, but their results are discarded.
   useEffect(() => {
     if (!series.length) return
     abortRef.current?.abort()
@@ -156,6 +160,10 @@ export default function SeriesFeature() {
         }
       }
 
+      // Fetch all statuses fresh for export — the background enrichment Map only covers
+      // the current page, so we re-fetch all pages' details here. allSettled ensures
+      // a single failure doesn't abort the whole export; failed rows fall back to the
+      // component statuses Map or an empty string.
       const detailResults = await Promise.allSettled(
         baseRows.map((s) => fetchSeriesDetail(s.id, language))
       )

@@ -34,6 +34,8 @@ export function useAsync<T>(
     const promise = fetcher()
     if (!promise) return
 
+    // cancelled flag prevents dispatching state updates after the component unmounts
+    // or deps change mid-flight — avoids the "can't update state on unmounted component" warning.
     let cancelled = false
     dispatch({ type: 'start' })
     promise
@@ -42,6 +44,8 @@ export function useAsync<T>(
         if (!cancelled) dispatch({ type: 'error', error: 'TMDB_FETCH_ERROR' })
       })
     return () => { cancelled = true }
+    // fetcher is intentionally excluded from deps: callers pass a new closure each render
+    // and are responsible for including their own captured variables in deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
 
