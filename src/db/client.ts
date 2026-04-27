@@ -5,8 +5,13 @@ import path from 'path'
 const DATA_DIR = path.join(process.cwd(), 'data')
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR)
 
+// Singleton: Node.js caches modules, so this instance is shared across all Route Handlers
+// in the same process. better-sqlite3 is synchronous and not safe for concurrent writes,
+// but Next.js Route Handlers are single-threaded per request, so this is fine.
 const db = new Database(path.join(DATA_DIR, 'popcorn.db'))
 
+// Schema migration runs once at module load. CREATE TABLE IF NOT EXISTS is idempotent,
+// so importing this module from both Route Handlers and the seed script is safe.
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id         TEXT PRIMARY KEY,

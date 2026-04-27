@@ -26,6 +26,8 @@ function downloadBlob(content: string, filename: string, mimeType: string): void
   a.href = url
   a.download = filename
   a.click()
+  // Revoke after click: the browser queues the download before this runs,
+  // so the object URL is still valid when the download starts.
   URL.revokeObjectURL(url)
 }
 
