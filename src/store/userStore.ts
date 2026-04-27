@@ -1,18 +1,23 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { UserRole } from '@/db/users'
+
+export type { UserRole }
 
 interface UserState {
-  userId: number | null
-  setUserId: (id: number) => void
-  clearUserId: () => void
+  userId: string | null
+  role: UserRole | null
+  setUser: (id: string, role: UserRole) => void
+  clearUser: () => void
 }
 
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
       userId: null,
-      setUserId: (id) => set({ userId: id }),
-      clearUserId: () => set({ userId: null }),
+      role: null,
+      setUser: (id, role) => set({ userId: id, role }),
+      clearUser: () => set({ userId: null, role: null }),
     }),
     { name: 'popcorn-user' }
   )

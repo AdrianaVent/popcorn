@@ -6,7 +6,8 @@ type LoginPayload = {
 type LoginResult = {
   code: string
   ok: boolean
-  userId?: number
+  userId?: string
+  role?: 'admin' | 'guest'
 }
 
 export async function loginRequest(payload: LoginPayload): Promise<LoginResult> {
@@ -17,7 +18,7 @@ export async function loginRequest(payload: LoginPayload): Promise<LoginResult> 
   })
   try {
     const data = await res.json()
-    return { code: data.code ?? 'LOGIN_FAILED', ok: res.ok, userId: data.userId }
+    return { code: data.code ?? 'LOGIN_FAILED', ok: res.ok, userId: data.userId, role: data.role }
   } catch {
     return { code: 'LOGIN_FAILED', ok: false }
   }
