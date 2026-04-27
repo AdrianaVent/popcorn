@@ -86,7 +86,8 @@ export default function SeriesFeature() {
   }, [series, language])
 
   const userId = useUserStore((s) => s.userId)
-  const clearUserId = useUserStore((s) => s.clearUserId)
+  const role = useUserStore((s) => s.role)
+  const clearUser = useUserStore((s) => s.clearUser)
   const userKey = String(userId ?? 'guest')
   const seriesEpisodes = useWatchedStore((s) => s.episodes[userKey])
 
@@ -124,7 +125,7 @@ export default function SeriesFeature() {
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
-    clearUserId()
+    clearUser()
     router.push('/login')
   }
 
@@ -281,7 +282,7 @@ export default function SeriesFeature() {
     <DashboardLayout activeNav="series" onLogout={handleLogout}>
       <div className="h-full flex flex-col gap-4 p-4">
 
-        <Header title={t('series.title')} end={<ExportButton onExport={handleExport} />} />
+        <Header title={t('series.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} /> : undefined} />
 
         <FiltersPanel
           schema={seriesFiltersSchema}

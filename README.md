@@ -2,143 +2,130 @@
 
 Personal movie & series dashboard. Track what you watch, discover new titles.
 
-## Tech Stack
+---
 
-- **Next.js 16** + React 19 (App Router)
-- **TypeScript 5** — path alias `@/*` → `src/*`
-- **Tailwind CSS 4** + PostCSS
-- **Zustand 5** — state management (theme & language)
-- **i18next** + react-i18next — ES/EN internationalization
-- **jose** — JWT utilities (Edge Runtime compatible)
-- **clsx** — conditional class merging
-- **ESLint 9** + Prettier — no semicolons, single quotes
-- **Jest 30** + Testing Library — unit & integration tests
+## Stack
 
-## Getting started
+| | |
+|---|---|
+| Framework | Next.js 16 + React 19 (App Router) |
+| Language | TypeScript 5 — path alias `@/*` → `src/*` |
+| Styling | Tailwind CSS 4 + PostCSS |
+| State | Zustand 5 — persisted in localStorage |
+| i18n | i18next + react-i18next — English / Spanish |
+| Auth | jose (JWT) · better-sqlite3 · bcryptjs |
+| Testing | Jest 30 + Testing Library |
+| Linting | ESLint 9 + Prettier — no semicolons, single quotes |
+
+---
+
+## Getting Started
 
 ```bash
 npm install
-cp .env.local.example .env.local  # add your TMDB API key
-npm run dev   # http://localhost:3000
+cp .env.local.example .env.local   # fill in TMDB_API_KEY and JWT_SECRET
+npm run seed                        # creates the default admin user
+npm run dev                         # http://localhost:3000
 ```
 
-Test credentials: `emilys` / `emilyspass`
+Default credentials: `admin` / `Admin123!`
+
+To create an admin with custom credentials:
+
+```bash
+npm run seed <username> <password>
+```
+
+> Passwords must contain at least 8 characters, one uppercase letter, one number and one special character.
+
+---
 
 ## Commands
 
-```bash
-npm run dev         # development server
-npm run build       # production build
-npm run lint        # ESLint check
-npm run lint:fix    # ESLint auto-fix
-npm run format      # Prettier
-npm test            # Jest test suite
-npm run test:watch  # Jest watch mode
-```
+| Command | Description |
+|---|---|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm test` | Run all tests |
+| `npm run test:watch` | Tests in watch mode |
+| `npm run lint` | ESLint check |
+| `npm run lint:fix` | ESLint auto-fix |
+| `npm run format` | Prettier |
+| `npm run seed` | Create default admin user |
+
+---
 
 ## Features
 
-#### Movies
-- Paginated movie list powered by TMDB discover & search endpoints
-- Filter by title (TMDB search), rating and release year
-- Filters panel collapsible with active filter count badge
-- Language filter fixed to EN/ES content
-- Click any row to open a detail modal: poster, metadata grid, genres, tagline
-- Upcoming badge for unreleased movies
-- Collection / saga accordion — click a part to reload the modal with that film
+### Authentication & Roles
 
-#### Theme
-- Light, dark, and auto modes (auto resolves by time of day: light 7am–7pm)
-- Managed with Zustand, persisted in localStorage
-- Switched via the Settings modal (gear icon in sidebar)
+- Self-hosted auth — users stored in local SQLite, passwords hashed with bcrypt
+- Two roles: **admin** (full access) and **guest** (limited access)
+- JWT sessions: `token` (1h) + `refresh_token` (7d), both HttpOnly cookies
+- Route protection via Next.js middleware — JWT verified on every request
 
-#### Language
-- English / Spanish — auto-detects browser language on first visit
-- State persisted with Zustand, synced to i18n via `onRehydrateStorage`
-- Switched via the Settings modal
+| Capability | Admin | Guest |
+|---|---|---|
+| Browse movies & series | ✓ | ✓ |
+| Mark as watched | ✓ | ✓ |
+| Export data (JSON / CSV) | ✓ | — |
+| Manage users | ✓ | — |
 
-#### Authentication
-- Login UI with skeleton loading, field validation and i18n error messages
-- Route protection via Next.js middleware (`src/middleware.ts`)
-- HttpOnly cookie-based sessions — `token` (1h) + `refresh_token` (7d)
-- Login, logout and refresh via Route Handlers (`src/app/api/auth/`)
-- Auth logic isolated in `src/services/auth/` (DummyJSON as mock provider)
+### Movies & Series
 
-#### PWA
-- Favicons in `/public/icons/`, manifest at `/public/manifest.json`
+- Paginated lists — title search, rating, year and language filters
+- Detail modal — poster, metadata, genres, tagline, collection/saga
+- Watched tracking per user, persisted locally
+- Export all pages to JSON or CSV with formatted values (admin only)
+
+### Theme & Language
+
+- Light / dark / auto modes — auto resolves by time of day (7am–7pm)
+- English / Spanish — browser language auto-detected on first visit
+- Both settings persisted in localStorage, switchable from the Settings modal
+
+---
 
 ## Project Structure
 
 ```
 src/
-├── app/
-│   ├── api/auth/           # login / logout / refresh — Route Handlers (thin)
-│   ├── login/              # Login page (ssr: false)
-│   ├── movies/             # Movies page (ssr: false)
-│   ├── series/             # Series page (ssr: false)
-│   └── page.tsx            # → redirects to /movies
+├── app/api/auth/       # login · logout · refresh — thin Route Handlers
 ├── components/
-│   ├── common/             # FiltersPanel, MoviePoster, MetaRow, Sidebar, Topbar, SettingsModal
-│   ├── layouts/            # AuthLayout, DashboardLayout
-│   └── ui/                 # Button, Input, Text, Modal, Header, AccordionList, Table/
-├── config/                 # Constants split by domain (auth, i18n, tmdb, constants)
+│   ├── common/         # FiltersPanel, ExportButton, Sidebar, SettingsModal, ...
+│   ├── layouts/        # AuthLayout, DashboardLayout
+│   └── ui/             # Button, Input, Text, Modal, Header, Table/, LoadingOverlay, ...
+├── config/             # auth.ts · tmdb.ts · i18n.ts · constants.ts
+├── db/                 # client.ts (SQLite singleton) · users.ts (typed queries)
 ├── features/
-│   ├── auth/login/         # LoginFeature, LoginForm, useLogin, login.service.ts
-│   ├── dashboard/          # Placeholder
-│   ├── movies/             # MoviesFeature, useMovies, useMovieDetail, useCollectionDetail,
-│   │                       # MovieDetailModal, CollectionAccordion, MovieMetaGrid, movies.service.ts
-│   └── series/             # SeriesFeature (coming soon)
-├── hooks/                  # useAsync (generic), useFilters, useTranslation
-├── locales/                # en.json, es.json
-├── middleware.ts            # Route protection
-├── providers/              # GlobalProvider, ThemeProvider, LanguageProvider
+│   ├── auth/login/     # LoginFeature · useLogin · login.service.ts
+│   ├── movies/         # MoviesFeature · hooks · components · service
+│   └── series/         # SeriesFeature · hooks · components · service
+├── hooks/              # useAsync · useFilters
+├── locales/            # en.json · es.json
+├── middleware.ts        # JWT verification + route protection
+├── providers/          # GlobalProvider · ThemeProvider · LanguageProvider
 ├── services/
-│   ├── auth/               # DummyJSON client
-│   └── tmdb/               # TMDB client (movies, series, search) + tmdbFetch
-├── store/                  # themeStore, languageStore
-├── styles/
-│   ├── theme/              # resolveTheme, types
-│   └── globals.css         # Tailwind @theme tokens, semantic light/dark vars
-├── types/                  # tmdb.ts, movie.ts, table.ts, languageTypes.ts
-└── utils/                  # getTMDBImageUrl, getMovieUI, updateFilterValue
+│   ├── auth/           # authService — bcrypt verify, JWT sign/refresh
+│   └── tmdb/           # TMDB client — movies, series, search
+├── store/              # themeStore · languageStore · userStore · watchedStore
+└── utils/              # formatDate · formatNumber · exportData · getTMDBImageUrl · ...
+scripts/
+└── seed.ts             # Creates an admin user
+data/
+└── popcorn.db          # SQLite database — gitignored
 ```
 
-## Architecture Decisions
-
-- **API separation**: `src/app/api/` holds Route Handlers; `src/services/` holds all external API clients. Route Handlers are thin — business logic lives in services.
-- **Auth**: Two HttpOnly cookies — `token` (1h) and `refresh_token` (7d). Set on login, both cleared on logout or failed refresh.
-- **Auth provider**: DummyJSON (`dummyjson.com/auth`). Login field accepts username (not email). Test credentials: `emilys` / `emilyspass`.
-- **TMDB**: Strictly a data provider. Never used for user authentication. API key is `NEXT_PUBLIC_` (client-visible) — acceptable for read-only personal projects.
-- **Movie filters**: title filter uses `/search/movie` (server pagination); rating/year use `/discover/movie` params. `vote_average_gte` applied client-side only when title search is active.
-- **Error codes**: API responses return `{ code: string }` — never hardcoded text. Frontend translates via i18next.
-- **Auto theme**: resolves light (7am–7pm) vs dark based on time of day — see `resolveTheme.ts`.
-- **State**: separate Zustand stores per domain. `partialize` persists only the key field; `merge` recalculates derived state on rehydration.
-- **SSR / hydration**: features using i18n or theme use `dynamic(..., { ssr: false })`.
-- **Middleware**: skips all `/api/*`. Redirects unauthenticated users → `/login`; authenticated users away from auth routes → `/movies`.
-- **useAsync**: generic hook (`useAsync<T>`) centralises all data-fetching state — `loading / data / error` — removing duplicated reducer boilerplate across hooks.
-- **PWA**: manifest + favicons configured in root layout.
-
-## Conventions
-
-- New features go in `src/features/`
-- External API clients go in `src/services/`
-- Route Handlers go in `src/app/api/` and must stay thin
-- UI primitives go in `src/components/ui/`, layout wrappers in `src/components/layouts/`, shared non-UI in `src/components/common/`
-- Constants split by domain in `src/config/`
-- API responses always return `{ code: string }`, never hardcoded messages
-- User-facing strings always via `t()` — add keys to both `en.json` and `es.json`
-- No hex/rgb in JSX — use design token classes only
-- No manual font-size/weight/line-height — use `<Text variant="...">` component
-- Inline `style={{}}` only for runtime-computed values (positions, dynamic heights)
-- Tests co-located with source files (`*.test.ts` / `*.test.tsx`)
-- Tests, TypeScript and ESLint must all pass before opening a PR
+---
 
 ## Git Workflow
 
-Branch flow: `feature → dev → main`
+```
+feature → dev → main
+```
 
-- Feature branches are always created from `dev`
-- Before opening a PR: `npm test`, `tsc --noEmit` and `npm run lint` must all pass
-- Merge feature PR into `dev`; run build-check on `dev`; only then merge `dev` into `main`
+- Feature branches are always cut from `dev`
+- Before a PR: `npm test` + `tsc --noEmit` + `npm run lint` must all pass
+- After merging to `dev`: run build-check — only then merge `dev` into `main`
 - `main` is always stable and production-ready
 - All merges and branch deletions require explicit user authorization
