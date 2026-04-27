@@ -29,7 +29,7 @@
       "emailRequired": "El usuario es obligatorio",
       "emailInvalid": "El formato del correo no es válido",
       "passwordRequired": "La contraseña es obligatoria",
-      "passwordWeak": "Mínimo 8 caracteres, una mayúscula, un número y un carácter especial"
+      "passwordInvalid": "Contraseña no válida"
     },
     "forgotPassword": "¿Contraseña olvidada?",
     "resetPassword": "Recuperar contraseña",
