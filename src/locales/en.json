@@ -3,6 +3,10 @@
     "accept": "Accept",
     "cancel": "Cancel"
   },
+  "export": {
+    "button": "Export",
+    "loading": "Exporting data..."
+  },
   "common": {
     "prev": "Previous",
     "next": "Next",
@@ -95,7 +99,8 @@
       "title": "Title",
       "ratingGte": "Rating ≥",
       "year": "Year",
-      "status": "Status"
+      "status": "Status",
+      "watched": "Seen"
     },
     "columns": {
       "poster": "Poster",
@@ -103,6 +108,7 @@
       "firstAirDate": "First aired",
       "rating": "Rating",
       "votes": "Votes",
+      "language": "Language",
       "status": "Status",
       "watched": "Seen"
     },
