@@ -27,10 +27,12 @@ type UseLoginReturn = {
   handleResetError: () => void
 }
 
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
+
 export function useLogin(): UseLoginReturn {
   const router = useRouter()
   const { t } = useTranslation()
-  const setUserId = useUserStore((s) => s.setUserId)
+  const setUser = useUserStore((s) => s.setUser)
 
   const [form, setForm] = useState<LoginForm>({
     email: '',
@@ -42,6 +44,7 @@ export function useLogin(): UseLoginReturn {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
   /* ─── VALIDATION ─────────────────────────────── */
+
   const validate = (data: LoginForm): FieldErrors => {
     const errors: FieldErrors = {}
 
@@ -51,6 +54,8 @@ export function useLogin(): UseLoginReturn {
 
     if (!data.password) {
       errors.password = t('login.validation.passwordRequired')
+    } else if (!PASSWORD_REGEX.test(data.password)) {
+      errors.password = t('login.validation.passwordInvalid')
     }
 
     return errors
@@ -79,10 +84,10 @@ export function useLogin(): UseLoginReturn {
     setErrorMessage(null)
 
     try {
-      const { ok, code, userId } = await loginRequest(form)
+      const { ok, code, userId, role } = await loginRequest(form)
 
       if (ok) {
-        if (userId) setUserId(userId)
+        if (userId && role) setUser(userId, role)
         router.push('/movies')
         return
       }

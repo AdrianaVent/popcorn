@@ -63,7 +63,8 @@ export default function MoviesFeature() {
   } = useMovies(filters)
 
   const userId = useUserStore((s) => s.userId)
-  const clearUserId = useUserStore((s) => s.clearUserId)
+  const role = useUserStore((s) => s.role)
+  const clearUser = useUserStore((s) => s.clearUser)
   const userKey = String(userId ?? 'guest')
   const watchedMovies = useWatchedStore((s) => s.movies[userKey])
 
@@ -92,7 +93,7 @@ export default function MoviesFeature() {
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
-    clearUserId()
+    clearUser()
     router.push('/login')
   }
 
@@ -201,7 +202,7 @@ export default function MoviesFeature() {
     <DashboardLayout activeNav="movies" onLogout={handleLogout}>
       <div className="h-full flex flex-col gap-4 p-4">
 
-        <Header title={t('movies.title')} end={<ExportButton onExport={handleExport} />} />
+        <Header title={t('movies.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} /> : undefined} />
 
         <FiltersPanel
           schema={movieFiltersSchema}
