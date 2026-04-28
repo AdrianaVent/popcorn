@@ -3,16 +3,30 @@
 import { ButtonHTMLAttributes, ReactNode } from 'react'
 import clsx from 'clsx'
 
+type Breakpoint = 'sm' | 'md' | 'lg'
+
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode
   loading?: boolean
   variant?: 'primary' | 'secondary'
+  icon?: ReactNode
+  /** Hide label below this breakpoint — icon stays visible */
+  hideLabelBelow?: Breakpoint
+  /** Hide icon below this breakpoint — label stays visible */
+  hideIconBelow?: Breakpoint
+}
+
+const hidden: Record<Breakpoint, string> = {
+  sm: 'hidden sm:flex', md: 'hidden md:flex', lg: 'hidden lg:flex',
 }
 
 export default function Button({
   children,
   loading = false,
   variant = 'primary',
+  icon,
+  hideLabelBelow,
+  hideIconBelow,
   disabled,
   className,
   ...props
@@ -24,16 +38,35 @@ export default function Button({
     <button
       disabled={isDisabled}
       className={clsx(
-        'w-full px-4 py-2.5 rounded-md text-small font-semibold transition-opacity duration-200 cursor-pointer',
+        'inline-flex items-center justify-center gap-2',
+        'w-full px-4 py-2 rounded-md text-small font-semibold',
+        'transition-colors duration-150 cursor-pointer',
         isPrimary
-          ? 'bg-primary text-primary-foreground border-0'
-          : 'bg-transparent text-foreground border border-border',
+          ? 'bg-primary text-primary-foreground border-0 hover:opacity-80'
+          : 'bg-transparent text-foreground border border-border hover:bg-cream-400 dark:hover:bg-gray-700',
         isDisabled && 'opacity-60 cursor-not-allowed',
         className,
       )}
       {...props}
     >
-      {loading ? '...' : children}
+      {loading ? (
+        '...'
+      ) : (
+        <>
+          {icon && (
+            <span className={clsx('shrink-0 flex', hideIconBelow && hidden[hideIconBelow])}>
+              {icon}
+            </span>
+          )}
+          {hideLabelBelow ? (
+            <span className={clsx('hidden', hideLabelBelow === 'sm' ? 'sm:inline' : hideLabelBelow === 'md' ? 'md:inline' : 'lg:inline')}>
+              {children}
+            </span>
+          ) : (
+            children
+          )}
+        </>
+      )}
     </button>
   )
 }
