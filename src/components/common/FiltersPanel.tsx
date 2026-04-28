@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import Text from '@/components/ui/Text'
+import DatePicker from '@/components/ui/DatePicker'
 import { ChevronDownIcon } from '@/components/icons'
 import type { FiltersSchema } from '@/types/table'
 import { updateFilterValue } from '@/utils/updateFilterValue'
@@ -112,6 +113,13 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
                         updateFilterValue(filters, field.key, e.target.checked as T[keyof T])
                       )
                     }
+                  />
+                )}
+
+                {field.type === 'date' && (
+                  <DatePicker
+                    value={typeof value === 'string' && value ? value : undefined}
+                    onChange={(v) => onChange(updateFilterValue(filters, field.key, (v ?? '') as T[keyof T]))}
                   />
                 )}
 

@@ -51,7 +51,7 @@ export default function CollectionAccordion({ collection, movieId, onMovieSelect
               'flex items-center gap-3 px-3 py-2 transition-colors',
               isCurrent
                 ? 'bg-cream-300 dark:bg-gray-700 border-l-2 border-primary shadow-[inset_2px_0_0_var(--color-primary)]'
-                : 'bg-card hover:bg-muted/40',
+                : 'bg-card hover:bg-cream-400 dark:hover:bg-gray-700',
               !isCurrent && onMovieSelect && 'cursor-pointer',
               isWatched && !isCurrent && 'opacity-60'
             )}

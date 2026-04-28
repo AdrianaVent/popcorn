@@ -12,7 +12,8 @@
     "next": "Siguiente",
     "all": "Todas",
     "watchedOnly": "Vistos",
-    "unwatchedOnly": "No vistos"
+    "unwatchedOnly": "No vistos",
+    "confirm": "Confirmar"
   },
   "languageSwitcher": {
     "label": "Idioma actual: {{language}}"
@@ -48,6 +49,7 @@
     "dashboard": "Dashboard",
     "movies": "Películas",
     "series": "Series",
+    "users": "Usuarios",
     "settings": "Configuración"
   },
   "movies": {
@@ -135,6 +137,62 @@
       "ended": "Finalizada",
       "canceled": "Cancelada",
       "pilot": "Piloto"
+    }
+  },
+  "users": {
+    "title": "Usuarios",
+    "loading": "Cargando usuarios...",
+    "empty": "No hay usuarios",
+    "error": "No se han podido cargar los usuarios",
+    "retry": "Reintentar",
+    "addUser": "Añadir usuario",
+    "noResults": "Ningún usuario coincide con los filtros actuales",
+    "filters": {
+      "panel": "Filtros",
+      "username": "Usuario",
+      "role": "Rol",
+      "createdAfter": "Creado desde",
+      "createdBy": "Creado por"
+    },
+    "self": "tú",
+    "deleteSelected": "Eliminar seleccionados",
+    "selectedCount": "{{count}} seleccionados",
+    "confirm": {
+      "titleOne": "Eliminar usuario",
+      "titleMany": "Eliminar usuarios",
+      "bodyOne": "¿Seguro que quieres eliminar a {{username}}? Esta acción no se puede deshacer.",
+      "bodyMany": "¿Seguro que quieres eliminar {{count}} usuarios? Esta acción no se puede deshacer."
+    },
+    "columns": {
+      "username": "Usuario",
+      "role": "Rol",
+      "createdAt": "Creado",
+      "createdBy": "Creado por",
+      "actions": "Acciones"
+    },
+    "roles": {
+      "admin": "Admin",
+      "guest": "Invitado"
+    },
+    "actions": {
+      "edit": "Editar",
+      "delete": "Eliminar"
+    },
+    "form": {
+      "add": "Añadir usuario",
+      "edit": "Editar usuario",
+      "username": "Usuario",
+      "password": "Contraseña",
+      "passwordHint": "Déjalo en blanco para mantener la contraseña actual",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
+      "role": "Rol"
+    },
+    "errors": {
+      "USERNAME_TAKEN": "El nombre de usuario ya está en uso",
+      "NOT_FOUND": "Usuario no encontrado",
+      "FORBIDDEN": "Acción no permitida",
+      "UNKNOWN_ERROR": "Error inesperado, inténtalo de nuevo"
     }
   },
   "dashboard": {

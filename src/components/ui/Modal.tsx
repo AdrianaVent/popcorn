@@ -6,6 +6,7 @@ type ModalProps = {
   title: string
   onClose: () => void
   children: ReactNode
+  footer?: ReactNode
   maxWidth?: string
 }
 
@@ -13,6 +14,7 @@ export default function Modal({
   title,
   onClose,
   children,
+  footer,
   maxWidth = '48rem',
 }: ModalProps) {
   useEffect(() => {
@@ -87,6 +89,9 @@ export default function Modal({
         <div className="flex-1 overflow-y-auto p-6">
           {children}
         </div>
+
+        {/* FOOTER — rendered outside the scroll area so it stays fixed */}
+        {footer}
       </div>
     </div>
   )

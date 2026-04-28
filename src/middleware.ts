@@ -3,6 +3,7 @@ import { jwtVerify } from 'jose'
 import { JWT_SECRET_BYTES } from '@/config/auth'
 
 const AUTH_ROUTES = ['/login', '/register']
+const ADMIN_ROUTES = ['/users']
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
@@ -19,8 +20,10 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 
+  let payload: { role?: string } = {}
   try {
-    await jwtVerify(token, JWT_SECRET_BYTES)
+    const result = await jwtVerify(token, JWT_SECRET_BYTES)
+    payload = result.payload as { role?: string }
   } catch {
     // Expired or tampered token: clear both cookies before redirecting so the
     // login page does not immediately bounce back due to the stale cookie.
@@ -31,6 +34,11 @@ export async function middleware(req: NextRequest) {
   }
 
   if (isAuthRoute) {
+    return NextResponse.redirect(new URL('/movies', req.url))
+  }
+
+  // Admin-only routes: guests are redirected to /movies
+  if (ADMIN_ROUTES.some((r) => pathname.startsWith(r)) && payload.role !== 'admin') {
     return NextResponse.redirect(new URL('/movies', req.url))
   }
 

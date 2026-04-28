@@ -7,6 +7,11 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }))
 
+jest.mock('@/components/ui/DatePicker', () => {
+  function MockDatePicker() { return <input type="date" data-testid="date-picker" /> }
+  return MockDatePicker
+})
+
 type Filters = { title: string; year: number }
 
 const schema: FiltersSchema<Filters> = [
