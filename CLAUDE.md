@@ -27,16 +27,20 @@ src/
 │   │   ├── login/              # POST — validates credentials, signs JWT, sets cookies
 │   │   ├── logout/             # POST — clears token + refresh_token cookies
 │   │   └── refresh/            # POST — verifies refresh JWT, re-signs both tokens
+│   ├── api/users/              # GET · POST · DELETE (bulk) — list, create, bulk delete
+│   │   └── [id]/               # PATCH · DELETE — update, delete single user
 │   ├── login/page.tsx          # ssr: false (i18n)
 │   ├── movies/page.tsx         # ssr: false (i18n)
 │   ├── series/page.tsx         # ssr: false (i18n)
+│   ├── users/page.tsx          # ssr: false — admin only, middleware redirects guests
 │   ├── dashboard/page.tsx      # placeholder
 │   └── page.tsx                # → redirects to /movies
 ├── components/
 │   ├── common/                 # FiltersPanel, MetaRow, Sidebar, Topbar, SettingsModal, ExportButton
 │   ├── layouts/                # AuthLayout, DashboardLayout
-│   └── ui/                     # Button, Input, Text (polymorphic), Modal, Header,
-│                               # AccordionList, Table/, LoadingOverlay
+│   └── ui/                     # Button, Input, Text (polymorphic), Modal, ModalFooter,
+│                               # Header, AccordionList, Table/, LoadingOverlay,
+│                               # DatePicker, ConfirmModal, IconButton
 ├── config/
 │   ├── auth.ts                 # TOKEN_MAX_TIME, REFRESH_TOKEN_MAX_TIME, JWT_SECRET
 │   ├── constants.ts            # DEFAULT_LANGUAGE, ALLOWED_ORIGINAL_LANGUAGES
@@ -57,15 +61,17 @@ src/
 │   │   ├── movieFilters.schema.ts
 │   │   ├── getMovieUI.ts       # isUpcoming + releaseYear helpers
 │   │   └── index.ts
-│   └── series/
-│       ├── components/         # SeriesDetailModal, SeriesDetailSkeleton, SeriesMetaGrid,
-│       │                       # SeasonsAccordion
-│       ├── hooks/              # useSeries, useSeriesDetail
-│       ├── SeriesFeature.tsx
-│       ├── series.service.ts   # fetchSeries, fetchSeriesDetail, fetchSeasonDetail
-│       ├── seriesFilters.schema.ts
-│       ├── getSeriesUI.ts      # status badge config from TMDB status string
-│       └── index.ts
+│   ├── series/
+│   │   ├── components/         # SeriesDetailModal, SeriesDetailSkeleton, SeriesMetaGrid,
+│   │   │                       # SeasonsAccordion
+│   │   ├── hooks/              # useSeries, useSeriesDetail
+│   │   ├── SeriesFeature.tsx
+│   │   ├── series.service.ts   # fetchSeries, fetchSeriesDetail, fetchSeasonDetail
+│   │   ├── seriesFilters.schema.ts
+│   │   ├── getSeriesUI.ts      # status badge config from TMDB status string
+│   │   └── index.ts
+│   └── users/                  # UsersFeature, UserFormModal, users.service.ts,
+│                               # userFilters.schema.ts, applyUserFilters.ts, index.ts
 ├── hooks/
 │   ├── useAsync.ts             # generic loading/error/data hook; null fetcher = skip
 │   └── useFilters.ts
@@ -74,6 +80,7 @@ src/
 ├── providers/                  # GlobalProvider, ThemeProvider, LanguageProvider
 ├── services/
 │   ├── auth/index.ts           # authService.login (bcrypt + sign), authService.refresh (verify + re-sign)
+│   │   └── requireAdmin.ts     # Route Handler guard — verifies JWT + asserts admin role
 │   └── tmdb/                   # tmdbFetch, movies, series, search clients
 ├── store/
 │   ├── themeStore.ts           # light / dark / auto
@@ -114,7 +121,7 @@ data/
 | Watched tracking (movies + episodes, per-user) | Done |
 | Export JSON + CSV (movies + series, admin only) | Done |
 | Unit & integration tests | Done |
-| User management UI | Not started |
+| User management UI | Done |
 | Dashboard UI | Not started |
 
 ---
@@ -197,10 +204,10 @@ npm run test:watch  # watch mode
 | Area | What's covered |
 |---|---|
 | Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate` |
-| Business logic | `applyClientFilters` (movies + series + language filter), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
+| Business logic | `applyClientFilters` (movies + series + language filter), `applyUserFilters` (username, role, date, creator), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
 | Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation |
 | Hooks | `useAsync` (state machine, cancellation), `useMovieDetail`, `useSeriesDetail` (conditional fetch) |
-| Components | `Button`, `Modal`, `FiltersPanel`, `SeriesMetaGrid`, `ExportButton` |
+| Components | `Button`, `Modal`, `FiltersPanel`, `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal` |
 
 ---
 

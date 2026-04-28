@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
-import { FilmIcon, TvIcon, GearIcon, MenuIcon } from '@/components/icons'
+import { FilmIcon, TvIcon, GearIcon, MenuIcon, UsersIcon } from '@/components/icons'
 import SettingsModal from './SettingsModal'
 import Image from 'next/image'
+import { useUserStore } from '@/store/userStore'
 
 type NavItem = {
   key: string
@@ -21,6 +22,7 @@ type SidebarProps = {
 
 export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
   const { t } = useTranslation()
+  const { role } = useUserStore()
 
   const [collapsed, setCollapsed] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -42,9 +44,10 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
   }, [])
 
   const navItems: NavItem[] = [
-    { key: 'movies',   labelKey: 'nav.movies',   icon: <FilmIcon size={16} />, href: '/movies' },
-    { key: 'series',   labelKey: 'nav.series',   icon: <TvIcon size={16} />,   href: '/series' },
-    { key: 'settings', labelKey: 'nav.settings', icon: <GearIcon size={16} />, onClick: () => setSettingsOpen(true) },
+    { key: 'movies',   labelKey: 'nav.movies',   icon: <FilmIcon size={16} />,   href: '/movies' },
+    { key: 'series',   labelKey: 'nav.series',   icon: <TvIcon size={16} />,     href: '/series' },
+    ...(role === 'admin' ? [{ key: 'users', labelKey: 'nav.users', icon: <UsersIcon size={16} />, href: '/users' }] : []),
+    { key: 'settings', labelKey: 'nav.settings', icon: <GearIcon size={16} />,   onClick: () => setSettingsOpen(true) },
   ]
 
   const handleMouseEnter = (key: string, e: React.MouseEvent) => {

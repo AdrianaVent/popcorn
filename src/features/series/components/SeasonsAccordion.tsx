@@ -65,7 +65,7 @@ function EpisodeRow({
   return (
     <div className={clsx(
       'flex items-center gap-2 px-4 py-1.5 transition-colors',
-      watched ? 'bg-green-500/5' : 'hover:bg-muted/30'
+      watched ? 'bg-green-500/5' : 'hover:bg-cream-300 dark:hover:bg-gray-700/60'
     )}>
       <span className="text-[11px] font-mono text-muted-foreground shrink-0 w-7">E{num}</span>
       <span className={clsx(
@@ -136,7 +136,7 @@ function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot
     )}>
       <button
         onClick={handleToggle}
-        className="w-full flex items-center gap-3 px-4 py-3 transition-colors text-left hover:bg-muted/20"
+        className="w-full flex items-center gap-3 px-4 py-3 transition-colors text-left hover:bg-cream-400 dark:hover:bg-gray-700"
       >
         <MediaPoster posterPath={season.poster_path} title={season.name} variant="sm" />
 

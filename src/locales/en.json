@@ -12,7 +12,8 @@
     "next": "Next",
     "all": "All",
     "watchedOnly": "Watched",
-    "unwatchedOnly": "Unwatched"
+    "unwatchedOnly": "Unwatched",
+    "confirm": "Confirm"
   },
   "languageSwitcher": {
     "label": "Current language: {{language}}"
@@ -48,6 +49,7 @@
     "dashboard": "Dashboard",
     "movies": "Movies",
     "series": "Series",
+    "users": "Users",
     "settings": "Settings"
   },
   "movies": {
@@ -136,6 +138,62 @@
       "ended": "Ended",
       "canceled": "Canceled",
       "pilot": "Pilot"
+    }
+  },
+  "users": {
+    "title": "Users",
+    "loading": "Loading users...",
+    "empty": "No users found",
+    "error": "Failed to load users",
+    "retry": "Retry",
+    "addUser": "Add user",
+    "noResults": "No users match the current filters",
+    "filters": {
+      "panel": "Filters",
+      "username": "Username",
+      "role": "Role",
+      "createdAfter": "Created from",
+      "createdBy": "Created by"
+    },
+    "self": "you",
+    "deleteSelected": "Delete selected",
+    "selectedCount": "{{count}} selected",
+    "confirm": {
+      "titleOne": "Delete user",
+      "titleMany": "Delete users",
+      "bodyOne": "Are you sure you want to delete {{username}}? This action cannot be undone.",
+      "bodyMany": "Are you sure you want to delete {{count}} users? This action cannot be undone."
+    },
+    "columns": {
+      "username": "Username",
+      "role": "Role",
+      "createdAt": "Created",
+      "createdBy": "Created by",
+      "actions": "Actions"
+    },
+    "roles": {
+      "admin": "Admin",
+      "guest": "Guest"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "form": {
+      "add": "Add user",
+      "edit": "Edit user",
+      "username": "Username",
+      "password": "Password",
+      "passwordHint": "Leave blank to keep current password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "role": "Role"
+    },
+    "errors": {
+      "USERNAME_TAKEN": "Username already taken",
+      "NOT_FOUND": "User not found",
+      "FORBIDDEN": "Action not permitted",
+      "UNKNOWN_ERROR": "Unexpected error, please try again"
     }
   },
   "dashboard": {
