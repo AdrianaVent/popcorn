@@ -2,7 +2,7 @@
 
 /* ─── Palette ─────────────────────────────────────── */
 @theme {
-  /* ─── GRAYS (base system) ─────────────────────── */
+  /* ─── GRAYS ───────────────────────────────────── */
   --color-gray-100: #F3F4F6;
   --color-gray-200: #E5E7EB;
   --color-gray-300: #D1D5DB;
@@ -13,7 +13,7 @@
   --color-gray-800: #1F2937;
   --color-gray-900: #111827;
 
-  /* ─── RED ───────────────────────── */
+  /* ─── RED — destructive + login card accent ─── */
   --color-red-100: #FDE2E1;
   --color-red-200: #FAC4C2;
   --color-red-300: #F7A5A3;
@@ -24,7 +24,7 @@
   --color-red-800: #4C1412;
   --color-red-900: #260A09;
 
-  /* ─── YELLOW ───────────────────────── */
+  /* ─── YELLOW — login divider accent ──────────── */
   --color-yellow-100: #FEF6E0;
   --color-yellow-200: #FDF0B3;
   --color-yellow-300: #FCE883;
@@ -35,7 +35,7 @@
   --color-yellow-800: #4C3304;
   --color-yellow-900: #1F0E00;
 
-  /* ─── GREEN ───────────────────────── */
+  /* ─── GREEN — watched state + series status ─── */
   --color-green-100: #E3F6F2;
   --color-green-200: #C0E8DE;
   --color-green-300: #96D9C7;
@@ -46,7 +46,19 @@
   --color-green-800: #062D1E;
   --color-green-900: #03150F;
 
-  /* ─── CREAM ───────────────────────── */
+  /* ─── BURGUNDY — primary (light mode) ────────── */
+  --color-burgundy-50:  #FDF2F0;
+  --color-burgundy-100: #F9D9D5;
+  --color-burgundy-200: #F0B0A9;
+  --color-burgundy-300: #D4827A;
+  --color-burgundy-400: #BB5A51;
+  --color-burgundy-500: #8E3B2E;
+  --color-burgundy-600: #712F24;
+  --color-burgundy-700: #54231A;
+  --color-burgundy-800: #371711;
+  --color-burgundy-900: #1A0B08;
+
+  /* ─── CREAM — backgrounds + light UI surfaces ─ */
   --color-cream-100: #FEF9F4;
   --color-cream-200: #FAF8F5;
   --color-cream-300: #F6F3EF;
@@ -57,21 +69,12 @@
   --color-cream-800: #A19183;
   --color-cream-900: #8A7A6A;
 
-  /* ─── TYPOGRAPHY ─────────────────────────────── */
-  --text-title: 2rem;
-  --text-title--line-height: 2.5rem;
-
-  --text-subtitle: 1.5rem;
-  --text-subtitle--line-height: 2rem;
-
-  --text-body: 1rem;
-  --text-body--line-height: 1.5rem;
-
-  --text-small: 0.875rem;
-  --text-small--line-height: 1.25rem;
-
-  --text-caption: 0.75rem;
-  --text-caption--line-height: 1rem;
+  /* ─── TYPOGRAPHY ──────────────────────────────── */
+  --text-title:    2rem;    --text-title--line-height:    2.5rem;
+  --text-subtitle: 1.5rem;  --text-subtitle--line-height: 2rem;
+  --text-body:     1rem;    --text-body--line-height:     1.5rem;
+  --text-small:    0.875rem; --text-small--line-height:   1.25rem;
+  --text-caption:  0.75rem;  --text-caption--line-height: 1rem;
 }
 
 /* ─── Dark variant → data-theme attribute ────── */
@@ -79,69 +82,173 @@
 
 /* ─── Semantic tokens ─────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-card: var(--card);
-  --color-border: var(--border);
-  --color-primary: var(--primary);
+  --color-background:        var(--background);
+  --color-foreground:        var(--foreground);
+  --color-muted:             var(--muted);
+  --color-muted-foreground:  var(--muted-foreground);
+  --color-card:              var(--card);
+  --color-border:            var(--border);
+  --color-primary:           var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-destructive: var(--destructive);
+  --color-destructive:       var(--destructive);
 }
 
-/* ─── LIGHT (cream cinema system) ─────────── */
+/* ─── LIGHT ───────────────────────────────────── */
 :root {
   --background:         #F6F3EF;
   --foreground:         #111827;
 
-  --muted-50:          #FAF8F5;
-  --muted-100:         #F6F3EF;
-  --muted-200:         #EDE7E0;
-
-  --muted:              var(--muted-100);
+  --muted:              #F6F3EF;
   --muted-foreground:   #4B5563;
 
   --card:               #FAF8F5;
-  --surface:            #F6F3EF;
 
   --border:             #E6E1DA;
 
-  --primary:            #111827;
+  --primary:            var(--color-burgundy-500);
   --primary-foreground: #FFFFFF;
 
-  --destructive:        #C0392B;
+  --destructive:        var(--color-red-500);
 
   --pattern-opacity: 0.04;
 }
 
-/* ─── DARK (cinema slate system coherente) ─────────── */
+/* ─── DARK ────────────────────────────────────── */
 [data-theme="dark"] {
   --background:         #111827;
   --foreground:         #F3F4F6;
 
-  --muted-50:          #1A2333;
-  --muted-100:         #1F2937;
-  --muted-200:         #374151;
-
-  --muted:              var(--muted-100);
+  --muted:              #1F2937;
   --muted-foreground:   #D1D5DB;
 
   --card:               #1F2937;
-  --surface:            #374151;
 
   --border:             #374151;
 
-  --primary:            #FEF9F4;
+  /* Vintage paper cream — warm counterpart to the burgundy light primary */
+  --primary:            #F5E6C8;
   --primary-foreground: #111827;
 
-  --destructive:        #C0392B;
+  --destructive:        var(--color-red-500);
 
   --pattern-opacity: 0.15;
 }
 
-/* ─── BASE ────────────────────────────────────────── */
+/* ─── BASE ────────────────────────────────────── */
 html {
   font-family: var(--font-open-sans), system-ui, -apple-system,
     BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ─── REACT-DAY-PICKER ───────────────────────── */
+.rdp-theme .rdp-root {
+  --rdp-accent-color: var(--primary);
+  --rdp-accent-background-color: color-mix(in srgb, var(--primary) 14%, transparent);
+  --rdp-today-color: var(--primary);
+  --rdp-day-height: 34px;
+  --rdp-day-width: 34px;
+  --rdp-day_button-height: 32px;
+  --rdp-day_button-width: 32px;
+  --rdp-nav_button-height: 26px;
+  --rdp-nav_button-width: 26px;
+  --rdp-outside-opacity: 0.35;
+  font-family: var(--font-open-sans), system-ui, sans-serif;
+  font-size: 0.8125rem;
+  color: var(--foreground);
+}
+
+.rdp-theme .rdp-month_caption {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--foreground);
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.rdp-theme .rdp-root[data-nav-layout="around"] .rdp-month_caption {
+  margin-inline-start: calc(var(--rdp-nav_button-width) * 2 + 6px);
+  margin-inline-end: calc(var(--rdp-nav_button-width) * 2 + 6px);
+}
+
+.rdp-theme .rdp-weekday {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+  opacity: 1;
+}
+
+.rdp-theme .rdp-day_button {
+  border-radius: 50%;
+  font-size: 0.8125rem;
+  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+  color: var(--foreground);
+}
+
+.rdp-theme .rdp-day_button:hover:not(.rdp-selected .rdp-day_button) {
+  background-color: var(--muted);
+}
+
+.rdp-theme .rdp-selected .rdp-day_button {
+  border: none;
+  background-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  color: var(--primary-foreground);
+  font-weight: 600;
+}
+
+.rdp-theme .rdp-today:not(.rdp-selected) .rdp-day_button {
+  box-shadow: 0 0 0 1.5px var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.rdp-theme .rdp-today.rdp-selected .rdp-day_button {
+  background-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  color: var(--primary-foreground);
+  box-shadow: 0 0 0 1.5px var(--primary);
+  font-weight: 600;
+}
+
+/* ─── Year navigation (custom Nav component) ─── */
+.rdp-theme .rdp-nav-year {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--rdp-nav-height, 2.75rem);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rdp-theme .rdp-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.rdp-theme .rdp-year-btn {
+  width: var(--rdp-nav_button-width);
+  height: var(--rdp-nav_button-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  border-radius: 0.375rem;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.rdp-theme .rdp-year-btn:hover:not(:disabled) {
+  background-color: var(--muted);
+  color: var(--foreground);
+}
+
+.rdp-theme .rdp-year-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
 }

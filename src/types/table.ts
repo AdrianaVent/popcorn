@@ -7,7 +7,7 @@ export type Column<T extends Record<string, unknown>> = {
   width?: 'xs' | 'sm' | 'md' | 'lg' | 'flex'
 }
 
-export type FilterFieldType = 'text' | 'number' | 'boolean' | 'select'
+export type FilterFieldType = 'text' | 'number' | 'boolean' | 'select' | 'date'
 
 export type FilterOption = { value: string | number; label: string }
 

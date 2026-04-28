@@ -78,6 +78,15 @@ npm run seed <username> <password>
 - Watched tracking per user, persisted locally
 - Export all pages to JSON or CSV with formatted values (admin only)
 
+### User Management
+
+- Admin-only — guests cannot access this section (middleware redirect)
+- Create, edit and delete users with role assignment (admin / guest)
+- Password validation on submit (min 8 chars, uppercase, number, special character)
+- Filters: username, role, creation date, created by
+- Bulk selection and bulk delete with confirmation modal
+- Self-edit protection — admins cannot delete or demote their own account
+
 ### Theme & Language
 
 - Light / dark / auto modes — auto resolves by time of day (7am–7pm)
@@ -94,13 +103,15 @@ src/
 ├── components/
 │   ├── common/         # FiltersPanel, ExportButton, Sidebar, SettingsModal, ...
 │   ├── layouts/        # AuthLayout, DashboardLayout
-│   └── ui/             # Button, Input, Text, Modal, Header, Table/, LoadingOverlay, ...
+│   └── ui/             # Button, Input, Text, Modal, ModalFooter, Header,
+│                       # DatePicker, ConfirmModal, IconButton, Table/, LoadingOverlay, ...
 ├── config/             # auth.ts · tmdb.ts · i18n.ts · constants.ts
 ├── db/                 # client.ts (SQLite singleton) · users.ts (typed queries)
 ├── features/
 │   ├── auth/login/     # LoginFeature · useLogin · login.service.ts
 │   ├── movies/         # MoviesFeature · hooks · components · service
-│   └── series/         # SeriesFeature · hooks · components · service
+│   ├── series/         # SeriesFeature · hooks · components · service
+│   └── users/          # UsersFeature · UserFormModal · users.service.ts
 ├── hooks/              # useAsync · useFilters
 ├── locales/            # en.json · es.json
 ├── middleware.ts        # JWT verification + route protection
