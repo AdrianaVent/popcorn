@@ -86,6 +86,8 @@ npm run seed <username> <password>
 - Filters: username, role, creation date, created by
 - Bulk selection and bulk delete with confirmation modal
 - Self-edit protection — admins cannot delete or demote their own account
+- Paginated list (10 per page) — resets on filter change
+- Toast notifications (success / error) on every action
 
 ### Theme & Language
 
@@ -104,7 +106,8 @@ src/
 │   ├── common/         # FiltersPanel, ExportButton, Sidebar, SettingsModal, ...
 │   ├── layouts/        # AuthLayout, DashboardLayout
 │   └── ui/             # Button, Input, Text, Modal, ModalFooter, Header,
-│                       # DatePicker, ConfirmModal, IconButton, Table/, LoadingOverlay, ...
+│                       # DatePicker, ConfirmModal, IconButton, Table/, LoadingOverlay,
+│                       # Toast/ToastItem, Toast/ToastContainer, ...
 ├── config/             # auth.ts · tmdb.ts · i18n.ts · constants.ts
 ├── db/                 # client.ts (SQLite singleton) · users.ts (typed queries)
 ├── features/
@@ -119,7 +122,7 @@ src/
 ├── services/
 │   ├── auth/           # authService — bcrypt verify, JWT sign/refresh
 │   └── tmdb/           # TMDB client — movies, series, search
-├── store/              # themeStore · languageStore · userStore · watchedStore
+├── store/              # themeStore · languageStore · userStore · watchedStore · toastStore
 └── utils/              # formatDate · formatNumber · exportData · getTMDBImageUrl · ...
 scripts/
 └── seed.ts             # Creates an admin user

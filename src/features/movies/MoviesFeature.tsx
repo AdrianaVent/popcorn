@@ -215,11 +215,11 @@ export default function MoviesFeature() {
 
         <div className="flex-1 min-h-0 overflow-hidden">
 
-          {loading && <Text>Loading...</Text>}
+          {loading && <Text>{t('movies.loading')}</Text>}
 
           {!loading && error && (
             <Button variant="secondary" onClick={retry}>
-              {t('movies.retry')}
+              {t('common.retry')}
             </Button>
           )}
 

@@ -40,7 +40,8 @@ src/
 │   ├── layouts/                # AuthLayout, DashboardLayout
 │   └── ui/                     # Button, Input, Text (polymorphic), Modal, ModalFooter,
 │                               # Header, AccordionList, Table/, LoadingOverlay,
-│                               # DatePicker, ConfirmModal, IconButton
+│                               # DatePicker, ConfirmModal, IconButton,
+│                               # Toast/ToastItem, Toast/ToastContainer
 ├── config/
 │   ├── auth.ts                 # TOKEN_MAX_TIME, REFRESH_TOKEN_MAX_TIME, JWT_SECRET
 │   ├── constants.ts            # DEFAULT_LANGUAGE, ALLOWED_ORIGINAL_LANGUAGES
@@ -86,10 +87,12 @@ src/
 │   ├── themeStore.ts           # light / dark / auto
 │   ├── languageStore.ts        # en / es
 │   ├── userStore.ts            # userId (string) + role ('admin' | 'guest')
-│   └── watchedStore.ts         # per-user movies Map, episodes Map, seriesData Map (v3)
+│   ├── watchedStore.ts         # per-user movies Map, episodes Map, seriesData Map (v3)
+│   └── toastStore.ts           # transient toast queue — addToast(type, message) / removeToast(id)
 ├── styles/
 │   ├── theme/                  # resolveTheme.ts (auto = time-of-day), types.ts
 │   └── globals.css             # Tailwind @theme tokens + semantic light/dark CSS vars
+│                               # palette: gray, red, yellow, green, burgundy, cream, blue
 ├── types/                      # tmdb.ts, movie.ts, series.ts, table.ts, languageTypes.ts
 └── utils/
     ├── exportData.ts           # toCSV, exportAsJSON, exportAsCSV
@@ -122,6 +125,7 @@ data/
 | Export JSON + CSV (movies + series, admin only) | Done |
 | Unit & integration tests | Done |
 | User management UI | Done |
+| User management — pagination + toasts | Done |
 | Dashboard UI | Not started |
 
 ---
