@@ -13,7 +13,8 @@
     "all": "Todas",
     "watchedOnly": "Vistos",
     "unwatchedOnly": "No vistos",
-    "confirm": "Confirmar"
+    "confirm": "Confirmar",
+    "retry": "Reintentar"
   },
   "languageSwitcher": {
     "label": "Idioma actual: {{language}}"
@@ -56,11 +57,9 @@
     "title": "Películas",
     "addMovie": "+ Añadir película",
     "comingSoon": "Próximamente",
+    "loading": "Cargando películas...",
     "empty": "No hay películas disponibles",
     "error": "No se han podido cargar las películas",
-    "retry": "Reintentar",
-    "prev": "Anterior",
-    "next": "Siguiente",
     "filters": {
       "panel": "Filtros",
       "title": "Título",
@@ -93,9 +92,9 @@
   },
   "series": {
     "title": "Series",
+    "loading": "Cargando series...",
     "empty": "No hay series disponibles",
     "error": "No se han podido cargar las series",
-    "retry": "Reintentar",
     "filters": {
       "panel": "Filtros",
       "title": "Título",
@@ -111,7 +110,8 @@
       "rating": "Valoración",
       "votes": "Votos",
       "language": "Idioma",
-      "status": "Estado"
+      "status": "Estado",
+      "watched": "Visto"
     },
     "detail": {
       "overview": "Sinopsis",
@@ -127,7 +127,6 @@
       "statusBadge": "Estado",
       "noEpisodes": "No hay episodios disponibles",
       "watched": "Visto",
-      "seriesWatched": "Visto",
       "markSeriesWatched": "Marcar como visto"
     },
     "status": {
@@ -144,7 +143,6 @@
     "loading": "Cargando usuarios...",
     "empty": "No hay usuarios",
     "error": "No se han podido cargar los usuarios",
-    "retry": "Reintentar",
     "addUser": "Añadir usuario",
     "noResults": "Ningún usuario coincide con los filtros actuales",
     "filters": {
@@ -193,13 +191,16 @@
       "NOT_FOUND": "Usuario no encontrado",
       "FORBIDDEN": "Acción no permitida",
       "UNKNOWN_ERROR": "Error inesperado, inténtalo de nuevo"
+    },
+    "success": {
+      "created": "Usuario creado",
+      "updated": "Usuario actualizado",
+      "deleted": "Usuario eliminado",
+      "deletedMany": "{{count}} usuarios eliminados"
     }
   },
   "dashboard": {
-    "recentlyAdded": "Añadido recientemente",
-    "all": "Todo",
-    "movies": "Películas",
-    "series": "Series"
+    "recentlyAdded": "Añadido recientemente"
   },
   "topbar": {
     "search": "Buscar...",

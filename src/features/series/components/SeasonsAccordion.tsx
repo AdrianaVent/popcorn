@@ -255,7 +255,7 @@ export default function SeasonsAccordion({ seasons, seriesName, seriesId, series
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
             <path d="M2 5L4.2 7.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          {t('series.detail.seriesWatched')}
+          {t('series.detail.watched')}
         </span>
       ) : undefined}
       items={allItems}
