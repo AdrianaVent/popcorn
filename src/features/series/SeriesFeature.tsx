@@ -304,11 +304,11 @@ export default function SeriesFeature() {
 
         <div className="flex-1 min-h-0 overflow-hidden">
 
-          {loading && <Text>Loading...</Text>}
+          {loading && <Text>{t('series.loading')}</Text>}
 
           {!loading && error && (
             <Button variant="secondary" onClick={retry}>
-              {t('series.retry')}
+              {t('common.retry')}
             </Button>
           )}
 
