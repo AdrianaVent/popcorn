@@ -77,6 +77,7 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
 
                 {field.type === 'text' && (
                   <input
+                    data-cy={`filter-${String(field.key)}`}
                     value={typeof value === 'string' ? value : ''}
                     onChange={(e) =>
                       onChange(
@@ -125,6 +126,7 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
 
                 {field.type === 'select' && field.options && (
                   <select
+                    data-cy={`filter-${String(field.key)}`}
                     value={typeof value === 'string' ? value : ''}
                     onChange={(e) =>
                       onChange(
