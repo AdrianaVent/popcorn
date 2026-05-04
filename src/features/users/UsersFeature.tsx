@@ -321,6 +321,7 @@ export default function UsersFeature() {
                       <td className="px-2 py-2">
                         <div className="flex items-center justify-end gap-1">
                           <IconButton
+                            data-cy="edit-user-btn"
                             icon={<PencilIcon size={14} />}
                             label={t('users.actions.edit')}
                             variant="ghost"
@@ -330,6 +331,7 @@ export default function UsersFeature() {
                           />
                           {!isSelf && (
                             <IconButton
+                              data-cy="delete-user-btn"
                               icon={<TrashIcon size={14} />}
                               label={t('users.actions.delete')}
                               variant="ghost"
