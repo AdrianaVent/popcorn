@@ -13,7 +13,8 @@
     "all": "All",
     "watchedOnly": "Watched",
     "unwatchedOnly": "Unwatched",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "retry": "Retry"
   },
   "languageSwitcher": {
     "label": "Current language: {{language}}"
@@ -56,11 +57,9 @@
     "title": "Movies",
     "addMovie": "+ Add Movie",
     "comingSoon": "Coming soon",
+    "loading": "Loading movies...",
     "empty": "No movies found",
     "error": "Failed to load movies",
-    "retry": "Retry",
-    "prev": "Previous",
-    "next": "Next",
     "filters": {
       "panel": "Filters",
       "title": "Title",
@@ -93,9 +92,9 @@
   },
   "series": {
     "title": "Series",
+    "loading": "Loading series...",
     "empty": "No series found",
     "error": "Failed to load series",
-    "retry": "Retry",
     "filters": {
       "panel": "Filters",
       "title": "Title",
@@ -128,7 +127,6 @@
       "statusBadge": "Status",
       "noEpisodes": "No episodes available",
       "watched": "Watched",
-      "seriesWatched": "Watched",
       "markSeriesWatched": "Mark as watched"
     },
     "status": {
@@ -145,7 +143,6 @@
     "loading": "Loading users...",
     "empty": "No users found",
     "error": "Failed to load users",
-    "retry": "Retry",
     "addUser": "Add user",
     "noResults": "No users match the current filters",
     "filters": {
@@ -194,13 +191,16 @@
       "NOT_FOUND": "User not found",
       "FORBIDDEN": "Action not permitted",
       "UNKNOWN_ERROR": "Unexpected error, please try again"
+    },
+    "success": {
+      "created": "User created",
+      "updated": "User updated",
+      "deleted": "User deleted",
+      "deletedMany": "{{count}} users deleted"
     }
   },
   "dashboard": {
-    "recentlyAdded": "Recently added",
-    "all": "All",
-    "movies": "Movies",
-    "series": "Series"
+    "recentlyAdded": "Recently added"
   },
   "topbar": {
     "search": "Search...",

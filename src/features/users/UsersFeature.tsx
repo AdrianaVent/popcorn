@@ -11,12 +11,14 @@ import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/Text'
 import FiltersPanel from '@/components/common/FiltersPanel'
+import TableFooter from '@/components/ui/Table/TableFooter'
 import UserFormModal from './UserFormModal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import { PlusCircleIcon, TrashIcon, PencilIcon } from '@/components/icons'
 
 import { useUserStore } from '@/store/userStore'
 import { useLanguageStore } from '@/store/languageStore'
+import { useToastStore } from '@/store/toastStore'
 import { fetchUsers, createUser, updateUser, deleteUser, deleteUsers } from './users.service'
 import { formatShortDate } from '@/utils/formatDate'
 import { useFilters } from '@/hooks/useFilters'
@@ -40,6 +42,12 @@ export default function UsersFeature() {
   const router = useRouter()
   const { userId: currentUserId, clearUser } = useUserStore()
   const { language } = useLanguageStore()
+  const addToast = useToastStore((s) => s.addToast)
+
+  const toastError = (e: unknown) => {
+    const code = e instanceof Error ? e.message : 'UNKNOWN_ERROR'
+    addToast('error', t(`users.errors.${code}`, { defaultValue: t('users.errors.UNKNOWN_ERROR') }))
+  }
 
   const [users, setUsers] = useState<PublicUser[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,7 +56,10 @@ export default function UsersFeature() {
   const [modal, setModal] = useState<ModalState>(null)
   const [confirmDelete, setConfirmDelete] = useState<ConfirmDeleteState>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [page, setPage] = useState(1)
   const { filters, setFilters } = useFilters(INITIAL_USER_FILTERS)
+
+  const PAGE_SIZE = 10
 
   const usersById = useMemo(
     () => new Map(users.map((u) => [u.id, u])),
@@ -67,6 +78,18 @@ export default function UsersFeature() {
   }, [users])
 
   const filteredUsers = useMemo(() => applyUserFilters(users, filters), [users, filters])
+
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE)),
+    [filteredUsers.length, PAGE_SIZE]
+  )
+
+  const paginatedUsers = useMemo(
+    () => filteredUsers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredUsers, page, PAGE_SIZE]
+  )
+
+  useEffect(() => { setPage(1) }, [filters])
 
   // Selectable = visible filtered users excluding self
   const selectableUsers = useMemo(
@@ -104,17 +127,29 @@ export default function UsersFeature() {
   }
 
   const handleCreate = async (data: { username: string; password: string; role: UserRole }) => {
-    await createUser(data)
-    await loadUsers()
+    try {
+      await createUser(data)
+      await loadUsers()
+      addToast('success', t('users.success.created'))
+    } catch (e) {
+      toastError(e)
+      throw e
+    }
   }
 
   const handleUpdate = (user: PublicUser) => async (data: { username: string; password: string; role: UserRole }) => {
-    await updateUser(user.id, {
-      username: data.username !== user.username ? data.username : undefined,
-      password: data.password || undefined,
-      role: data.role !== user.role ? data.role : undefined,
-    })
-    await loadUsers()
+    try {
+      await updateUser(user.id, {
+        username: data.username !== user.username ? data.username : undefined,
+        password: data.password || undefined,
+        role: data.role !== user.role ? data.role : undefined,
+      })
+      await loadUsers()
+      addToast('success', t('users.success.updated'))
+    } catch (e) {
+      toastError(e)
+      throw e
+    }
   }
 
   const handleDeleteOne = (id: string) => {
@@ -133,12 +168,17 @@ export default function UsersFeature() {
       if (confirmDelete.type === 'one') {
         await deleteUser(confirmDelete.userId)
         setSelected((prev) => { const next = new Set(prev); next.delete(confirmDelete.userId); return next })
+        addToast('success', t('users.success.deleted'))
       } else {
+        const count = selected.size
         await deleteUsers(Array.from(selected))
         setSelected(new Set())
+        addToast('success', t('users.success.deletedMany', { count }))
       }
       await loadUsers()
       setConfirmDelete(null)
+    } catch (e) {
+      toastError(e)
     } finally {
       setDeleteLoading(false)
     }
@@ -231,7 +271,7 @@ export default function UsersFeature() {
                     <td colSpan={6} className="py-16 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <Text variant="body" className="text-muted-foreground">{error}</Text>
-                        <Button onClick={loadUsers} variant="secondary" className="w-auto px-4">{t('users.retry')}</Button>
+                        <Button onClick={loadUsers} variant="secondary" className="w-auto px-4">{t('common.retry')}</Button>
                       </div>
                     </td>
                   </tr>
@@ -242,7 +282,7 @@ export default function UsersFeature() {
                 {!loading && !error && users.length > 0 && filteredUsers.length === 0 && (
                   <tr><td colSpan={6} className="py-16 text-center text-muted-foreground text-sm">{t('users.noResults')}</td></tr>
                 )}
-                {!loading && !error && filteredUsers.map((user, i) => {
+                {!loading && !error && paginatedUsers.map((user, i) => {
                   const isSelf = user.id === currentUserId
                   const isSelected = selected.has(user.id)
 
@@ -307,6 +347,15 @@ export default function UsersFeature() {
             </table>
           </div>
         </div>
+        {totalPages > 1 && (
+          <TableFooter
+            page={page}
+            totalPages={totalPages}
+            onPrev={() => setPage((p) => p - 1)}
+            onNext={() => setPage((p) => p + 1)}
+            onPageChange={setPage}
+          />
+        )}
 
       </div>
 
