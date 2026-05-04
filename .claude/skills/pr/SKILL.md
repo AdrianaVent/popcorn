@@ -51,3 +51,31 @@ gh pr create --base dev --title "<title>" --body "..."
 
 Infer the summary and test plan from the commits and the conversation context.
 After creating the PR, return the URL.
+
+---
+
+## Before committing (MANDATORY)
+
+After finishing any task and before moving to the commit step, always update:
+
+1. **`CLAUDE.md`** — update the Project Structure section (new files/components/stores) and the Current State table if applicable
+2. **`README.md`** — update Features and Project Structure to reflect user-visible changes
+
+Do this without being asked. If either file is out of date, update it as part of the task completion — not as a separate step.
+
+---
+
+## Full workflow — step-by-step authorization (MANDATORY)
+
+Every step requires explicit user approval before moving to the next. Never chain steps automatically.
+
+1. **Commit** — stage and commit → wait for user approval
+2. **PR** — create PR → wait for user approval
+3. **Merge PR to dev** → wait for user approval
+4. **Delete branch** — both local (`git branch -d`) and remote (`git push origin --delete`) → wait for user approval
+5. **Merge dev → main** → wait for user approval
+6. **Switch back to `dev`** — always the final state
+
+After step 5, always verify main is in sync: `git log --oneline origin/main -3` vs `origin/dev`. If behind, flag it proactively.
+
+**"Continua"** at the end of a session means "proceed with the next pending step in the current flow" — never "start a new feature." Never begin a new feature without the user explicitly naming it.
