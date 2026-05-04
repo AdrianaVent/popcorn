@@ -75,7 +75,7 @@ export default function LoginForm({
       )}
 
       {errorMessage && (
-        <div className="rounded-md bg-destructive/10 px-3 py-1.5">
+        <div data-cy="login-error" className="rounded-md bg-destructive/10 px-3 py-1.5">
           <Text variant="caption" className="text-destructive font-medium leading-tight">
             {errorMessage}
           </Text>
