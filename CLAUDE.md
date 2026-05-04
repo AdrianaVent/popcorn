@@ -15,6 +15,7 @@ Personal movie & series dashboard built with Next.js.
 - **clsx** — conditional class merging
 - **ESLint 9** + Prettier — no semicolons, single quotes
 - **Jest 30** + Testing Library — unit & integration tests
+- **Cypress 15** — end-to-end tests (auth, movies, user management)
 
 ---
 
@@ -126,6 +127,7 @@ data/
 | Unit & integration tests | Done |
 | User management UI | Done |
 | User management — pagination + toasts | Done |
+| E2E tests (Cypress) | Done |
 | Dashboard UI | Not started |
 
 ---
@@ -198,6 +200,8 @@ Tokens in `src/styles/globals.css` and `src/styles/theme/`. CSS custom propertie
 
 ## Testing
 
+### Unit & integration (Jest)
+
 Co-located with source files (`*.test.ts` / `*.test.tsx`).
 
 ```bash
@@ -209,9 +213,27 @@ npm run test:watch  # watch mode
 |---|---|
 | Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate` |
 | Business logic | `applyClientFilters` (movies + series + language filter), `applyUserFilters` (username, role, date, creator), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
-| Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation |
+| Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation; `toastStore` — addToast, timers, removeToast |
 | Hooks | `useAsync` (state machine, cancellation), `useMovieDetail`, `useSeriesDetail` (conditional fetch) |
-| Components | `Button`, `Modal`, `FiltersPanel`, `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal` |
+| Components | `Button`, `Modal`, `FiltersPanel`, `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem` |
+
+### E2E (Cypress)
+
+Tests live in `cypress/e2e/`. Requires the dev server running on port 3000.
+
+```bash
+npm run dev          # terminal 1
+npm run cypress      # terminal 2 — opens Cypress UI
+npm run cypress:run  # headless run
+```
+
+Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test users directly in the SQLite DB. TMDB calls are intercepted with `cy.intercept`.
+
+| Suite | What's covered |
+|---|---|
+| `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, successful login, logout |
+| `movies.cy.ts` | Movie list renders (mocked TMDB), detail modal opens on row click |
+| `users.cy.ts` | List, create + toast, edit + toast, delete + toast, bulk delete + toast |
 
 ---
 
