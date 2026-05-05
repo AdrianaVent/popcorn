@@ -11,4 +11,5 @@ export type SeriesFilters = {
   first_air_year?: number
   status?: string
   watched?: 'watched' | 'unwatched'
+  provider_id?: string
 }

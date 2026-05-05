@@ -1,7 +1,9 @@
 import { seriesService } from '@/services/tmdb'
 import { TMDB_LANGUAGE } from '@/config/tmdb'
+import { WATCH_PROVIDERS_REGION } from '@/config/constants'
+import { deduplicateProviders } from '@/utils/watchProviders'
 import type { SeriesFilters } from '@/types/series'
-import type { TMDBPagedResponse, TMDBSeries, TMDBSeriesDetail, TMDBSeasonDetail } from '@/types/tmdb'
+import type { TMDBPagedResponse, TMDBSeries, TMDBSeriesDetail, TMDBSeasonDetail, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
 export function fetchSeries(
   page = 1,
@@ -20,6 +22,10 @@ export function fetchSeries(
   if (filters?.vote_average_gte) params['vote_average.gte'] = filters.vote_average_gte
   if (filters?.first_air_year)   params['first_air_date_year'] = filters.first_air_year
   if (filters?.status)           params['with_status'] = Number(filters.status)
+  if (filters?.provider_id) {
+    params['with_watch_providers'] = filters.provider_id
+    params['watch_region'] = WATCH_PROVIDERS_REGION
+  }
 
   return seriesService.discover(page, tmdbLang, params)
 }
@@ -30,4 +36,13 @@ export function fetchSeriesDetail(id: number, language = 'es'): Promise<TMDBSeri
 
 export function fetchSeasonDetail(seriesId: number, seasonNumber: number, language = 'es'): Promise<TMDBSeasonDetail> {
   return seriesService.seasonDetail(seriesId, seasonNumber, TMDB_LANGUAGE[language] ?? 'es-ES')
+}
+
+export function fetchSeriesWatchProviders(id: number): Promise<WatchProvidersResult> {
+  return seriesService.watchProviders(id)
+}
+
+export async function fetchSeriesWatchProviderOptions(): Promise<WatchProvider[]> {
+  const r = await seriesService.watchProviderOptions(WATCH_PROVIDERS_REGION)
+  return deduplicateProviders(r.results.sort((a, b) => a.display_priority - b.display_priority)).slice(0, 10)
 }
