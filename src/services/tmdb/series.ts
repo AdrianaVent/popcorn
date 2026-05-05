@@ -1,6 +1,6 @@
 import { tmdbFetch } from './client'
 import { DEFAULT_LANGUAGE } from '@/config/constants'
-import type { TMDBSeries, TMDBSeriesDetail, TMDBSeasonDetail, TMDBPagedResponse } from '@/types/tmdb'
+import type { TMDBSeries, TMDBSeriesDetail, TMDBSeasonDetail, TMDBPagedResponse, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
 export const seriesService = {
   popular: (page = 1, language = DEFAULT_LANGUAGE) =>
@@ -33,4 +33,10 @@ export const seriesService = {
 
   seasonDetail: (seriesId: number, seasonNumber: number, language = DEFAULT_LANGUAGE) =>
     tmdbFetch<TMDBSeasonDetail>(`/tv/${seriesId}/season/${seasonNumber}`, { language }),
+
+  watchProviders: (id: number) =>
+    tmdbFetch<WatchProvidersResult>(`/tv/${id}/watch/providers`),
+
+  watchProviderOptions: (region: string) =>
+    tmdbFetch<{ results: WatchProvider[] }>('/watch/providers/tv', { watch_region: region, language: 'en-US' }),
 }

@@ -16,6 +16,8 @@ export type FilterField<T> = {
   label: string
   type: FilterFieldType
   options?: FilterOption[]
+  min?: number
+  max?: number
 }
 
 export type FiltersSchema<T> = FilterField<T>[]

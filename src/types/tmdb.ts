@@ -125,3 +125,29 @@ export type TMDBSeriesDetail = TMDBSeries & {
   seasons: TMDBSeason[]
   next_episode_to_air: { air_date: string } | null
 }
+
+export type WatchProvider = {
+  provider_id: number
+  provider_name: string
+  logo_path: string
+  display_priority: number
+}
+
+export type WatchProvidersResult = {
+  results: {
+    ES?: {
+      flatrate?: WatchProvider[]
+      rent?: WatchProvider[]
+      buy?: WatchProvider[]
+    }
+  }
+}
+
+export type ReleaseDate = {
+  release_date: string
+  type: number // 1=Premiere 2=Theatrical(limited) 3=Theatrical 4=Digital 5=Physical 6=TV
+}
+
+export type ReleaseDatesResult = {
+  results: Array<{ iso_3166_1: string; release_dates: ReleaseDate[] }>
+}

@@ -16,7 +16,7 @@ import ExportButton from '@/components/common/ExportButton'
 import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 import { useMovies, applyClientFilters } from './hooks/useMovies'
-import { fetchMovies } from './movies.service'
+import { fetchMovies, fetchMovieWatchProviderOptions } from './movies.service'
 import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
 import type { Column } from '@/types/table'
 import type { MovieRow, MovieFilters } from '@/types/movie'
@@ -24,8 +24,9 @@ import { useLanguageStore } from '@/store/languageStore'
 import { useUserStore } from '@/store/userStore'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useFilters } from '@/hooks/useFilters'
+import { useAsync } from '@/hooks/useAsync'
 
-import { movieFiltersSchema } from './movieFilters.schema'
+import { staticMovieFiltersSchema } from './movieFilters.schema'
 import { formatVoteCount } from '@/utils/formatNumber'
 import { formatShortDate } from '@/utils/formatDate'
 
@@ -69,6 +70,15 @@ export default function MoviesFeature() {
   const watchedMovies = useWatchedStore((s) => s.movies[userKey])
 
   const PAGE_SIZE = 20
+
+  const { data: providerOptions } = useAsync(() => fetchMovieWatchProviderOptions(), [])
+
+  const filtersSchema = useMemo(() => staticMovieFiltersSchema.map((field) => {
+    if (field.key === 'provider_id' && providerOptions?.length) {
+      return { ...field, options: providerOptions.map((p) => ({ value: String(p.provider_id), label: p.provider_name })) }
+    }
+    return field
+  }), [providerOptions])
 
   // "watched" mode: use local store data with local pagination, skip TMDB
   const watchedModeItems = useMemo(() => {
@@ -205,7 +215,7 @@ export default function MoviesFeature() {
         <Header title={t('movies.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} /> : undefined} />
 
         <FiltersPanel
-          schema={movieFiltersSchema}
+          schema={filtersSchema}
           filters={filters}
           onChange={(next) => {
             setFilters(next)
