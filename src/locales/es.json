@@ -14,7 +14,9 @@
     "watchedOnly": "Vistos",
     "unwatchedOnly": "No vistos",
     "confirm": "Confirmar",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "availableOn": "Disponible en",
+    "inTheaters": "En cartelera"
   },
   "languageSwitcher": {
     "label": "Idioma actual: {{language}}"
@@ -65,7 +67,8 @@
       "title": "Título",
       "ratingGte": "Valoración ≥",
       "year": "Año",
-      "watched": "Visto"
+      "watched": "Visto",
+      "platform": "Plataforma"
     },
     "columns": {
       "poster": "Póster",
@@ -101,7 +104,8 @@
       "ratingGte": "Valoración ≥",
       "year": "Año",
       "status": "Estado",
-      "watched": "Visto"
+      "watched": "Visto",
+      "platform": "Plataforma"
     },
     "columns": {
       "poster": "Póster",

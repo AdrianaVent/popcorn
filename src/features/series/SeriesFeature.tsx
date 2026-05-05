@@ -16,14 +16,15 @@ import LoadingOverlay from '@/components/ui/LoadingOverlay'
 import SeriesDetailModal from './components/SeriesDetailModal'
 
 import { useSeries, applyClientFilters } from './hooks/useSeries'
-import { fetchSeries, fetchSeriesDetail } from './series.service'
+import { fetchSeries, fetchSeriesDetail, fetchSeriesWatchProviderOptions } from './series.service'
 import { getStatusConfig } from './getSeriesUI'
 import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
 import { useLanguageStore } from '@/store/languageStore'
 import { useUserStore } from '@/store/userStore'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useFilters } from '@/hooks/useFilters'
-import { seriesFiltersSchema } from './seriesFilters.schema'
+import { useAsync } from '@/hooks/useAsync'
+import { staticSeriesFiltersSchema } from './seriesFilters.schema'
 import { formatVoteCount } from '@/utils/formatNumber'
 import { formatShortDate } from '@/utils/formatDate'
 import type { Column } from '@/types/table'
@@ -96,6 +97,15 @@ export default function SeriesFeature() {
   const seriesEpisodes = useWatchedStore((s) => s.episodes[userKey])
 
   const PAGE_SIZE = 20
+
+  const { data: providerOptions } = useAsync(() => fetchSeriesWatchProviderOptions(), [])
+
+  const filtersSchema = useMemo(() => staticSeriesFiltersSchema.map((field) => {
+    if (field.key === 'provider_id' && providerOptions?.length) {
+      return { ...field, options: providerOptions.map((p) => ({ value: String(p.provider_id), label: p.provider_name })) }
+    }
+    return field
+  }), [providerOptions])
 
   const watchedSeriesData = useWatchedStore((s) => s.seriesData[userKey])
 
@@ -293,7 +303,7 @@ export default function SeriesFeature() {
         <Header title={t('series.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} /> : undefined} />
 
         <FiltersPanel
-          schema={seriesFiltersSchema}
+          schema={filtersSchema}
           filters={filters}
           onChange={(next) => {
             setFilters(next)

@@ -8,9 +8,12 @@ import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 
 import { useMovieDetail } from '@/features/movies/hooks/useMovieDetail'
+import { useMovieWatchProviders } from '@/features/movies/hooks/useMovieWatchProviders'
+import { useMovieInTheaters } from '@/features/movies/hooks/useMovieInTheaters'
 import CollectionAccordion from './CollectionAccordion'
 import MovieMetaGrid from './MovieMetaGrid'
 import MovieDetailSkeleton from './MovieDetailSkeleton'
+import WatchProviders from '@/components/common/WatchProviders'
 import { getMovieUI } from '@/features/movies/getMovieUI'
 import { useLanguageStore } from '@/store/languageStore'
 import { useWatchedStore } from '@/store/watchedStore'
@@ -27,6 +30,8 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
   const { language } = useLanguageStore()
   const [currentId, setCurrentId] = useState(movieId)
   const { detail, loading, error } = useMovieDetail(currentId)
+  const { flatrate, rent, loading: providersLoading } = useMovieWatchProviders(currentId)
+  const { inTheaters, loading: inTheatersLoading } = useMovieInTheaters(currentId)
 
   const userId = useUserStore((s) => s.userId)
   const userKey = String(userId ?? 'guest')
@@ -147,6 +152,9 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
               onMovieSelect={setCurrentId}
             />
           )}
+
+          {/* WATCH PROVIDERS */}
+          <WatchProviders flatrate={flatrate} rent={rent} inTheaters={inTheaters} loading={providersLoading || inTheatersLoading} />
 
           {/* OVERVIEW */}
           {detail.overview && (
