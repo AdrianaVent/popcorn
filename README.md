@@ -9,7 +9,7 @@ Personal movie & series dashboard. Track what you watch, explore collections, an
 | | Admin | Guest |
 |---|---|---|
 | Browse movies & series (TMDB) | ✓ | ✓ |
-| Filter by title, rating, year, language | ✓ | ✓ |
+| Filter by title, rating, year, language, platform | ✓ | ✓ |
 | Mark movies and episodes as watched | ✓ | ✓ |
 | Switch language (English / Spanish) | ✓ | ✓ |
 | Switch theme (Light / Dark / Auto) | ✓ | ✓ |
@@ -69,7 +69,11 @@ Open [http://localhost:3000](http://localhost:3000) and sign in.
 
 ### Movies & Series
 
-Browse titles powered by TMDB. Filter by title, minimum rating, release year and original language. Click any row to open a detail panel with the overview, genres, runtime, vote count and collection info.
+Browse titles powered by TMDB. Filter by title, minimum rating, release year, original language and streaming platform. Click any row to open a detail panel with the overview, genres, runtime, vote count and collection info.
+
+### Watch providers
+
+The detail panel shows where each title is available in Spain — subscription platforms (flatrate), rentals (€ badge) and purchases (cart badge). Movies released in cinemas in the last 90 days show an "In theaters" chip.
 
 ### Watched tracking
 
@@ -123,8 +127,8 @@ The test suite covers:
 | Suite | What's tested |
 |---|---|
 | `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, login, logout |
-| `movies.cy.ts` | Movie list (TMDB mocked), detail modal on row click |
-| `series.cy.ts` | Series list (TMDB mocked), detail modal on row click |
+| `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, access control |
+| `series.cy.ts` | Series list, detail modal, watch providers, platform filter |
 | `users.cy.ts` | Create, edit, delete (single + bulk), toast notifications |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
 
