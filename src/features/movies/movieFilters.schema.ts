@@ -1,7 +1,9 @@
 import type { FiltersSchema } from '@/types/table'
 import type { MovieFilters } from '@/types/movie'
 
-export const movieFiltersSchema: FiltersSchema<MovieFilters> = [
+const CURRENT_YEAR = new Date().getFullYear()
+
+export const staticMovieFiltersSchema: FiltersSchema<MovieFilters> = [
   {
     key: 'title',
     label: 'movies.filters.title',
@@ -11,11 +13,21 @@ export const movieFiltersSchema: FiltersSchema<MovieFilters> = [
     key: 'release_year',
     label: 'movies.filters.year',
     type: 'number',
+    min: 1900,
+    max: CURRENT_YEAR,
   },
   {
     key: 'vote_average_gte',
     label: 'movies.filters.ratingGte',
     type: 'number',
+    min: 0,
+    max: 10,
+  },
+  {
+    key: 'provider_id',
+    label: 'movies.filters.platform',
+    type: 'select',
+    options: [], // populated dynamically in MoviesFeature
   },
   {
     key: 'watched',

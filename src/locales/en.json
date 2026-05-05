@@ -14,7 +14,9 @@
     "watchedOnly": "Watched",
     "unwatchedOnly": "Unwatched",
     "confirm": "Confirm",
-    "retry": "Retry"
+    "retry": "Retry",
+    "availableOn": "Available on",
+    "inTheaters": "In theaters"
   },
   "languageSwitcher": {
     "label": "Current language: {{language}}"
@@ -65,7 +67,8 @@
       "title": "Title",
       "ratingGte": "Rating ≥",
       "year": "Year",
-      "watched": "Seen"
+      "watched": "Seen",
+      "platform": "Platform"
     },
     "columns": {
       "poster": "Poster",
@@ -101,7 +104,8 @@
       "ratingGte": "Rating ≥",
       "year": "Year",
       "status": "Status",
-      "watched": "Seen"
+      "watched": "Seen",
+      "platform": "Platform"
     },
     "columns": {
       "poster": "Poster",

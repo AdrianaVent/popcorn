@@ -64,7 +64,7 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
 
       {/* Body */}
       {open && (
-        <div className="flex items-center gap-4 px-4 pb-3 border-t border-border pt-3">
+        <div className="flex items-center gap-4 px-4 pb-3 border-t border-border pt-3 overflow-x-auto">
           {schema.map((field, index) => {
             const value = filters[field.key]
 
@@ -77,6 +77,7 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
 
                 {field.type === 'text' && (
                   <input
+                    data-cy={`filter-${String(field.key)}`}
                     value={typeof value === 'string' ? value : ''}
                     onChange={(e) =>
                       onChange(
@@ -91,6 +92,8 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
                   <input
                     type="number"
                     value={typeof value === 'number' ? value : ''}
+                    min={field.min}
+                    max={field.max}
                     onChange={(e) =>
                       onChange(
                         updateFilterValue(
@@ -100,7 +103,7 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
                         )
                       )
                     }
-                    className="w-24 px-2 py-1 text-sm border border-border rounded-md bg-background text-foreground outline-none focus:border-primary/50 transition-colors"
+                    className="w-16 px-2 py-1 text-sm border border-border rounded-md bg-background text-foreground outline-none focus:border-primary/50 transition-colors"
                   />
                 )}
 
@@ -125,6 +128,7 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
 
                 {field.type === 'select' && field.options && (
                   <select
+                    data-cy={`filter-${String(field.key)}`}
                     value={typeof value === 'string' ? value : ''}
                     onChange={(e) =>
                       onChange(

@@ -1,6 +1,6 @@
 import { tmdbFetch } from './client'
 import { DEFAULT_LANGUAGE } from '@/config/constants'
-import type { TMDBCollectionDetail, TMDBMovie, TMDBMovieDetail, TMDBPagedResponse } from '@/types/tmdb'
+import type { ReleaseDatesResult, TMDBCollectionDetail, TMDBMovie, TMDBMovieDetail, TMDBPagedResponse, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
 export const moviesService = {
   popular: (page = 1, language = DEFAULT_LANGUAGE) =>
@@ -33,4 +33,13 @@ export const moviesService = {
 
   collection: (id: number, language = DEFAULT_LANGUAGE) =>
     tmdbFetch<TMDBCollectionDetail>(`/collection/${id}`, { language }),
+
+  watchProviders: (id: number) =>
+    tmdbFetch<WatchProvidersResult>(`/movie/${id}/watch/providers`),
+
+  watchProviderOptions: (region: string) =>
+    tmdbFetch<{ results: WatchProvider[] }>('/watch/providers/movie', { watch_region: region, language: 'en-US' }),
+
+  releaseDates: (id: number) =>
+    tmdbFetch<ReleaseDatesResult>(`/movie/${id}/release_dates`),
 }

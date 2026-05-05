@@ -15,6 +15,7 @@ Personal movie & series dashboard built with Next.js.
 - **clsx** — conditional class merging
 - **ESLint 9** + Prettier — no semicolons, single quotes
 - **Jest 30** + Testing Library — unit & integration tests
+- **Cypress 15** — end-to-end tests (auth, movies, user management)
 
 ---
 
@@ -56,18 +57,21 @@ src/
 │   ├── movies/
 │   │   ├── components/         # MovieDetailModal, MovieDetailSkeleton, MovieMetaGrid,
 │   │   │                       # CollectionAccordion, MediaPoster
-│   │   ├── hooks/              # useMovies, useMovieDetail, useCollectionDetail
+│   │   ├── hooks/              # useMovies, useMovieDetail, useCollectionDetail,
+│   │   │                       # useMovieWatchProviders, useMovieInTheaters
 │   │   ├── MoviesFeature.tsx
-│   │   ├── movies.service.ts   # fetchMovies, fetchMovieDetail, fetchCollectionDetail
+│   │   ├── movies.service.ts   # fetchMovies, fetchMovieDetail, fetchCollectionDetail,
+│   │   │                       # fetchMovieWatchProviders, fetchMovieWatchProviderOptions
 │   │   ├── movieFilters.schema.ts
 │   │   ├── getMovieUI.ts       # isUpcoming + releaseYear helpers
 │   │   └── index.ts
 │   ├── series/
 │   │   ├── components/         # SeriesDetailModal, SeriesDetailSkeleton, SeriesMetaGrid,
 │   │   │                       # SeasonsAccordion
-│   │   ├── hooks/              # useSeries, useSeriesDetail
+│   │   ├── hooks/              # useSeries, useSeriesDetail, useSeriesWatchProviders
 │   │   ├── SeriesFeature.tsx
-│   │   ├── series.service.ts   # fetchSeries, fetchSeriesDetail, fetchSeasonDetail
+│   │   ├── series.service.ts   # fetchSeries, fetchSeriesDetail, fetchSeasonDetail,
+│   │   │                       # fetchSeriesWatchProviders, fetchSeriesWatchProviderOptions
 │   │   ├── seriesFilters.schema.ts
 │   │   ├── getSeriesUI.ts      # status badge config from TMDB status string
 │   │   └── index.ts
@@ -75,7 +79,8 @@ src/
 │                               # userFilters.schema.ts, applyUserFilters.ts, index.ts
 ├── hooks/
 │   ├── useAsync.ts             # generic loading/error/data hook; null fetcher = skip
-│   └── useFilters.ts
+│   ├── useFilters.ts
+│   └── useWatchProviders.ts    # generic hook — fetches + deduplicates flatrate/rent/buy per region
 ├── locales/                    # en.json, es.json
 ├── middleware.ts               # JWT verification + route protection (Edge Runtime)
 ├── providers/                  # GlobalProvider, ThemeProvider, LanguageProvider
@@ -99,7 +104,8 @@ src/
     ├── formatDate.ts           # formatShortDate(dateStr, language) → "dd mon yyyy"
     ├── formatNumber.ts         # formatVoteCount(n, language) — regex-based thousands separator
     ├── getTMDBImageUrl.ts
-    └── updateFilterValue.ts    # immutable filter key update
+    ├── updateFilterValue.ts    # immutable filter key update
+    └── watchProviders.ts       # deduplicateProviders — prefix-based variant removal
 scripts/
 └── seed.ts                     # npm run seed [username] [password] — creates admin user
 data/
@@ -126,6 +132,8 @@ data/
 | Unit & integration tests | Done |
 | User management UI | Done |
 | User management — pagination + toasts | Done |
+| E2E tests (Cypress) | Done |
+| Watch providers (Spain) — modal + platform filter | Done |
 | Dashboard UI | Not started |
 
 ---
@@ -180,6 +188,9 @@ Per-user state keyed by `userId`. Movies stored as `StoredMovie` snapshots. Epis
 **Series background enrichment**
 `SeriesFeature` runs `Promise.allSettled` after the list loads to fetch `status` and `number_of_episodes` per series. Cancelled via `AbortController` on cleanup. Results stored in `Map<id, value>` component state — not in Zustand.
 
+**Watch providers**
+Region hardcoded to `ES` (`WATCH_PROVIDERS_REGION` constant). `useWatchProviders(id, fetcher)` is a generic hook used by both `useMovieWatchProviders` and `useSeriesWatchProviders`. Flatrate providers are sorted by `display_priority` and name-deduplicated via `deduplicateProviders` (generic, preserves subtypes). Rent and buy are merged into a single paid list tagged with `source: 'rent' | 'buy'`; rent takes precedence when a provider appears in both. Paid list is also deduplicated by `provider_id` first, then by name, and capped at 3. "In theaters" is detected via `/movie/{id}/release_dates` for ES — only type 3 (Theatrical) releases within the last 90 days qualify. Badge color uses `bg-primary` (burgundy in light, yellow in dark). Future: multi-country support via user preference.
+
 ---
 
 ## UI Design System
@@ -198,6 +209,8 @@ Tokens in `src/styles/globals.css` and `src/styles/theme/`. CSS custom propertie
 
 ## Testing
 
+### Unit & integration (Jest)
+
 Co-located with source files (`*.test.ts` / `*.test.tsx`).
 
 ```bash
@@ -207,11 +220,31 @@ npm run test:watch  # watch mode
 
 | Area | What's covered |
 |---|---|
-| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate` |
+| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `deduplicateProviders` (generic, subtype preservation) |
 | Business logic | `applyClientFilters` (movies + series + language filter), `applyUserFilters` (username, role, date, creator), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
-| Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation |
-| Hooks | `useAsync` (state machine, cancellation), `useMovieDetail`, `useSeriesDetail` (conditional fetch) |
-| Components | `Button`, `Modal`, `FiltersPanel`, `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal` |
+| Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation; `toastStore` — addToast, timers, removeToast |
+| Hooks | `useAsync` (state machine, cancellation), `useMovieDetail`, `useSeriesDetail` (conditional fetch), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window) |
+| Components | `Button`, `Modal`, `FiltersPanel`, `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip) |
+
+### E2E (Cypress)
+
+Tests live in `cypress/e2e/`. Requires the dev server running on port 3000.
+
+```bash
+npm run dev          # terminal 1
+npm run cypress      # terminal 2 — opens Cypress UI
+npm run cypress:run  # headless run
+```
+
+Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test users directly in the SQLite DB. TMDB calls are intercepted with `cy.intercept`.
+
+| Suite | What's covered |
+|---|---|
+| `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, successful login, logout, guest redirect from /users |
+| `movies.cy.ts` | Movie list, detail modal, watch providers section, platform filter, access control (guest) |
+| `series.cy.ts` | Series list, detail modal, watch providers section, platform filter |
+| `users.cy.ts` | List, create + toast, edit + toast, delete + toast, bulk delete + toast, self-protection, filters |
+| `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
 
 ---
 

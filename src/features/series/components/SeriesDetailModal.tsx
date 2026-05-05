@@ -5,7 +5,9 @@ import Modal from '@/components/ui/Modal'
 import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 import { useSeriesDetail } from '@/features/series/hooks/useSeriesDetail'
+import { useSeriesWatchProviders } from '@/features/series/hooks/useSeriesWatchProviders'
 import { getSeriesUI } from '@/features/series/getSeriesUI'
+import WatchProviders from '@/components/common/WatchProviders'
 import type { StoredSeries } from '@/store/watchedStore'
 
 import SeriesMetaGrid from './SeriesMetaGrid'
@@ -20,6 +22,7 @@ type Props = {
 export default function SeriesDetailModal({ seriesId, onClose }: Props) {
   const { t } = useTranslation()
   const { detail, loading, error } = useSeriesDetail(seriesId)
+  const { flatrate, rent, loading: providersLoading } = useSeriesWatchProviders(seriesId)
 
   const ui = getSeriesUI(detail)
 
@@ -101,6 +104,9 @@ export default function SeriesDetailModal({ seriesId, onClose }: Props) {
               seriesSnapshot={seriesSnapshot}
             />
           )}
+
+          {/* WATCH PROVIDERS */}
+          <WatchProviders flatrate={flatrate} rent={rent} loading={providersLoading} />
 
           {/* OVERVIEW */}
           {detail.overview && (
