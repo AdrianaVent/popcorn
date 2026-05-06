@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAsync } from '@/hooks/useAsync'
+import { useQuery } from '@tanstack/react-query'
 import { fetchSeries } from '@/features/series/series.service'
 import { useLanguageStore } from '@/store/languageStore'
 import { ALLOWED_ORIGINAL_LANGUAGES } from '@/config/constants'
@@ -26,26 +26,24 @@ export function applyClientFilters(results: TMDBSeries[], filters: SeriesFilters
 export function useSeries(filters: SeriesFilters) {
   const { language } = useLanguageStore()
   const [page, setPage] = useState(1)
-  const [retryCount, setRetryCount] = useState(0)
 
-  const { data, loading, error } = useAsync<FetchResult>(
-    () => {
-      if (filters.watched === 'watched') return null
-      return fetchSeries(page, language, filters).then((raw) => ({
+  const { data, isLoading, isError, refetch } = useQuery<FetchResult>({
+    queryKey: ['series', page, language, filters],
+    queryFn: () =>
+      fetchSeries(page, language, filters).then((raw) => ({
         series: applyClientFilters(raw.results ?? [], filters),
         totalPages: raw.total_pages ?? 1,
-      }))
-    },
-    [page, language, filters, retryCount],
-  )
+      })),
+    enabled: filters.watched !== 'watched',
+  })
 
   return {
     series: data?.series ?? [],
     totalPages: data?.totalPages ?? 1,
-    loading,
-    error,
+    loading: isLoading,
+    error: isError ? 'TMDB_FETCH_ERROR' : null,
     page,
     goToPage: setPage,
-    retry: () => setRetryCount((c) => c + 1),
+    retry: refetch,
   }
 }
