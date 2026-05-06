@@ -29,7 +29,8 @@ src/
 │   │   ├── logout/             # POST — clears token + refresh_token cookies
 │   │   └── refresh/            # POST — verifies refresh JWT, re-signs both tokens
 │   ├── api/users/              # GET · POST · DELETE (bulk) — list, create, bulk delete
-│   │   └── [id]/               # PATCH · DELETE — update, delete single user
+│   │   ├── [id]/               # PATCH · DELETE — update, delete single user
+│   │   └── import/             # POST — bulk create from parsed JSON/CSV rows; returns { created, failed[] }
 │   ├── login/page.tsx          # ssr: false (i18n)
 │   ├── movies/page.tsx         # ssr: false (i18n)
 │   ├── series/page.tsx         # ssr: false (i18n)
@@ -37,7 +38,8 @@ src/
 │   ├── dashboard/page.tsx      # placeholder
 │   └── page.tsx                # → redirects to /movies
 ├── components/
-│   ├── common/                 # FiltersPanel, MetaRow, Sidebar, Topbar, SettingsModal, ExportButton
+│   ├── common/                 # FiltersPanel, MetaRow, Sidebar, Topbar, SettingsModal, ExportButton,
+│   │                           # ImportModal (generic file upload → results), WatchProviders
 │   ├── layouts/                # AuthLayout, DashboardLayout
 │   └── ui/                     # Button, Input, Text (polymorphic), Modal, ModalFooter,
 │                               # Header, AccordionList, Table/, LoadingOverlay,
@@ -75,8 +77,8 @@ src/
 │   │   ├── seriesFilters.schema.ts
 │   │   ├── getSeriesUI.ts      # status badge config from TMDB status string
 │   │   └── index.ts
-│   └── users/                  # UsersFeature, UserFormModal, users.service.ts,
-│                               # userFilters.schema.ts, applyUserFilters.ts, index.ts
+│   └── users/                  # UsersFeature, UserFormModal, ImportUsersModal,
+│                               # users.service.ts, userFilters.schema.ts, applyUserFilters.ts, index.ts
 ├── hooks/
 │   ├── useAsync.ts             # generic loading/error/data hook; null fetcher = skip
 │   ├── useFilters.ts
@@ -85,6 +87,7 @@ src/
 ├── middleware.ts               # JWT verification + route protection (Edge Runtime)
 ├── providers/                  # GlobalProvider, ThemeProvider, LanguageProvider
 ├── services/
+│   ├── apiFetch.ts             # apiFetch wrapper — auto-refresh on 401, redirect to /login on failure
 │   ├── auth/index.ts           # authService.login (bcrypt + sign), authService.refresh (verify + re-sign)
 │   │   └── requireAdmin.ts     # Route Handler guard — verifies JWT + asserts admin role
 │   └── tmdb/                   # tmdbFetch, movies, series, search clients
@@ -134,6 +137,9 @@ data/
 | User management — pagination + toasts | Done |
 | E2E tests (Cypress) | Done |
 | Watch providers (Spain) — modal + platform filter | Done |
+| Export users (JSON + CSV, admin only) | Done |
+| Import users — bulk create from JSON/CSV (admin only) | Done |
+| Session auto-refresh + redirect on expiry | Done |
 | Dashboard UI | Not started |
 
 ---
@@ -191,6 +197,12 @@ Per-user state keyed by `userId`. Movies stored as `StoredMovie` snapshots. Epis
 **Watch providers**
 Region hardcoded to `ES` (`WATCH_PROVIDERS_REGION` constant). `useWatchProviders(id, fetcher)` is a generic hook used by both `useMovieWatchProviders` and `useSeriesWatchProviders`. Flatrate providers are sorted by `display_priority` and name-deduplicated via `deduplicateProviders` (generic, preserves subtypes). Rent and buy are merged into a single paid list tagged with `source: 'rent' | 'buy'`; rent takes precedence when a provider appears in both. Paid list is also deduplicated by `provider_id` first, then by name, and capped at 3. "In theaters" is detected via `/movie/{id}/release_dates` for ES — only type 3 (Theatrical) releases within the last 90 days qualify. Badge color uses `bg-primary` (burgundy in light, yellow in dark). Future: multi-country support via user preference.
 
+**Import (bulk create)**
+`ImportModal` in `src/components/common/` is fully generic: accepts an `onProcess(rows)` callback and renders the two-phase UI (upload → results) independently of the entity type. Thin wrappers (e.g. `ImportUsersModal`) wire the domain-specific API call and i18n strings. CSV parser handles commas inside middle columns (e.g. passwords) by splitting on the first and last comma and joining the rest. Password requirements for bulk import are validated server-side at `/api/users/import` using the same `PASSWORD_REGEX` as the single-user form (`^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$`). Failed rows are returned as `{ index, username, code }` and can be downloaded as CSV. Each row is processed independently — valid rows are created even if other rows fail. Intra-file duplicate usernames: first occurrence is created, subsequent ones get `IMPORT_USERNAME_DUPLICATE`.
+
+**Session auto-refresh**
+`apiFetch` in `src/services/apiFetch.ts` wraps all user-management API calls. On 401: attempts `/api/auth/refresh` (POST); if successful, retries original request; if refresh fails, calls `redirectToLogin()` which calls `window.location.replace('/login')` and throws `SESSION_EXPIRED`. `users.service.ts` uses `apiFetch` instead of bare `fetch`.
+
 ---
 
 ## UI Design System
@@ -225,6 +237,8 @@ npm run test:watch  # watch mode
 | Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation; `toastStore` — addToast, timers, removeToast |
 | Hooks | `useAsync` (state machine, cancellation), `useMovieDetail`, `useSeriesDetail` (conditional fetch), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window) |
 | Components | `Button`, `Modal`, `FiltersPanel`, `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip) |
+| Services | `apiFetch` (401 auto-refresh, redirect on session expiry) |
+| API routes | `/api/users/import` (per-row validation: missing fields, invalid role/password, intra-file duplicate, DB duplicate, invalid creator, invalid date) |
 
 ### E2E (Cypress)
 

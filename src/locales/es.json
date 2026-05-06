@@ -5,7 +5,9 @@
   },
   "export": {
     "button": "Exportar",
-    "loading": "Exportando datos..."
+    "loading": "Exportando datos...",
+    "success": "Exportación completada",
+    "error": "Error al exportar"
   },
   "common": {
     "prev": "Anterior",
@@ -190,11 +192,41 @@
       "hidePassword": "Ocultar contraseña",
       "role": "Rol"
     },
+    "import": {
+    "noFile": "Selecciona un fichero antes de importar",
+      "button": "Importar",
+      "title": "Importar usuarios",
+      "description": "Sube un fichero JSON o CSV para crear usuarios en bloque.",
+      "formatTitle": "Formato esperado",
+      "formatHint": "JSON: [{\"username\":\"...\",\"password\":\"...\",\"role\":\"admin|guest\"}]\nCSV: username,password,role (una fila por usuario, cabecera requerida)",
+      "dropzone": "Haz clic para seleccionar un fichero (.json o .csv)",
+      "replaceFile": "Haz clic para reemplazar",
+      "process": "Importar",
+      "results": {
+        "title": "Resultado de la importación",
+        "success": "{{count}} usuarios creados correctamente",
+        "noneCreated": "No se ha creado ningún usuario",
+        "failed": "{{count}} filas con errores:",
+        "colRow": "Fila",
+        "colUsername": "Usuario",
+        "colReason": "Motivo",
+        "downloadFailed": "Descargar filas con error"
+      }
+    },
     "errors": {
       "USERNAME_TAKEN": "El nombre de usuario ya está en uso",
       "NOT_FOUND": "Usuario no encontrado",
       "FORBIDDEN": "Acción no permitida",
-      "UNKNOWN_ERROR": "Error inesperado, inténtalo de nuevo"
+      "UNKNOWN_ERROR": "Error inesperado, inténtalo de nuevo",
+      "IMPORT_MISSING_FIELDS": "Faltan campos obligatorios",
+      "IMPORT_MISSING_FIELDS_DETAIL": "Faltan: {{fields}}",
+      "IMPORT_INVALID_PASSWORD": "La contraseña no cumple los requisitos",
+      "IMPORT_INVALID_ROLE": "Rol no válido (debe ser admin o guest)",
+      "IMPORT_USERNAME_TAKEN": "El nombre de usuario ya existe",
+      "IMPORT_USERNAME_DUPLICATE": "El nombre de usuario aparece más de una vez en este fichero",
+      "IMPORT_PARSE_ERROR": "No se ha podido leer el fichero — revisa el formato e inténtalo de nuevo",
+      "IMPORT_INVALID_CREATOR": "El creador no existe o no es administrador",
+      "IMPORT_INVALID_DATE": "La fecha debe ser hoy o anterior"
     },
     "success": {
       "created": "Usuario creado",

@@ -21,8 +21,8 @@ export const usersDb = {
   findAll: (): DbUser[] =>
     db.prepare('SELECT * FROM users ORDER BY created_at DESC').all() as DbUser[],
 
-  create: (user: Omit<DbUser, 'created_at'>): DbUser => {
-    const now = Date.now()
+  create: (user: Omit<DbUser, 'created_at'> & { created_at?: number }): DbUser => {
+    const now = user.created_at ?? Date.now()
     db.prepare(
       'INSERT INTO users (id, username, password, role, created_at, created_by) VALUES (?, ?, ?, ?, ?, ?)'
     ).run(user.id, user.username, user.password, user.role, now, user.created_by ?? null)

@@ -23,6 +23,7 @@ import type { MovieRow, MovieFilters } from '@/types/movie'
 import { useLanguageStore } from '@/store/languageStore'
 import { useUserStore } from '@/store/userStore'
 import { useWatchedStore } from '@/store/watchedStore'
+import { useToastStore } from '@/store/toastStore'
 import { useFilters } from '@/hooks/useFilters'
 import { useAsync } from '@/hooks/useAsync'
 
@@ -47,6 +48,7 @@ export default function MoviesFeature() {
   const { t } = useTranslation()
   const router = useRouter()
   const { language } = useLanguageStore()
+  const addToast = useToastStore((s) => s.addToast)
 
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [isExporting, setIsExporting] = useState(false)
@@ -150,10 +152,13 @@ export default function MoviesFeature() {
         ]
         exportAsCSV(csvRows, MOVIE_CSV_FIELDS, `movies-${date}.csv`, headers)
       }
+      addToast('success', t('export.success'))
+    } catch {
+      addToast('error', t('export.error'))
     } finally {
       setIsExporting(false)
     }
-  }, [filters, totalPages, language, watchedModeItems, watchedMovies, t])
+  }, [filters, totalPages, language, watchedModeItems, watchedMovies, t, addToast])
 
   const columns: Column<MovieRow>[] = [
     {

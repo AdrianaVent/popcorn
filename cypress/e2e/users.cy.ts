@@ -10,6 +10,8 @@ describe('Users', () => {
     cy.task('deleteUser', 'cy_other')
     cy.task('deleteUser', 'cy_filter_user')
     cy.task('deleteUser', 'cy_role_test')
+    cy.task('deleteUser', 'cy_import_1')
+    cy.task('deleteUser', 'cy_import_2')
     cy.visitAsAdmin('/users')
   })
 
@@ -100,7 +102,7 @@ describe('Users', () => {
 
   // ─── Error cases ─────────────────────────────────────────────
 
-  it('shows an error toast when creating a user with a taken username', () => {
+  it('shows an inline error in the form when creating a user with a taken username', () => {
     cy.task('seedUser', TEMP_USER)
     cy.reload()
     cy.contains('Add user').click()
@@ -108,12 +110,13 @@ describe('Users', () => {
     cy.get('#password').type('AnotherPass1!')
     cy.get('#role').select('guest')
     cy.contains('button', 'Accept').click()
-    cy.get('[role="alert"]').should('contain', 'Username already taken')
+    cy.get('[role="dialog"]').should('contain', 'Username already taken')
     cy.get('[role="dialog"]').should('be.visible')
+    cy.get('[role="alert"]').should('not.exist')
     cy.task('deleteUser', TEMP_USER.username)
   })
 
-  it('keeps the form open after a failed create', () => {
+  it('keeps the form open with the username value after a failed create', () => {
     cy.task('seedUser', TEMP_USER)
     cy.reload()
     cy.contains('Add user').click()
@@ -125,7 +128,7 @@ describe('Users', () => {
     cy.task('deleteUser', TEMP_USER.username)
   })
 
-  it('shows an error toast when editing a user to a taken username', () => {
+  it('shows an inline error in the form when editing a user to a taken username', () => {
     const otherUser = { username: 'cy_other', password: 'OtherUser1!', role: 'guest' as const }
     cy.task('seedUser', TEMP_USER)
     cy.task('seedUser', otherUser)
@@ -135,8 +138,67 @@ describe('Users', () => {
     })
     cy.get('#username').clear().type(TEMP_USER.username)
     cy.contains('button', 'Accept').click()
-    cy.get('[role="alert"]').should('contain', 'Username already taken')
+    cy.get('[role="dialog"]').should('contain', 'Username already taken')
+    cy.get('[role="dialog"]').should('be.visible')
+    cy.get('[role="alert"]').should('not.exist')
     cy.task('deleteUser', TEMP_USER.username)
     cy.task('deleteUser', otherUser.username)
+  })
+
+  // ─── Import ───────────────────────────────────────────────────
+
+  it('shows error when Import is clicked without selecting a file', () => {
+    cy.contains('Import').click()
+    cy.get('[role="dialog"]').contains('button', 'Import').click()
+    cy.get('[role="dialog"]').should('contain', 'Please select a file before importing')
+  })
+
+  it('imports users from a JSON file and shows the created count', () => {
+    const json = JSON.stringify([
+      { username: 'cy_import_1', password: 'Import1User!', role: 'guest' },
+      { username: 'cy_import_2', password: 'Import2User!', role: 'guest' },
+    ])
+    cy.contains('Import').click()
+    cy.get('input[type="file"]').selectFile(
+      { contents: Cypress.Buffer.from(json), fileName: 'users.json', mimeType: 'application/json' },
+      { force: true }
+    )
+    cy.get('[role="dialog"]').contains('button', 'Import').click()
+    cy.get('[role="dialog"]').should('contain', '2 users created successfully')
+    cy.contains('button', 'Accept').click()
+    cy.contains('cy_import_1').should('be.visible')
+    cy.contains('cy_import_2').should('be.visible')
+  })
+
+  it('imports users from a CSV file and shows the created count', () => {
+    const csv = 'username,password,role\ncy_import_1,Import1User!,guest\ncy_import_2,Import2User!,guest'
+    cy.contains('Import').click()
+    cy.get('input[type="file"]').selectFile(
+      { contents: Cypress.Buffer.from(csv), fileName: 'users.csv', mimeType: 'text/csv' },
+      { force: true }
+    )
+    cy.get('[role="dialog"]').contains('button', 'Import').click()
+    cy.get('[role="dialog"]').should('contain', '2 users created successfully')
+    cy.contains('button', 'Accept').click()
+    cy.contains('cy_import_1').should('be.visible')
+  })
+
+  it('shows failed rows when a username is already taken', () => {
+    cy.task('seedUser', { username: 'cy_import_1', password: 'Import1User!', role: 'guest' as const })
+    cy.reload()
+    const json = JSON.stringify([
+      { username: 'cy_import_1', password: 'Import1User!', role: 'guest' },
+      { username: 'cy_import_2', password: 'Import2User!', role: 'guest' },
+    ])
+    cy.contains('Import').click()
+    cy.get('input[type="file"]').selectFile(
+      { contents: Cypress.Buffer.from(json), fileName: 'users.json', mimeType: 'application/json' },
+      { force: true }
+    )
+    cy.get('[role="dialog"]').contains('button', 'Import').click()
+    cy.get('[role="dialog"]').should('contain', '1 users created successfully')
+    cy.get('[role="dialog"]').should('contain', '1 rows failed')
+    cy.get('[role="dialog"]').should('contain', 'cy_import_1')
+    cy.get('[role="dialog"]').contains('button', 'Download failed rows').should('be.visible')
   })
 })
