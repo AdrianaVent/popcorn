@@ -168,6 +168,8 @@ describe('Users', () => {
     cy.contains('button', 'Accept').click()
     cy.contains('cy_import_1').should('be.visible')
     cy.contains('cy_import_2').should('be.visible')
+    cy.task('deleteUser', 'cy_import_1')
+    cy.task('deleteUser', 'cy_import_2')
   })
 
   it('imports users from a CSV file and shows the created count', () => {
@@ -181,6 +183,8 @@ describe('Users', () => {
     cy.get('[role="dialog"]').should('contain', '2 users created successfully')
     cy.contains('button', 'Accept').click()
     cy.contains('cy_import_1').should('be.visible')
+    cy.task('deleteUser', 'cy_import_1')
+    cy.task('deleteUser', 'cy_import_2')
   })
 
   it('shows failed rows when a username is already taken', () => {
@@ -200,5 +204,19 @@ describe('Users', () => {
     cy.get('[role="dialog"]').should('contain', '1 rows failed')
     cy.get('[role="dialog"]').should('contain', 'cy_import_1')
     cy.get('[role="dialog"]').contains('button', 'Download failed rows').should('be.visible')
+    cy.task('deleteUser', 'cy_import_1')
+    cy.task('deleteUser', 'cy_import_2')
+  })
+
+  after(() => {
+    cy.task('deleteUser', 'cy_tempuser')
+    cy.task('deleteUser', 'cy_renamed')
+    cy.task('deleteUser', 'cy_bulk_a')
+    cy.task('deleteUser', 'cy_bulk_b')
+    cy.task('deleteUser', 'cy_other')
+    cy.task('deleteUser', 'cy_filter_user')
+    cy.task('deleteUser', 'cy_role_test')
+    cy.task('deleteUser', 'cy_import_1')
+    cy.task('deleteUser', 'cy_import_2')
   })
 })
