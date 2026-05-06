@@ -74,7 +74,7 @@ export default function Modal({
             aria-label="Close modal"
             className="
               text-muted-foreground
-              hover:text-red-500
+              hover:text-red-500 dark:hover:text-red-400
               transition-colors
               text-xl leading-none
               px-2

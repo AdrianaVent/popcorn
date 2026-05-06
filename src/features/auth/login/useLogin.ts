@@ -27,7 +27,7 @@ type UseLoginReturn = {
   handleResetError: () => void
 }
 
-const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
 
 export function useLogin(): UseLoginReturn {
   const router = useRouter()

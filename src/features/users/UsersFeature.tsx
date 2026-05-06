@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import clsx from 'clsx'
@@ -11,15 +11,19 @@ import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/Text'
 import FiltersPanel from '@/components/common/FiltersPanel'
+import ExportButton from '@/components/common/ExportButton'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 import TableFooter from '@/components/ui/Table/TableFooter'
 import UserFormModal from './UserFormModal'
+import ImportUsersModal from './ImportUsersModal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
-import { PlusCircleIcon, TrashIcon, PencilIcon } from '@/components/icons'
+import { PlusCircleIcon, TrashIcon, PencilIcon, UploadIcon } from '@/components/icons'
 
 import { useUserStore } from '@/store/userStore'
 import { useLanguageStore } from '@/store/languageStore'
 import { useToastStore } from '@/store/toastStore'
 import { fetchUsers, createUser, updateUser, deleteUser, deleteUsers } from './users.service'
+import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
 import { formatShortDate } from '@/utils/formatDate'
 import { useFilters } from '@/hooks/useFilters'
 import { staticUserFiltersSchema, INITIAL_USER_FILTERS } from './userFilters.schema'
@@ -30,6 +34,7 @@ import type { UserRole } from '@/db/users'
 type ModalState =
   | { mode: 'add' }
   | { mode: 'edit'; user: PublicUser }
+  | { mode: 'import' }
   | null
 
 type ConfirmDeleteState =
@@ -49,6 +54,8 @@ export default function UsersFeature() {
     addToast('error', t(`users.errors.${code}`, { defaultValue: t('users.errors.UNKNOWN_ERROR') }))
   }
 
+  const pendingToast = useRef<(() => void) | null>(null)
+
   const [users, setUsers] = useState<PublicUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -56,8 +63,15 @@ export default function UsersFeature() {
   const [modal, setModal] = useState<ModalState>(null)
   const [confirmDelete, setConfirmDelete] = useState<ConfirmDeleteState>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const [page, setPage] = useState(1)
   const { filters, setFilters } = useFilters(INITIAL_USER_FILTERS)
+
+  const closeModal = () => {
+    setModal(null)
+    pendingToast.current?.()
+    pendingToast.current = null
+  }
 
   const PAGE_SIZE = 10
 
@@ -130,9 +144,10 @@ export default function UsersFeature() {
     try {
       await createUser(data)
       await loadUsers()
-      addToast('success', t('users.success.created'))
+      pendingToast.current = () => addToast('success', t('users.success.created'))
     } catch (e) {
-      toastError(e)
+      const code = e instanceof Error ? e.message : ''
+      if (code !== 'USERNAME_TAKEN') toastError(e)
       throw e
     }
   }
@@ -145,9 +160,10 @@ export default function UsersFeature() {
         role: data.role !== user.role ? data.role : undefined,
       })
       await loadUsers()
-      addToast('success', t('users.success.updated'))
+      pendingToast.current = () => addToast('success', t('users.success.updated'))
     } catch (e) {
-      toastError(e)
+      const code = e instanceof Error ? e.message : ''
+      if (code !== 'USERNAME_TAKEN') toastError(e)
       throw e
     }
   }
@@ -165,24 +181,60 @@ export default function UsersFeature() {
     if (!confirmDelete) return
     setDeleteLoading(true)
     try {
+      let successMsg: string
       if (confirmDelete.type === 'one') {
         await deleteUser(confirmDelete.userId)
         setSelected((prev) => { const next = new Set(prev); next.delete(confirmDelete.userId); return next })
-        addToast('success', t('users.success.deleted'))
+        successMsg = t('users.success.deleted')
       } else {
         const count = selected.size
         await deleteUsers(Array.from(selected))
         setSelected(new Set())
-        addToast('success', t('users.success.deletedMany', { count }))
+        successMsg = t('users.success.deletedMany', { count })
       }
       await loadUsers()
       setConfirmDelete(null)
+      addToast('success', successMsg)
     } catch (e) {
       toastError(e)
     } finally {
       setDeleteLoading(false)
     }
   }
+
+  const handleExport = useCallback(async (format: 'json' | 'csv') => {
+    setIsExporting(true)
+    try {
+      const date = new Date().toISOString().split('T')[0]
+      if (format === 'json') {
+        const rows = users.map((u) => ({
+          username: u.username,
+          role: u.role,
+          created_at: u.created_at ? new Date(u.created_at).toISOString() : null,
+          created_by: u.created_by ? (usersById.get(u.created_by)?.username ?? u.created_by) : null,
+        }))
+        exportAsJSON(rows, `users-${date}.json`)
+      } else {
+        const rows = users.map((u) => ({
+          username: u.username,
+          role: u.role,
+          created_at: u.created_at ? formatShortDate(new Date(u.created_at).toISOString(), language) : '',
+          created_by: u.created_by ? (usersById.get(u.created_by)?.username ?? '') : '',
+        }))
+        exportAsCSV(rows, ['username', 'role', 'created_at', 'created_by'], `users-${date}.csv`, [
+          t('users.columns.username'),
+          t('users.columns.role'),
+          t('users.columns.createdAt'),
+          t('users.columns.createdBy'),
+        ])
+      }
+      addToast('success', t('export.success'))
+    } catch {
+      addToast('error', t('export.error'))
+    } finally {
+      setIsExporting(false)
+    }
+  }, [users, usersById, language, t, addToast])
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -208,11 +260,21 @@ export default function UsersFeature() {
         <Header
           title={t('users.title')}
           end={
-            <IconButton
-              icon={<PlusCircleIcon size={15} />}
-              label={t('users.addUser')}
-              onClick={() => setModal({ mode: 'add' })}
-            />
+            <div className="flex items-center gap-2">
+              <ExportButton onExport={handleExport} />
+              <button
+                onClick={() => setModal({ mode: 'import' })}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-foreground text-sm font-medium hover:bg-muted/60 transition-colors"
+              >
+                <UploadIcon size={15} />
+                <span className="hidden md:inline">{t('users.import.button')}</span>
+              </button>
+              <IconButton
+                icon={<PlusCircleIcon size={15} />}
+                label={t('users.addUser')}
+                onClick={() => setModal({ mode: 'add' })}
+              />
+            </div>
           }
         />
 
@@ -379,7 +441,7 @@ export default function UsersFeature() {
       {modal?.mode === 'add' && (
         <UserFormModal
           isSelf={false}
-          onClose={() => setModal(null)}
+          onClose={closeModal}
           onSubmit={handleCreate}
         />
       )}
@@ -387,10 +449,18 @@ export default function UsersFeature() {
         <UserFormModal
           user={modal.user}
           isSelf={modal.user.id === currentUserId}
-          onClose={() => setModal(null)}
+          onClose={closeModal}
           onSubmit={handleUpdate(modal.user)}
         />
       )}
+      {modal?.mode === 'import' && (
+        <ImportUsersModal
+          onClose={() => setModal(null)}
+          onDone={loadUsers}
+        />
+      )}
+
+      {isExporting && <LoadingOverlay message={t('export.loading')} />}
     </DashboardLayout>
   )
 }

@@ -10,7 +10,7 @@ export default function ToastContainer() {
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed top-18 right-3 z-50 flex flex-col gap-2 items-end">
+    <div className="fixed top-18 right-3 z-9999 flex flex-col gap-2 items-end">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onDismiss={() => removeToast(toast.id)} />
       ))}
