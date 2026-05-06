@@ -1,4 +1,6 @@
+import React from 'react'
 import { renderHook, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useMovieInTheaters } from './useMovieInTheaters'
 import { moviesService } from '@/services/tmdb/movies'
 import type { ReleaseDatesResult } from '@/types/tmdb'
@@ -8,6 +10,16 @@ jest.mock('@/services/tmdb/movies', () => ({
 }))
 
 const mockReleaseDates = moviesService.releaseDates as jest.MockedFunction<typeof moviesService.releaseDates>
+
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  function Wrapper({ children }: { children: React.ReactNode }) {
+    return React.createElement(QueryClientProvider, { client: queryClient }, children)
+  }
+  return Wrapper
+}
 
 function daysAgo(n: number): string {
   return new Date(Date.now() - n * 86_400_000).toISOString()
@@ -21,13 +33,13 @@ describe('useMovieInTheaters', () => {
   beforeEach(() => jest.clearAllMocks())
 
   it('does not fetch when id is null', () => {
-    renderHook(() => useMovieInTheaters(null))
+    renderHook(() => useMovieInTheaters(null), { wrapper: createWrapper() })
     expect(mockReleaseDates).not.toHaveBeenCalled()
   })
 
   it('returns false when there is no ES region', async () => {
     mockReleaseDates.mockResolvedValueOnce({ results: [] })
-    const { result } = renderHook(() => useMovieInTheaters(1))
+    const { result } = renderHook(() => useMovieInTheaters(1), { wrapper: createWrapper() })
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.inTheaters).toBe(false)
   })
@@ -36,7 +48,7 @@ describe('useMovieInTheaters', () => {
     mockReleaseDates.mockResolvedValueOnce(
       makeResult([{ release_date: daysAgo(10), type: 4 }]),
     )
-    const { result } = renderHook(() => useMovieInTheaters(1))
+    const { result } = renderHook(() => useMovieInTheaters(1), { wrapper: createWrapper() })
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.inTheaters).toBe(false)
   })
@@ -45,7 +57,7 @@ describe('useMovieInTheaters', () => {
     mockReleaseDates.mockResolvedValueOnce(
       makeResult([{ release_date: daysAgo(30), type: 3 }]),
     )
-    const { result } = renderHook(() => useMovieInTheaters(1))
+    const { result } = renderHook(() => useMovieInTheaters(1), { wrapper: createWrapper() })
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.inTheaters).toBe(true)
   })
@@ -54,7 +66,7 @@ describe('useMovieInTheaters', () => {
     mockReleaseDates.mockResolvedValueOnce(
       makeResult([{ release_date: daysAgo(91), type: 3 }]),
     )
-    const { result } = renderHook(() => useMovieInTheaters(1))
+    const { result } = renderHook(() => useMovieInTheaters(1), { wrapper: createWrapper() })
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.inTheaters).toBe(false)
   })
@@ -64,14 +76,14 @@ describe('useMovieInTheaters', () => {
     mockReleaseDates.mockResolvedValueOnce(
       makeResult([{ release_date: future, type: 3 }]),
     )
-    const { result } = renderHook(() => useMovieInTheaters(1))
+    const { result } = renderHook(() => useMovieInTheaters(1), { wrapper: createWrapper() })
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.inTheaters).toBe(false)
   })
 
   it('starts in loading state', () => {
     mockReleaseDates.mockReturnValueOnce(new Promise(() => {}))
-    const { result } = renderHook(() => useMovieInTheaters(1))
+    const { result } = renderHook(() => useMovieInTheaters(1), { wrapper: createWrapper() })
     expect(result.current.loading).toBe(true)
   })
 })

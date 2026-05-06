@@ -20,12 +20,13 @@ import { fetchMovies, fetchMovieWatchProviderOptions } from './movies.service'
 import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
 import type { Column } from '@/types/table'
 import type { MovieRow, MovieFilters } from '@/types/movie'
+import type { WatchProvider } from '@/types/tmdb'
 import { useLanguageStore } from '@/store/languageStore'
 import { useUserStore } from '@/store/userStore'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useToastStore } from '@/store/toastStore'
 import { useFilters } from '@/hooks/useFilters'
-import { useAsync } from '@/hooks/useAsync'
+import { useQuery } from '@tanstack/react-query'
 
 import { staticMovieFiltersSchema } from './movieFilters.schema'
 import { formatVoteCount } from '@/utils/formatNumber'
@@ -73,7 +74,7 @@ export default function MoviesFeature() {
 
   const PAGE_SIZE = 20
 
-  const { data: providerOptions } = useAsync(() => fetchMovieWatchProviderOptions(), [])
+  const { data: providerOptions } = useQuery<WatchProvider[]>({ queryKey: ['movie-provider-options'], queryFn: fetchMovieWatchProviderOptions, staleTime: Infinity })
 
   const filtersSchema = useMemo(() => staticMovieFiltersSchema.map((field) => {
     if (field.key === 'provider_id' && providerOptions?.length) {
@@ -233,7 +234,7 @@ export default function MoviesFeature() {
           {loading && <Text>{t('movies.loading')}</Text>}
 
           {!loading && error && (
-            <Button variant="secondary" onClick={retry}>
+            <Button variant="secondary" onClick={() => retry()}>
               {t('common.retry')}
             </Button>
           )}
