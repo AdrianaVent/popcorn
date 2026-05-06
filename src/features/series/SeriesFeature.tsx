@@ -24,12 +24,13 @@ import { useUserStore } from '@/store/userStore'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useToastStore } from '@/store/toastStore'
 import { useFilters } from '@/hooks/useFilters'
-import { useAsync } from '@/hooks/useAsync'
+import { useQuery } from '@tanstack/react-query'
 import { staticSeriesFiltersSchema } from './seriesFilters.schema'
 import { formatVoteCount } from '@/utils/formatNumber'
 import { formatShortDate } from '@/utils/formatDate'
 import type { Column } from '@/types/table'
 import type { SeriesRow, SeriesFilters } from '@/types/series'
+import type { WatchProvider } from '@/types/tmdb'
 
 type SeriesExportRow = SeriesRow & { status: string }
 
@@ -100,7 +101,7 @@ export default function SeriesFeature() {
 
   const PAGE_SIZE = 20
 
-  const { data: providerOptions } = useAsync(() => fetchSeriesWatchProviderOptions(), [])
+  const { data: providerOptions } = useQuery<WatchProvider[]>({ queryKey: ['series-provider-options'], queryFn: fetchSeriesWatchProviderOptions, staleTime: Infinity })
 
   const filtersSchema = useMemo(() => staticSeriesFiltersSchema.map((field) => {
     if (field.key === 'provider_id' && providerOptions?.length) {
@@ -322,7 +323,7 @@ export default function SeriesFeature() {
           {loading && <Text>{t('series.loading')}</Text>}
 
           {!loading && error && (
-            <Button variant="secondary" onClick={retry}>
+            <Button variant="secondary" onClick={() => retry()}>
               {t('common.retry')}
             </Button>
           )}

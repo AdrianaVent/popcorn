@@ -16,6 +16,7 @@
     "cypress:run": "cypress run"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.100.9",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.9.0",
     "clsx": "^2.1.1",

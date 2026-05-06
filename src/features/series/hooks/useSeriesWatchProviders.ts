@@ -6,5 +6,5 @@ import { fetchSeriesWatchProviders } from '@/features/series/series.service'
 export type { WatchProvidersData }
 
 export function useSeriesWatchProviders(id: number | null): WatchProvidersData {
-  return useWatchProviders(id, fetchSeriesWatchProviders)
+  return useWatchProviders(id, fetchSeriesWatchProviders, 'series')
 }

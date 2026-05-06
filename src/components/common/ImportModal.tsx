@@ -52,17 +52,19 @@ function parseCSV(content: string): ImportRow[] {
   return lines.slice(1).map((line) => {
     const parts = line.split(',')
     const row: ImportRow = {}
-    headers.forEach((h, i) => {
-      row[h] = (parts[i] ?? '').trim()
-    })
-    // Middle columns (e.g. passwords) may contain commas — re-join them
-    if (headers.length === 3 && parts.length > 3) {
-      const first = headers[0]!
-      const last = headers[headers.length - 1]!
-      const mid = headers[1]!
-      row[first] = (parts[0] ?? '').trim()
-      row[last] = (parts[parts.length - 1] ?? '').trim()
-      row[mid] = parts.slice(1, parts.length - 1).join(',').trim()
+    // password (index 1) may contain commas — consume exactly `trailingColumns`
+    // parts from the end for the trailing headers, everything in between is the password
+    if (parts.length > headers.length && headers.length >= 2) {
+      const excessParts = parts.length - headers.length
+      row[headers[0]!] = (parts[0] ?? '').trim()
+      row[headers[1]!] = parts.slice(1, 1 + excessParts + 1).join(',').trim()
+      for (let i = 2; i < headers.length; i++) {
+        row[headers[i]!] = (parts[i + excessParts] ?? '').trim()
+      }
+    } else {
+      headers.forEach((h, i) => {
+        row[h] = (parts[i] ?? '').trim()
+      })
     }
     return row
   })

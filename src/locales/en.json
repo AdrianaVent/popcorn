@@ -18,7 +18,8 @@
     "confirm": "Confirm",
     "retry": "Retry",
     "availableOn": "Available on",
-    "inTheaters": "In theaters"
+    "inTheaters": "In theaters",
+    "errorBoundary": "Something went wrong. You can try again or reload the page."
   },
   "languageSwitcher": {
     "label": "Current language: {{language}}"
@@ -198,7 +199,7 @@
       "title": "Import users",
       "description": "Upload a JSON or CSV file to bulk-create users.",
       "formatTitle": "Expected format",
-      "formatHint": "JSON: [{\"username\":\"...\",\"password\":\"...\",\"role\":\"admin|guest\"}]\nCSV: username,password,role (one row per user, header required)",
+      "formatHint": "JSON: [{\"username\":\"...\",\"password\":\"...\",\"role\":\"admin|guest\"}]\nCSV: username,password,role (one row per user, header required)\n\nOptional fields: created_by (admin username), created_at (ISO date, today or earlier).\nIf omitted, defaults to the importing admin and the current date.",
       "dropzone": "Click to select a file (.json or .csv)",
       "replaceFile": "Click to replace",
       "process": "Import",

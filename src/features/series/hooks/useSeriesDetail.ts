@@ -1,6 +1,6 @@
 'use client'
 
-import { useAsync } from '@/hooks/useAsync'
+import { useQuery } from '@tanstack/react-query'
 import { fetchSeriesDetail } from '@/features/series/series.service'
 import { useLanguageStore } from '@/store/languageStore'
 import type { TMDBSeriesDetail } from '@/types/tmdb'
@@ -8,10 +8,11 @@ import type { TMDBSeriesDetail } from '@/types/tmdb'
 export function useSeriesDetail(id: number | null) {
   const { language } = useLanguageStore()
 
-  const { data: detail, loading, error } = useAsync<TMDBSeriesDetail>(
-    () => (id !== null ? fetchSeriesDetail(id, language) : null),
-    [id, language],
-  )
+  const { data: detail, isLoading, isError } = useQuery<TMDBSeriesDetail>({
+    queryKey: ['series-detail', id, language],
+    queryFn: () => fetchSeriesDetail(id!, language),
+    enabled: id !== null,
+  })
 
-  return { detail, loading, error }
+  return { detail: detail ?? null, loading: isLoading, error: isError ? 'TMDB_FETCH_ERROR' : null }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useAsync } from '@/hooks/useAsync'
+import { useQuery } from '@tanstack/react-query'
 import { fetchMovieDetail } from '@/features/movies/movies.service'
 import { useLanguageStore } from '@/store/languageStore'
 import type { TMDBMovieDetail } from '@/types/tmdb'
@@ -8,10 +8,11 @@ import type { TMDBMovieDetail } from '@/types/tmdb'
 export function useMovieDetail(id: number | null) {
   const { language } = useLanguageStore()
 
-  const { data: detail, loading, error } = useAsync<TMDBMovieDetail>(
-    () => (id !== null ? fetchMovieDetail(id, language) : null),
-    [id, language],
-  )
+  const { data: detail, isLoading, isError } = useQuery<TMDBMovieDetail>({
+    queryKey: ['movie-detail', id, language],
+    queryFn: () => fetchMovieDetail(id!, language),
+    enabled: id !== null,
+  })
 
-  return { detail, loading, error }
+  return { detail: detail ?? null, loading: isLoading, error: isError ? 'TMDB_FETCH_ERROR' : null }
 }
