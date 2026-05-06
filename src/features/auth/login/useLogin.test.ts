@@ -49,6 +49,11 @@ describe('useLogin — validation', () => {
     expect(fieldErrors.password).toBe('login.validation.passwordInvalid')
   })
 
+  it('rejects a password without lowercase', async () => {
+    const { fieldErrors } = await submitWith('admin', 'PASSWORD1!')
+    expect(fieldErrors.password).toBe('login.validation.passwordInvalid')
+  })
+
   it('rejects a password without a number', async () => {
     const { fieldErrors } = await submitWith('admin', 'Password!')
     expect(fieldErrors.password).toBe('login.validation.passwordInvalid')

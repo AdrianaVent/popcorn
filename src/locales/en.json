@@ -5,7 +5,9 @@
   },
   "export": {
     "button": "Export",
-    "loading": "Exporting data..."
+    "loading": "Exporting data...",
+    "success": "Export completed",
+    "error": "Export failed"
   },
   "common": {
     "prev": "Previous",
@@ -190,11 +192,41 @@
       "hidePassword": "Hide password",
       "role": "Role"
     },
+    "import": {
+    "noFile": "Please select a file before importing",
+      "button": "Import",
+      "title": "Import users",
+      "description": "Upload a JSON or CSV file to bulk-create users.",
+      "formatTitle": "Expected format",
+      "formatHint": "JSON: [{\"username\":\"...\",\"password\":\"...\",\"role\":\"admin|guest\"}]\nCSV: username,password,role (one row per user, header required)",
+      "dropzone": "Click to select a file (.json or .csv)",
+      "replaceFile": "Click to replace",
+      "process": "Import",
+      "results": {
+        "title": "Import results",
+        "success": "{{count}} users created successfully",
+        "noneCreated": "No users were created",
+        "failed": "{{count}} rows failed:",
+        "colRow": "Row",
+        "colUsername": "Username",
+        "colReason": "Reason",
+        "downloadFailed": "Download failed rows"
+      }
+    },
     "errors": {
       "USERNAME_TAKEN": "Username already taken",
       "NOT_FOUND": "User not found",
       "FORBIDDEN": "Action not permitted",
-      "UNKNOWN_ERROR": "Unexpected error, please try again"
+      "UNKNOWN_ERROR": "Unexpected error, please try again",
+      "IMPORT_MISSING_FIELDS": "Missing required fields",
+      "IMPORT_MISSING_FIELDS_DETAIL": "Missing: {{fields}}",
+      "IMPORT_INVALID_PASSWORD": "Password does not meet requirements",
+      "IMPORT_INVALID_ROLE": "Invalid role (must be admin or guest)",
+      "IMPORT_USERNAME_TAKEN": "Username already exists",
+      "IMPORT_USERNAME_DUPLICATE": "Username appears more than once in this file",
+      "IMPORT_PARSE_ERROR": "Could not parse file — check the format and try again",
+      "IMPORT_INVALID_CREATOR": "Creator does not exist or is not an admin",
+      "IMPORT_INVALID_DATE": "Date must be today or in the past"
     },
     "success": {
       "created": "User created",
