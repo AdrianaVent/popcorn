@@ -244,7 +244,7 @@ export default function ImportModal({
       {phase === 'results' && result && (
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
-            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/15 flex items-center justify-center">
+            <span className="shrink-0 w-5 h-5 rounded-full bg-green-500/15 flex items-center justify-center">
               <CheckIcon size={12} color="#22c55e" />
             </span>
             <Text variant="small" className="text-foreground">
