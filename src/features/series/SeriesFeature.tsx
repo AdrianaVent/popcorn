@@ -22,6 +22,7 @@ import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
 import { useLanguageStore } from '@/store/languageStore'
 import { useUserStore } from '@/store/userStore'
 import { useWatchedStore } from '@/store/watchedStore'
+import { useToastStore } from '@/store/toastStore'
 import { useFilters } from '@/hooks/useFilters'
 import { useAsync } from '@/hooks/useAsync'
 import { staticSeriesFiltersSchema } from './seriesFilters.schema'
@@ -50,6 +51,7 @@ export default function SeriesFeature() {
   const { t } = useTranslation()
   const router = useRouter()
   const { language } = useLanguageStore()
+  const addToast = useToastStore((s) => s.addToast)
 
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [isExporting, setIsExporting] = useState(false)
@@ -214,10 +216,13 @@ export default function SeriesFeature() {
         ]
         exportAsCSV(csvData, SERIES_CSV_FIELDS, `series-${date}.csv`, headers)
       }
+      addToast('success', t('export.success'))
+    } catch {
+      addToast('error', t('export.error'))
     } finally {
       setIsExporting(false)
     }
-  }, [filters, totalPages, language, watchedModeItems, seriesEpisodes, totals, statuses, t])
+  }, [filters, totalPages, language, watchedModeItems, seriesEpisodes, totals, statuses, t, addToast])
 
   const columns: Column<SeriesRow>[] = [
     {

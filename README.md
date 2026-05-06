@@ -14,7 +14,8 @@ Personal movie & series dashboard. Track what you watch, explore collections, an
 | Switch language (English / Spanish) | ✓ | ✓ |
 | Switch theme (Light / Dark / Auto) | ✓ | ✓ |
 | Export your data (JSON / CSV) | ✓ | — |
-| Manage users | ✓ | — |
+| Manage users (create, edit, delete, bulk delete) | ✓ | — |
+| Import users from JSON / CSV | ✓ | — |
 
 ---
 
@@ -87,6 +88,14 @@ Admins can export the full movie or series list as **JSON** (raw TMDB data) or *
 
 Admins can create, edit and delete users, assign roles (admin / guest), and filter the list by username, role, creation date or creator. Bulk delete is supported. Admins cannot delete or demote their own account.
 
+### Import users
+
+Admins can bulk-create users by uploading a **JSON** or **CSV** file. Each row is validated independently — valid rows are created even if others fail. Errors are reported per row and can be downloaded as a file for correction and re-upload. Password requirements, role validity, duplicate detection (within the file and against the DB), creator attribution and date are all validated server-side.
+
+### Session auto-refresh
+
+When the access token (1h) expires, the app automatically attempts to refresh it in the background. If the refresh succeeds the current request is retried transparently. If the refresh also fails the user is redirected to `/login`.
+
 ### Theme & Language
 
 The **auto** theme switches between light (7am–7pm) and dark automatically. Language defaults to your browser locale and can be changed at any time from the Settings modal. Both preferences are persisted locally.
@@ -126,10 +135,10 @@ The test suite covers:
 
 | Suite | What's tested |
 |---|---|
-| `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, login, logout |
+| `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, login, logout, session expiry redirect |
 | `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, access control |
 | `series.cy.ts` | Series list, detail modal, watch providers, platform filter |
-| `users.cy.ts` | Create, edit, delete (single + bulk), toast notifications |
+| `users.cy.ts` | Create, edit, delete (single + bulk), toast notifications, import (JSON / CSV, errors, partial failures) |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
 
 Cypress creates and cleans up its own test users in the local database automatically.
@@ -171,12 +180,13 @@ src/
 │   ├── auth/login/     # LoginFeature · useLogin · login.service.ts
 │   ├── movies/         # MoviesFeature · hooks · components · service
 │   ├── series/         # SeriesFeature · hooks · components · service
-│   └── users/          # UsersFeature · UserFormModal · users.service.ts
+│   └── users/          # UsersFeature · UserFormModal · ImportUsersModal · users.service.ts
 ├── hooks/              # useAsync · useFilters
 ├── locales/            # en.json · es.json
 ├── middleware.ts        # JWT verification + route protection
 ├── providers/          # GlobalProvider · ThemeProvider · LanguageProvider
 ├── services/
+│   ├── apiFetch.ts     # fetch wrapper — auto-refresh on 401, redirect to /login on expiry
 │   ├── auth/           # authService — bcrypt verify, JWT sign/refresh
 │   └── tmdb/           # TMDB client — movies, series, search
 ├── store/              # themeStore · languageStore · userStore · watchedStore · toastStore

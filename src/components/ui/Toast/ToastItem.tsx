@@ -9,23 +9,23 @@ const config: Record<ToastType, {
   Icon: React.ComponentType<{ size?: number }>
 }> = {
   success: {
-    container: 'bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800 border-l-green-500 text-green-700 dark:text-green-400',
-    iconBg: 'bg-green-500/20 dark:bg-green-500/30',
+    container: 'bg-green-100 dark:bg-card border-green-200 dark:border-green-600/60 border-l-green-500 dark:border-l-green-400 text-green-700 dark:text-green-300',
+    iconBg: 'bg-green-500/20 dark:bg-green-400/15',
     Icon: CheckIcon,
   },
   error: {
-    container: 'bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800 border-l-red-500 text-red-700 dark:text-red-400',
-    iconBg: 'bg-red-500/20 dark:bg-red-500/30',
+    container: 'bg-red-100 dark:bg-card border-red-200 dark:border-red-600/60 border-l-red-500 dark:border-l-red-400 text-red-700 dark:text-red-300',
+    iconBg: 'bg-red-500/20 dark:bg-red-400/15',
     Icon: XIcon,
   },
   warning: {
-    container: 'bg-yellow-100 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 border-l-yellow-500 text-yellow-700 dark:text-yellow-400',
-    iconBg: 'bg-yellow-500/20 dark:bg-yellow-500/30',
+    container: 'bg-yellow-100 dark:bg-card border-yellow-200 dark:border-yellow-600/60 border-l-yellow-500 dark:border-l-yellow-400 text-yellow-700 dark:text-yellow-300',
+    iconBg: 'bg-yellow-500/20 dark:bg-yellow-400/15',
     Icon: WarningIcon,
   },
   info: {
-    container: 'bg-blue-100 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 border-l-blue-500 text-blue-700 dark:text-blue-400',
-    iconBg: 'bg-blue-500/20 dark:bg-blue-500/30',
+    container: 'bg-blue-100 dark:bg-card border-blue-200 dark:border-blue-600/60 border-l-blue-500 dark:border-l-blue-400 text-blue-700 dark:text-blue-300',
+    iconBg: 'bg-blue-500/20 dark:bg-blue-400/15',
     Icon: InfoIcon,
   },
 }

@@ -43,7 +43,7 @@ export default function Button({
         'transition-colors duration-150 cursor-pointer',
         isPrimary
           ? 'bg-primary text-primary-foreground border-0 hover:opacity-80'
-          : 'bg-transparent text-foreground border border-border hover:bg-cream-400 dark:hover:bg-gray-700',
+          : 'bg-transparent text-foreground border border-border hover:bg-gray-100 dark:hover:bg-gray-700',
         isDisabled && 'opacity-60 cursor-not-allowed',
         className,
       )}

@@ -17,7 +17,7 @@ type Props = {
   onSubmit: (data: { username: string; password: string; role: UserRole }) => Promise<void>
 }
 
-const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
 
 export default function UserFormModal({ user, isSelf, onClose, onSubmit }: Props) {
   const { t } = useTranslation()
