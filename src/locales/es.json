@@ -18,7 +18,8 @@
     "confirm": "Confirmar",
     "retry": "Reintentar",
     "availableOn": "Disponible en",
-    "inTheaters": "En cartelera"
+    "inTheaters": "En cartelera",
+    "errorBoundary": "Algo ha ido mal. Puedes volver a intentarlo o recargar la página."
   },
   "languageSwitcher": {
     "label": "Idioma actual: {{language}}"
@@ -198,7 +199,7 @@
       "title": "Importar usuarios",
       "description": "Sube un fichero JSON o CSV para crear usuarios en bloque.",
       "formatTitle": "Formato esperado",
-      "formatHint": "JSON: [{\"username\":\"...\",\"password\":\"...\",\"role\":\"admin|guest\"}]\nCSV: username,password,role (una fila por usuario, cabecera requerida)",
+      "formatHint": "JSON: [{\"username\":\"...\",\"password\":\"...\",\"role\":\"admin|guest\"}]\nCSV: username,password,role (una fila por usuario, cabecera requerida)\n\nCampos opcionales: created_by (usuario admin), created_at (fecha ISO, hoy o anterior).\nSi se omiten, se usan el admin importador y la fecha actual.",
       "dropzone": "Haz clic para seleccionar un fichero (.json o .csv)",
       "replaceFile": "Haz clic para reemplazar",
       "process": "Importar",

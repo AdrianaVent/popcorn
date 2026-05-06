@@ -161,7 +161,7 @@ describe('ImportModal', () => {
     )
   })
 
-  it('handles commas inside the middle CSV column (password)', async () => {
+  it('handles commas inside the password column (3-column CSV)', async () => {
     baseProps.onProcess.mockResolvedValueOnce(SUCCESS_RESULT)
     const csv = 'username,password,role\nalice,Pass,word1!,guest'
     const { container } = render(<ImportModal {...baseProps} />)
@@ -170,6 +170,32 @@ describe('ImportModal', () => {
     await waitFor(() =>
       expect(baseProps.onProcess).toHaveBeenCalledWith([
         { username: 'alice', password: 'Pass,word1!', role: 'guest' },
+      ])
+    )
+  })
+
+  it('parses a 5-column CSV with created_by and created_at', async () => {
+    baseProps.onProcess.mockResolvedValueOnce(SUCCESS_RESULT)
+    const csv = 'username,password,role,created_by,created_at\nalice,Alice1!x,guest,admin,2024-01-01'
+    const { container } = render(<ImportModal {...baseProps} />)
+    selectFile(container, makeFile(csv, 'users.csv'))
+    fireEvent.click(screen.getByText('users.import.process'))
+    await waitFor(() =>
+      expect(baseProps.onProcess).toHaveBeenCalledWith([
+        { username: 'alice', password: 'Alice1!x', role: 'guest', created_by: 'admin', created_at: '2024-01-01' },
+      ])
+    )
+  })
+
+  it('handles commas inside the password column in a 5-column CSV', async () => {
+    baseProps.onProcess.mockResolvedValueOnce(SUCCESS_RESULT)
+    const csv = 'username,password,role,created_by,created_at\nalice,Pass,word1!,guest,admin,2024-01-01'
+    const { container } = render(<ImportModal {...baseProps} />)
+    selectFile(container, makeFile(csv, 'users.csv'))
+    fireEvent.click(screen.getByText('users.import.process'))
+    await waitFor(() =>
+      expect(baseProps.onProcess).toHaveBeenCalledWith([
+        { username: 'alice', password: 'Pass,word1!', role: 'guest', created_by: 'admin', created_at: '2024-01-01' },
       ])
     )
   })

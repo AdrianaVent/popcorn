@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import clsx from 'clsx'
@@ -22,7 +23,7 @@ import { PlusCircleIcon, TrashIcon, PencilIcon, UploadIcon } from '@/components/
 import { useUserStore } from '@/store/userStore'
 import { useLanguageStore } from '@/store/languageStore'
 import { useToastStore } from '@/store/toastStore'
-import { fetchUsers, createUser, updateUser, deleteUser, deleteUsers } from './users.service'
+import { fetchUsers, createUser, updateUser, deleteUser, deleteUsers, type CreateUserInput, type UpdateUserInput } from './users.service'
 import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
 import { formatShortDate } from '@/utils/formatDate'
 import { useFilters } from '@/hooks/useFilters'
@@ -56,16 +57,60 @@ export default function UsersFeature() {
 
   const pendingToast = useRef<(() => void) | null>(null)
 
-  const [users, setUsers] = useState<PublicUser[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
+  const { data: users = [], isLoading: loading, isError } = useQuery<PublicUser[]>({
+    queryKey: ['users'],
+    queryFn: fetchUsers,
+  })
+  const error = isError ? t('users.error') : null
+  const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: ['users'] })
+
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [modal, setModal] = useState<ModalState>(null)
   const [confirmDelete, setConfirmDelete] = useState<ConfirmDeleteState>(null)
-  const [deleteLoading, setDeleteLoading] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [page, setPage] = useState(1)
   const { filters, setFilters } = useFilters(INITIAL_USER_FILTERS)
+
+  const createMutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      invalidateUsers()
+      pendingToast.current = () => addToast('success', t('users.success.created'))
+    },
+    onError: (e: Error) => { if (e.message !== 'USERNAME_TAKEN') toastError(e) },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: UpdateUserInput }) => updateUser(id, patch),
+    onSuccess: () => {
+      invalidateUsers()
+      pendingToast.current = () => addToast('success', t('users.success.updated'))
+    },
+    onError: (e: Error) => { if (e.message !== 'USERNAME_TAKEN') toastError(e) },
+  })
+
+  const deleteOneMutation = useMutation({
+    mutationFn: (id: string) => deleteUser(id),
+    onSuccess: (_, id) => {
+      setSelected((prev) => { const next = new Set(prev); next.delete(id); return next })
+      invalidateUsers()
+      setConfirmDelete(null)
+      addToast('success', t('users.success.deleted'))
+    },
+    onError: (e) => toastError(e),
+  })
+
+  const deleteManyMutation = useMutation({
+    mutationFn: (ids: string[]) => deleteUsers(ids),
+    onSuccess: (_, ids) => {
+      setSelected(new Set())
+      invalidateUsers()
+      setConfirmDelete(null)
+      addToast('success', t('users.success.deletedMany', { count: ids.length }))
+    },
+    onError: (e) => toastError(e),
+  })
 
   const closeModal = () => {
     setModal(null)
@@ -114,19 +159,6 @@ export default function UsersFeature() {
   const allSelected = selectableUsers.length > 0 && selectableUsers.every((u) => selected.has(u.id))
   const someSelected = selected.size > 0
 
-  const loadUsers = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      setUsers(await fetchUsers())
-    } catch {
-      setError(t('users.error'))
-    } finally {
-      setLoading(false)
-    }
-  }, [t])
-
-  useEffect(() => { loadUsers() }, [loadUsers])
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -140,33 +172,17 @@ export default function UsersFeature() {
     setSelected(allSelected ? new Set() : new Set(selectableUsers.map((u) => u.id)))
   }
 
-  const handleCreate = async (data: { username: string; password: string; role: UserRole }) => {
-    try {
-      await createUser(data)
-      await loadUsers()
-      pendingToast.current = () => addToast('success', t('users.success.created'))
-    } catch (e) {
-      const code = e instanceof Error ? e.message : ''
-      if (code !== 'USERNAME_TAKEN') toastError(e)
-      throw e
-    }
-  }
+  const handleCreate = (data: CreateUserInput) => createMutation.mutateAsync(data)
 
-  const handleUpdate = (user: PublicUser) => async (data: { username: string; password: string; role: UserRole }) => {
-    try {
-      await updateUser(user.id, {
+  const handleUpdate = (user: PublicUser) => (data: CreateUserInput) =>
+    updateMutation.mutateAsync({
+      id: user.id,
+      patch: {
         username: data.username !== user.username ? data.username : undefined,
         password: data.password || undefined,
         role: data.role !== user.role ? data.role : undefined,
-      })
-      await loadUsers()
-      pendingToast.current = () => addToast('success', t('users.success.updated'))
-    } catch (e) {
-      const code = e instanceof Error ? e.message : ''
-      if (code !== 'USERNAME_TAKEN') toastError(e)
-      throw e
-    }
-  }
+      },
+    })
 
   const handleDeleteOne = (id: string) => {
     const user = users.find((u) => u.id === id)
@@ -177,32 +193,16 @@ export default function UsersFeature() {
     setConfirmDelete({ type: 'many', count: selected.size })
   }
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = () => {
     if (!confirmDelete) return
-    setDeleteLoading(true)
-    try {
-      let successMsg: string
-      if (confirmDelete.type === 'one') {
-        await deleteUser(confirmDelete.userId)
-        setSelected((prev) => { const next = new Set(prev); next.delete(confirmDelete.userId); return next })
-        successMsg = t('users.success.deleted')
-      } else {
-        const count = selected.size
-        await deleteUsers(Array.from(selected))
-        setSelected(new Set())
-        successMsg = t('users.success.deletedMany', { count })
-      }
-      await loadUsers()
-      setConfirmDelete(null)
-      addToast('success', successMsg)
-    } catch (e) {
-      toastError(e)
-    } finally {
-      setDeleteLoading(false)
+    if (confirmDelete.type === 'one') {
+      deleteOneMutation.mutate(confirmDelete.userId)
+    } else {
+      deleteManyMutation.mutate(Array.from(selected))
     }
   }
 
-  const handleExport = useCallback(async (format: 'json' | 'csv') => {
+  const handleExport = async (format: 'json' | 'csv') => {
     setIsExporting(true)
     try {
       const date = new Date().toISOString().split('T')[0]
@@ -234,7 +234,7 @@ export default function UsersFeature() {
     } finally {
       setIsExporting(false)
     }
-  }, [users, usersById, language, t, addToast])
+  }
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -333,7 +333,7 @@ export default function UsersFeature() {
                     <td colSpan={6} className="py-16 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <Text variant="body" className="text-muted-foreground">{error}</Text>
-                        <Button onClick={loadUsers} variant="secondary" className="w-auto px-4">{t('common.retry')}</Button>
+                        <Button onClick={invalidateUsers} variant="secondary" className="w-auto px-4">{t('common.retry')}</Button>
                       </div>
                     </td>
                   </tr>
@@ -432,7 +432,7 @@ export default function UsersFeature() {
               : t('users.confirm.bodyMany', { count: confirmDelete.count })
           }
           confirmLabel={t('users.actions.delete')}
-          loading={deleteLoading}
+          loading={deleteOneMutation.isPending || deleteManyMutation.isPending}
           onConfirm={handleConfirmDelete}
           onCancel={() => setConfirmDelete(null)}
         />
@@ -456,7 +456,7 @@ export default function UsersFeature() {
       {modal?.mode === 'import' && (
         <ImportUsersModal
           onClose={() => setModal(null)}
-          onDone={loadUsers}
+          onDone={invalidateUsers}
         />
       )}
 

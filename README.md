@@ -96,6 +96,10 @@ Admins can bulk-create users by uploading a **JSON** or **CSV** file. Each row i
 
 When the access token (1h) expires, the app automatically attempts to refresh it in the background. If the refresh succeeds the current request is retried transparently. If the refresh also fails the user is redirected to `/login`.
 
+### Smart caching
+
+All TMDB data is cached with **TanStack Query**. Switching between pages is instant for recently visited content, and changing the language automatically invalidates the cache to refetch translated data.
+
 ### Theme & Language
 
 The **auto** theme switches between light (7am–7pm) and dark automatically. Language defaults to your browser locale and can be changed at any time from the Settings modal. Both preferences are persisted locally.
@@ -181,7 +185,7 @@ src/
 │   ├── movies/         # MoviesFeature · hooks · components · service
 │   ├── series/         # SeriesFeature · hooks · components · service
 │   └── users/          # UsersFeature · UserFormModal · ImportUsersModal · users.service.ts
-├── hooks/              # useAsync · useFilters
+├── hooks/              # useFilters · useWatchProviders
 ├── locales/            # en.json · es.json
 ├── middleware.ts        # JWT verification + route protection
 ├── providers/          # GlobalProvider · ThemeProvider · LanguageProvider
@@ -211,11 +215,13 @@ data/
 | Language | TypeScript 5 |
 | Styling | Tailwind CSS 4 + PostCSS |
 | State | Zustand 5 — persisted in localStorage |
+| Server state | TanStack Query 5 — caching, background refetch |
 | i18n | i18next + react-i18next — English / Spanish |
 | Auth | jose (JWT) · better-sqlite3 · bcryptjs |
 | Unit tests | Jest 30 + Testing Library |
 | E2E tests | Cypress 15 |
 | Linting | ESLint 9 + Prettier |
+| CI | GitHub Actions — tsc, lint, jest, build on every push |
 
 ---
 
