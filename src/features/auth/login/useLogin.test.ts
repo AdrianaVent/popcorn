@@ -15,6 +15,11 @@ jest.mock('@/store/userStore', () => ({
     selector({ setUser: jest.fn(), userId: null, role: null, clearUser: jest.fn() }),
 }))
 
+jest.mock('@/store/languageStore', () => ({
+  useLanguageStore: (selector: (s: object) => unknown) =>
+    selector({ applyUserLanguage: jest.fn(), language: 'en', userLanguages: {}, setLanguage: jest.fn() }),
+}))
+
 jest.mock('./login.service')
 const mockLoginRequest = loginRequest as jest.Mock
 

@@ -106,7 +106,7 @@ All TMDB data is cached with **TanStack Query**. Switching between pages is inst
 
 ### Theme & Language
 
-The **auto** theme switches between light (7am–7pm) and dark automatically. Language defaults to your browser locale and can be changed at any time from the Settings modal. Both preferences are persisted locally.
+The **auto** theme switches between light (7am–7pm) and dark automatically. Language is stored **per user** — it defaults to Spanish and can be changed at any time from the Settings modal. Both preferences are persisted across sessions.
 
 ---
 

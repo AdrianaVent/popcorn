@@ -76,7 +76,7 @@ export default function Table<T extends Record<string, unknown>>({
         </div>
       )}
 
-      {footer && !loading && (
+      {footer && (
         <div
           className="
             absolute
@@ -87,7 +87,19 @@ export default function Table<T extends Record<string, unknown>>({
             px-3 py-2
           "
         >
-          <TableFooter {...footer} />
+          {loading ? (
+            <div className="flex items-center justify-center gap-3 py-2">
+              <div className="h-5 w-16 rounded bg-border animate-pulse" />
+              <div className="flex gap-1">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-7 w-7 rounded-md bg-border animate-pulse" />
+                ))}
+              </div>
+              <div className="h-5 w-16 rounded bg-border animate-pulse" />
+            </div>
+          ) : (
+            <TableFooter {...footer} />
+          )}
         </div>
       )}
     </div>

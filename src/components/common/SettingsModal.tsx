@@ -3,6 +3,7 @@
 import { useTranslation } from 'react-i18next'
 import { useThemeStore } from '@/store/themeStore'
 import { useLanguageStore } from '@/store/languageStore'
+import { useUserStore } from '@/store/userStore'
 import Modal from '@/components/ui/Modal'
 import clsx from 'clsx'
 import type { ThemeMode } from '@/styles/theme'
@@ -16,6 +17,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const { t } = useTranslation()
   const { mode, setMode } = useThemeStore()
   const { language, setLanguage } = useLanguageStore()
+  const userId = useUserStore((s) => s.userId)
 
   const themeModes: { key: ThemeMode; labelKey: string }[] = [
     { key: 'light', labelKey: 'settings.themeLight' },
@@ -57,7 +59,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             {languages.map(({ key, label }) => (
               <button
                 key={key}
-                onClick={() => setLanguage(key)}
+                onClick={() => setLanguage(key, userId ?? undefined)}
                 className={clsx(
                   optionBase,
                   language === key ? optionActive : optionInactive
