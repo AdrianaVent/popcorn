@@ -88,7 +88,7 @@ export function useLogin(): UseLoginReturn {
 
       if (ok) {
         if (userId && role) setUser(userId, role)
-        router.push('/movies')
+        router.push('/home')
         return
       }
 

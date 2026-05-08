@@ -1,7 +1,7 @@
 import { moviesService } from '@/services/tmdb'
 import { TMDB_LANGUAGE } from '@/config/tmdb'
 import { WATCH_PROVIDERS_REGION } from '@/config/constants'
-import { deduplicateProviders } from '@/utils/watchProviders'
+import { fetchWatchProviderOptions } from '@/utils/watchProviders'
 import type { MovieFilters } from '@/types/movie'
 import type { TMDBCollectionDetail, TMDBPagedResponse, TMDBMovie, TMDBMovieDetail, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
@@ -42,7 +42,6 @@ export function fetchMovieWatchProviders(id: number): Promise<WatchProvidersResu
   return moviesService.watchProviders(id)
 }
 
-export async function fetchMovieWatchProviderOptions(): Promise<WatchProvider[]> {
-  const r = await moviesService.watchProviderOptions(WATCH_PROVIDERS_REGION)
-  return deduplicateProviders(r.results.sort((a, b) => a.display_priority - b.display_priority)).slice(0, 10)
+export function fetchMovieWatchProviderOptions(): Promise<WatchProvider[]> {
+  return fetchWatchProviderOptions(moviesService, WATCH_PROVIDERS_REGION)
 }

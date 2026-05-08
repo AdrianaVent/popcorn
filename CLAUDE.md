@@ -32,20 +32,24 @@ src/
 │   ├── api/users/              # GET · POST · DELETE (bulk) — list, create, bulk delete
 │   │   ├── [id]/               # PATCH · DELETE — update, delete single user
 │   │   └── import/             # POST — bulk create from parsed JSON/CSV rows; returns { created, failed[] }
+│   ├── (dashboard)/            # persistent layout group (Sidebar + Topbar never unmount)
+│   │   ├── layout.tsx          # client layout — derives activeNav from pathname, handles logout
+│   │   ├── movies/             # page.tsx + loading.tsx
+│   │   ├── series/             # page.tsx + loading.tsx
+│   │   ├── users/              # page.tsx + loading.tsx (admin only)
+│   │   └── home/               # page.tsx + loading.tsx — genre dashboard
 │   ├── login/page.tsx          # ssr: false (i18n)
-│   ├── movies/page.tsx         # ssr: false (i18n)
-│   ├── series/page.tsx         # ssr: false (i18n)
-│   ├── users/page.tsx          # ssr: false — admin only, middleware redirects guests
-│   ├── dashboard/page.tsx      # placeholder
-│   └── page.tsx                # → redirects to /movies
+│   └── page.tsx                # → redirects to /home
 ├── components/
 │   ├── common/                 # FiltersPanel, MetaRow, Sidebar, Topbar, SettingsModal, ExportButton,
-│   │                           # ImportModal (generic file upload → results), WatchProviders, ErrorBoundary
+│   │                           # ImportModal (generic file upload → results), WatchProviders, ErrorBoundary,
+│   │                           # MediaDetailSkeleton (shared modal loading state)
 │   ├── layouts/                # AuthLayout, DashboardLayout
 │   └── ui/                     # Button, Input, Text (polymorphic), Modal, ModalFooter,
-│                               # Header, AccordionList, Table/, LoadingOverlay,
+│                               # Header, AccordionList, Table/, TableSkeleton, LoadingOverlay,
 │                               # DatePicker, ConfirmModal, IconButton,
-│                               # Toast/ToastItem, Toast/ToastContainer
+│                               # Toast/ToastItem, Toast/ToastContainer,
+│                               # BarChart (Recharts wrapper), ToggleSwitch, PageSkeleton
 ├── config/
 │   ├── auth.ts                 # TOKEN_MAX_TIME, REFRESH_TOKEN_MAX_TIME, JWT_SECRET
 │   ├── constants.ts            # DEFAULT_LANGUAGE, ALLOWED_ORIGINAL_LANGUAGES
@@ -56,12 +60,14 @@ src/
 │   └── users.ts                # DbUser, UserRole types; findByUsername, findById, create
 ├── features/
 │   ├── auth/login/             # LoginFeature, LoginForm, useLogin, login.service.ts
-│   ├── dashboard/              # placeholder
+│   ├── dashboard/              # DashboardFeature — genre bar charts (movies + series), user/global toggle
+│   │   └── hooks/              # useMovieGenres (user + global), useSeriesGenres (user + global),
+│   │                           # buildGenreCounts (shared genre aggregation utility)
 │   ├── movies/
-│   │   ├── components/         # MovieDetailModal, MovieDetailSkeleton, MovieMetaGrid,
+│   │   ├── components/         # MovieDetailModal, MovieMetaGrid,
 │   │   │                       # CollectionAccordion, MediaPoster
 │   │   ├── hooks/              # useMovies, useMovieDetail, useCollectionDetail,
-│   │   │                       # useMovieWatchProviders, useMovieInTheaters
+│   │   │                       # useMovieInTheaters
 │   │   ├── MoviesFeature.tsx
 │   │   ├── movies.service.ts   # fetchMovies, fetchMovieDetail, fetchCollectionDetail,
 │   │   │                       # fetchMovieWatchProviders, fetchMovieWatchProviderOptions
@@ -69,19 +75,21 @@ src/
 │   │   ├── getMovieUI.ts       # isUpcoming + releaseYear helpers
 │   │   └── index.ts
 │   ├── series/
-│   │   ├── components/         # SeriesDetailModal, SeriesDetailSkeleton, SeriesMetaGrid,
+│   │   ├── components/         # SeriesDetailModal, SeriesMetaGrid,
 │   │   │                       # SeasonsAccordion
-│   │   ├── hooks/              # useSeries, useSeriesDetail, useSeriesWatchProviders
+│   │   ├── hooks/              # useSeries, useSeriesDetail
 │   │   ├── SeriesFeature.tsx
 │   │   ├── series.service.ts   # fetchSeries, fetchSeriesDetail, fetchSeasonDetail,
 │   │   │                       # fetchSeriesWatchProviders, fetchSeriesWatchProviderOptions
 │   │   ├── seriesFilters.schema.ts
-│   │   ├── getSeriesUI.ts      # status badge config from TMDB status string
+│   │   ├── getSeriesUI.ts      # status badge config; resolveSeriesGenreName — static ES translation map (TV genre IDs)
 │   │   └── index.ts
 │   └── users/                  # UsersFeature, UserFormModal, ImportUsersModal,
 │                               # users.service.ts, userFilters.schema.ts, applyUserFilters.ts, index.ts
 ├── hooks/
 │   ├── useFilters.ts
+│   ├── useMounted.ts           # returns false on server / during hydration, true after mount
+│   ├── useTranslation.ts
 │   └── useWatchProviders.ts    # generic hook — fetches + deduplicates flatrate/rent/buy per region (TanStack Query)
 ├── locales/                    # en.json, es.json
 ├── middleware.ts               # JWT verification + route protection (Edge Runtime)
@@ -108,7 +116,8 @@ src/
     ├── formatNumber.ts         # formatVoteCount(n, language) — regex-based thousands separator
     ├── getTMDBImageUrl.ts
     ├── updateFilterValue.ts    # immutable filter key update
-    └── watchProviders.ts       # deduplicateProviders — prefix-based variant removal
+    └── watchProviders.ts       # deduplicateProviders — prefix-based variant removal;
+│                               # fetchWatchProviderOptions — shared fetch + dedup logic for movies and series
 scripts/
 └── seed.ts                     # npm run seed [username] [password] — creates admin user
 data/
@@ -143,11 +152,18 @@ data/
 | TanStack Query migration (server-state caching) | Done |
 | Error boundaries (movies, series, users) | Done |
 | CI pipeline (GitHub Actions — tsc, lint, jest, build) | Done |
-| Dashboard UI | Not started |
+| Home (genre bar charts — movies + series, user/global toggle) | Done |
+| Persistent dashboard layout + SSR-safe hydration | Done |
 
 ---
 
 ## Architecture Decisions
+
+**Persistent dashboard layout**
+All dashboard pages live inside the `(dashboard)` route group. The group layout (`src/app/(dashboard)/layout.tsx`) renders `DashboardLayout` (Sidebar + Topbar) once and keeps it mounted across client-side navigations — no blank screen between pages. `activeNav` is derived from `usePathname()`. Each page has a `loading.tsx` that shows a skeleton while the page chunk loads during client navigation.
+
+**SSR-safe hydration**
+Features that depend on Zustand `persist` stores (localStorage) are loaded with `dynamic(..., { ssr: false })` — they only render on the client, so store values are already rehydrated when the component mounts. No `useMounted` guard needed inside these components. The layout (`Sidebar`) is SSR'd and gates role-dependent nav items behind its own `mounted` state to avoid hydration mismatches. `DatePicker` uses `suppressHydrationWarning` on its placeholder span since the locale-specific placeholder text is non-critical and corrects itself after mount.
 
 **Auth — self-hosted**
 No external auth provider. Users in `data/popcorn.db` (gitignored, created on first run). Passwords hashed with bcrypt (cost 10). JWTs signed with `jose` using `JWT_SECRET` from env. Access token payload: `{ sub: userId, username, role }`. Refresh token payload: `{ sub: userId }`. Role is readable server-side without a DB roundtrip.
@@ -191,6 +207,9 @@ Features using i18n or theme loaded with `dynamic(..., { ssr: false })` to avoid
 **TanStack Query (server state)**
 All TMDB data fetching and the users list use `useQuery` from `@tanstack/react-query`. `QueryClientProvider` wraps the entire app in `GlobalProvider`. Default `staleTime: 5min` avoids redundant refetches for TMDB data. `enabled: id !== null` replaces the old null-fetcher pattern. Query keys are structured arrays (`['movie-detail', id, language]`) so language changes automatically invalidate cached data. The `useAsync` custom hook has been removed. Hook tests wrap `renderHook` in a `QueryClientProvider` with `retry: false` for deterministic test behavior. `useWatchProviders` accepts a `type: 'movie' | 'series'` parameter so movie and series provider queries get distinct cache entries despite sharing the same generic hook. User mutations (create, update, delete, bulk delete) use `useMutation`: `onSuccess` invalidates the `['users']` cache and queues the toast via `pendingToast` (fires on modal close); `onError` shows a toast for all errors except `USERNAME_TAKEN`, which is re-thrown to the form for inline display. Delete loading state is derived from `deleteOneMutation.isPending || deleteManyMutation.isPending`.
 
+**Table loading/error/empty states**
+`Table` accepts `loading`, `error`, `onRetry` and `emptyMessage` props. When `loading=true`, `TableBody` renders skeleton rows matching the real column structure — same headers, same widths, animated pulse cells. Error and empty states render as absolute overlays inside the table container. This eliminates the mount/unmount swap between `TableSkeleton` and `Table` that caused layout shifts. `MoviesFeature` and `SeriesFeature` render a single `<Table>` unconditionally; `loading.tsx` files use `PageSkeleton` (shared component: header + filters skeleton + `TableSkeleton`) as the chunk-load placeholder.
+
 **Error boundaries**
 `ErrorBoundary` in `src/components/common/` is a React class component wrapping a functional `ErrorFallback` (needed because hooks cannot be used in class components). Wraps `MoviesPage`, `SeriesPage`, and `UsersPage`. On error, renders a translated message with a reset button that clears the error state and remounts the children.
 
@@ -204,7 +223,7 @@ Per-user state keyed by `userId`. Movies stored as `StoredMovie` snapshots. Epis
 `SeriesFeature` runs `Promise.allSettled` after the list loads to fetch `status` and `number_of_episodes` per series. Cancelled via `AbortController` on cleanup. Results stored in `Map<id, value>` component state — not in Zustand.
 
 **Watch providers**
-Region hardcoded to `ES` (`WATCH_PROVIDERS_REGION` constant). `useWatchProviders(id, fetcher)` is a generic hook used by both `useMovieWatchProviders` and `useSeriesWatchProviders`. Flatrate providers are sorted by `display_priority` and name-deduplicated via `deduplicateProviders` (generic, preserves subtypes). Rent and buy are merged into a single paid list tagged with `source: 'rent' | 'buy'`; rent takes precedence when a provider appears in both. Paid list is also deduplicated by `provider_id` first, then by name, and capped at 3. "In theaters" is detected via `/movie/{id}/release_dates` for ES — only type 3 (Theatrical) releases within the last 90 days qualify. Badge color uses `bg-primary` (burgundy in light, yellow in dark). Future: multi-country support via user preference.
+Region hardcoded to `ES` (`WATCH_PROVIDERS_REGION` constant). `useWatchProviders(id, fetcher, type)` is a generic hook called directly from `MovieDetailModal` and `SeriesDetailModal` — the old `useMovieWatchProviders` / `useSeriesWatchProviders` wrappers have been removed. `fetchWatchProviderOptions` in `utils/watchProviders.ts` is the shared function for fetching + deduplicating provider options; both `movies.service.ts` and `series.service.ts` call it. Flatrate providers are sorted by `display_priority` and name-deduplicated via `deduplicateProviders` (generic, preserves subtypes). Rent and buy are merged into a single paid list tagged with `source: 'rent' | 'buy'`; rent takes precedence when a provider appears in both. Paid list is also deduplicated by `provider_id` first, then by name, and capped at 3. "In theaters" is detected via `/movie/{id}/release_dates` for ES — only type 3 (Theatrical) releases within the last 90 days qualify. Badge color uses `bg-primary` (burgundy in light, yellow in dark). Future: multi-country support via user preference.
 
 **Import (bulk create)**
 `ImportModal` in `src/components/common/` is fully generic: accepts an `onProcess(rows)` callback and renders the two-phase UI (upload → results) independently of the entity type. Thin wrappers (e.g. `ImportUsersModal`) wire the domain-specific API call and i18n strings. Required fields: `username`, `password`, `role`. Optional fields: `created_by` (admin username — defaults to the importing admin) and `created_at` (ISO date, today or earlier — defaults to current timestamp). CSV parser handles passwords with commas for any number of columns: it assumes `password` is always the second column and excess split parts are re-joined into it, with trailing columns consumed from the end. Password requirements for bulk import are validated server-side at `/api/users/import` using the same `PASSWORD_REGEX` as the single-user form (`^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$`). Failed rows are returned as `{ index, username, code }` and can be downloaded as CSV. Each row is processed independently — valid rows are created even if other rows fail. Intra-file duplicate usernames: first occurrence is created, subsequent ones get `IMPORT_USERNAME_DUPLICATE`.
@@ -268,6 +287,7 @@ Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test user
 | `series.cy.ts` | Series list, detail modal, watch providers section, platform filter |
 | `users.cy.ts` | List, create + toast, edit + toast, delete + toast, bulk delete + toast, self-protection, filters, import JSON + CSV, partial import failures, post-import cleanup |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
+| `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders |
 
 ---
 
