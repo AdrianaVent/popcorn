@@ -1,4 +1,5 @@
 export { default as GridIcon } from './GridIcon'
+export { default as HomeIcon } from './HomeIcon'
 export { default as FilmIcon } from './FilmIcon'
 export { default as TvIcon } from './TvIcon'
 export { default as GearIcon } from './GearIcon'

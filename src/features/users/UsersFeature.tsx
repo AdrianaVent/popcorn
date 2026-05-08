@@ -3,10 +3,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { useRouter } from 'next/navigation'
 import clsx from 'clsx'
 
-import DashboardLayout from '@/components/layouts/DashboardLayout'
 import Header from '@/components/ui/Header'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
@@ -45,8 +43,7 @@ type ConfirmDeleteState =
 
 export default function UsersFeature() {
   const { t } = useTranslation()
-  const router = useRouter()
-  const { userId: currentUserId, clearUser } = useUserStore()
+  const { userId: currentUserId } = useUserStore()
   const { language } = useLanguageStore()
   const addToast = useToastStore((s) => s.addToast)
 
@@ -236,12 +233,6 @@ export default function UsersFeature() {
     }
   }
 
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
-    clearUser()
-    router.push('/login')
-  }
-
   const roleBadge = (role: UserRole) => (
     <span className={clsx(
       'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold',
@@ -254,8 +245,8 @@ export default function UsersFeature() {
   )
 
   return (
-    <DashboardLayout activeNav="users" onLogout={handleLogout}>
-      <div className="h-full flex flex-col gap-4 p-4">
+    <>
+    <div className="h-full flex flex-col gap-4 p-4">
 
         <Header
           title={t('users.title')}
@@ -325,9 +316,14 @@ export default function UsersFeature() {
               </thead>
 
               <tbody>
-                {loading && (
-                  <tr><td colSpan={6} className="py-16 text-center text-muted-foreground text-sm">{t('users.loading')}</td></tr>
-                )}
+                {loading && Array.from({ length: 9 }).map((_, i) => (
+                  <tr key={i} className={i % 2 === 0 ? 'bg-cream-100 dark:bg-gray-900' : 'bg-cream-300 dark:bg-gray-800'}>
+                    <td className="px-2 py-3"><div className="w-4 h-4 rounded bg-border animate-pulse mx-auto" /></td>
+                    {(['w-1/3', 'w-16', 'w-24', 'w-24', 'w-12'] as const).map((w, j) => (
+                      <td key={j} className="px-2 py-3"><div className={`h-3 rounded bg-border animate-pulse ${w}`} /></td>
+                    ))}
+                  </tr>
+                ))}
                 {error && (
                   <tr>
                     <td colSpan={6} className="py-16 text-center">
@@ -461,6 +457,6 @@ export default function UsersFeature() {
       )}
 
       {isExporting && <LoadingOverlay message={t('export.loading')} />}
-    </DashboardLayout>
+    </>
   )
 }

@@ -128,7 +128,7 @@ export default function DatePicker({ value, onChange, placeholder, className }: 
           value ? 'text-foreground' : 'text-muted-foreground',
         )}
       >
-        <span>{displayValue ?? emptyPlaceholder}</span>
+        <span suppressHydrationWarning>{displayValue ?? emptyPlaceholder}</span>
         <span className="text-muted-foreground">
           <CalendarIcon size={12} />
         </span>

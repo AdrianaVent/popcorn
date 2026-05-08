@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import MetaRow from '@/components/common/MetaRow'
 import { useLanguageStore } from '@/store/languageStore'
+import { resolveSeriesGenreName } from '@/features/series/getSeriesUI'
 import { formatVoteCount } from '@/utils/formatNumber'
 import type { TMDBSeriesDetail } from '@/types/tmdb'
 
@@ -43,7 +44,7 @@ export default function SeriesMetaGrid({ detail, firstAirYear, avgRuntime }: Pro
                 key={g.id}
                 className="text-[11px] px-2 py-0.5 rounded-md bg-muted text-foreground border border-border/50 whitespace-nowrap"
               >
-                {g.name}
+                {resolveSeriesGenreName(g.id, g.name, language)}
               </span>
             ))}
           </div>

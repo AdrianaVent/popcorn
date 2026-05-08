@@ -1,7 +1,7 @@
 import { seriesService } from '@/services/tmdb'
 import { TMDB_LANGUAGE } from '@/config/tmdb'
 import { WATCH_PROVIDERS_REGION } from '@/config/constants'
-import { deduplicateProviders } from '@/utils/watchProviders'
+import { fetchWatchProviderOptions } from '@/utils/watchProviders'
 import type { SeriesFilters } from '@/types/series'
 import type { TMDBPagedResponse, TMDBSeries, TMDBSeriesDetail, TMDBSeasonDetail, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
@@ -42,7 +42,6 @@ export function fetchSeriesWatchProviders(id: number): Promise<WatchProvidersRes
   return seriesService.watchProviders(id)
 }
 
-export async function fetchSeriesWatchProviderOptions(): Promise<WatchProvider[]> {
-  const r = await seriesService.watchProviderOptions(WATCH_PROVIDERS_REGION)
-  return deduplicateProviders(r.results.sort((a, b) => a.display_priority - b.display_priority)).slice(0, 10)
+export function fetchSeriesWatchProviderOptions(): Promise<WatchProvider[]> {
+  return fetchWatchProviderOptions(seriesService, WATCH_PROVIDERS_REGION)
 }

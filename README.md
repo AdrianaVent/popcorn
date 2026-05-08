@@ -62,11 +62,15 @@ npm run seed <username> <password>
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and sign in.
+Open [http://localhost:3000](http://localhost:3000) and sign in. After login you land on the Home dashboard.
 
 ---
 
 ## Features
+
+### Home
+
+A personal dashboard at `/home` with two genre distribution charts — one for movies and one for series. Each chart lets you toggle between **My profile** (genres from your watched list) and **Global** (genres from the TMDB popular catalogue). Bar charts are built with Recharts; long labels truncate with an ellipsis and reveal the full name on hover.
 
 ### Movies & Series
 
@@ -177,11 +181,12 @@ src/
 │   ├── layouts/        # AuthLayout, DashboardLayout
 │   └── ui/             # Button, Input, Text, Modal, ModalFooter, Header,
 │                       # DatePicker, ConfirmModal, IconButton, Table/, LoadingOverlay,
-│                       # Toast/ToastItem, Toast/ToastContainer, ...
+│                       # Toast/ToastItem, Toast/ToastContainer, BarChart, ToggleSwitch, ...
 ├── config/             # auth.ts · tmdb.ts · i18n.ts · constants.ts
 ├── db/                 # client.ts (SQLite singleton) · users.ts (typed queries)
 ├── features/
 │   ├── auth/login/     # LoginFeature · useLogin · login.service.ts
+│   ├── dashboard/      # DashboardFeature · useMovieGenres · useSeriesGenres
 │   ├── movies/         # MoviesFeature · hooks · components · service
 │   ├── series/         # SeriesFeature · hooks · components · service
 │   └── users/          # UsersFeature · UserFormModal · ImportUsersModal · users.service.ts

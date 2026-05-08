@@ -16,7 +16,6 @@ type Props = {
 export default function MovieMetaGrid({ detail, isUpcoming, releaseYear }: Props) {
   const { t } = useTranslation()
   const { language } = useLanguageStore()
-
   const rows = useMemo(() => {
     if (isUpcoming) return []
 

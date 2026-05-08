@@ -3,6 +3,9 @@
 import TableHead from './TableHead'
 import TableBody from './TableBody'
 import TableFooter from './TableFooter'
+import { useTranslation } from 'react-i18next'
+import Button from '@/components/ui/Button'
+import Text from '@/components/ui/Text'
 import type { Column } from '@/types/table'
 
 type TableProps<T extends Record<string, unknown>> = {
@@ -12,6 +15,11 @@ type TableProps<T extends Record<string, unknown>> = {
   footer?: React.ComponentProps<typeof TableFooter>
   onRowClick?: (row: T) => void
   rowClassName?: (row: T) => string
+  loading?: boolean
+  skeletonRows?: number
+  error?: string | null
+  onRetry?: () => void
+  emptyMessage?: string
 }
 
 export const widthMap = {
@@ -29,20 +37,19 @@ export default function Table<T extends Record<string, unknown>>({
   footer,
   onRowClick,
   rowClassName,
+  loading = false,
+  skeletonRows,
+  error,
+  onRetry,
+  emptyMessage,
 }: TableProps<T>) {
+  const { t } = useTranslation()
+  const showOverlay = !loading && (error || (!error && data.length === 0 && emptyMessage))
+
   return (
-    <div
-      className="
-        relative
-        flex flex-col
-        h-full
-        border border-border
-        rounded-lg
-        overflow-hidden
-      "
-    >
+    <div className="relative flex flex-col h-full border border-border rounded-lg overflow-hidden">
       <div className="flex-1 min-h-0 overflow-auto pb-14">
-       <table className="w-full table-fixed text-sm">
+        <table className="w-full table-fixed text-sm">
           <TableHead columns={columns} />
           <TableBody
             data={data}
@@ -50,10 +57,26 @@ export default function Table<T extends Record<string, unknown>>({
             getRowKey={getRowKey}
             onRowClick={onRowClick}
             rowClassName={rowClassName}
+            loading={loading}
+            skeletonRows={skeletonRows}
           />
         </table>
       </div>
-      {footer && (
+
+      {showOverlay && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-sm rounded-lg">
+          {error ? (
+            <div className="flex flex-col items-center gap-3">
+              <Text variant="body" className="text-muted-foreground">{error}</Text>
+              {onRetry && <Button variant="secondary" onClick={onRetry}>{t('common.retry')}</Button>}
+            </div>
+          ) : (
+            <Text variant="body" className="text-muted-foreground">{emptyMessage}</Text>
+          )}
+        </div>
+      )}
+
+      {footer && !loading && (
         <div
           className="
             absolute

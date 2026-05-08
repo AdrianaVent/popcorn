@@ -52,7 +52,7 @@
     "themeAuto": "Auto"
   },
   "nav": {
-    "dashboard": "Dashboard",
+    "home": "Inicio",
     "movies": "Películas",
     "series": "Series",
     "users": "Usuarios",
@@ -237,7 +237,20 @@
     }
   },
   "dashboard": {
-    "recentlyAdded": "Añadido recientemente"
+    "recentlyAdded": "Añadido recientemente",
+    "genres": "Géneros más vistos",
+    "moviesGenres": "Géneros más vistos — Películas",
+    "seriesGenres": "Géneros más vistos — Series",
+    "mode": {
+      "user": "Mi perfil",
+      "global": "Global"
+    },
+    "chart": {
+      "movies": "películas",
+      "series": "series",
+      "error": "No se han podido cargar los datos",
+      "noWatched": "Marca títulos como vistos para ver tus géneros"
+    }
   },
   "topbar": {
     "search": "Buscar...",

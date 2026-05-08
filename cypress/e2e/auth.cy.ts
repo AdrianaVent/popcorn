@@ -12,12 +12,12 @@ describe('Auth', () => {
     cy.get('[data-cy="login-error"]').should('be.visible')
   })
 
-  it('logs in with valid credentials and lands on /movies', () => {
+  it('logs in with valid credentials and lands on /home', () => {
     cy.visitWithEnglish('/login')
     cy.get('#email').type('cypress_admin')
     cy.get('#password').type('CypressAdmin1!')
     cy.get('button[type="submit"]').click()
-    cy.url().should('include', '/movies')
+    cy.url().should('include', '/home')
   })
 
   it('logs out and redirects to /login', () => {
