@@ -17,9 +17,10 @@ export default function Topbar({ onLogout }: TopbarProps) {
         aria-label={t('topbar.logout')}
         title={t('topbar.logout')}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-transparent text-muted-foreground text-small cursor-pointer transition-colors hover:text-foreground whitespace-nowrap"
+        suppressHydrationWarning
       >
         <LogOutIcon size={16} />
-        <span className="hidden lg:inline">{t('topbar.logout')}</span>
+        <span className="hidden lg:inline" suppressHydrationWarning>{t('topbar.logout')}</span>
       </button>
     </header>
   )

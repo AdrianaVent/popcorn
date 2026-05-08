@@ -30,7 +30,7 @@ export default function TableSkeleton({ rows = 9, hasImage = true, cols = 5, sho
       </div>
       {/* Footer */}
       {showFooter && (
-        <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card px-3 py-2">
+        <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card shadow-[0_-2px_10px_rgba(0,0,0,0.06)] px-3 py-2">
           <div className="flex items-center justify-center gap-3 py-2">
             <div className="h-5 w-16 rounded bg-border animate-pulse" />
             <div className="flex gap-1">

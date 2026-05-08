@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { loginRequest } from './login.service'
 import { useUserStore } from '@/store/userStore'
+import { useLanguageStore } from '@/store/languageStore'
 
 type LoginForm = {
   email: string
@@ -33,6 +34,7 @@ export function useLogin(): UseLoginReturn {
   const router = useRouter()
   const { t } = useTranslation()
   const setUser = useUserStore((s) => s.setUser)
+  const applyUserLanguage = useLanguageStore((s) => s.applyUserLanguage)
 
   const [form, setForm] = useState<LoginForm>({
     email: '',
@@ -87,7 +89,10 @@ export function useLogin(): UseLoginReturn {
       const { ok, code, userId, role } = await loginRequest(form)
 
       if (ok) {
-        if (userId && role) setUser(userId, role)
+        if (userId && role) {
+          setUser(userId, role)
+          applyUserLanguage(userId)
+        }
         router.push('/home')
         return
       }

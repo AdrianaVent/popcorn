@@ -294,7 +294,6 @@ export default function SeriesFeature() {
           goToPage(1)
         }}
         titleKey="series.filters.panel"
-        disabled={loading}
       />
 
       <div className="flex-1 min-h-0 overflow-hidden">
@@ -312,14 +311,14 @@ export default function SeriesFeature() {
             const watched = Object.keys(seriesEpisodes?.[row.id] ?? {}).length
             return total > 0 && watched >= total ? 'opacity-60' : ''
           }}
-          footer={filteredSeries.length > 0 ? {
+          footer={{
             page,
             totalPages: displayTotalPages,
             onPrev: () => goToPage(page - 1),
             onNext: () => goToPage(page + 1),
             onPageChange: goToPage,
             disabled: loading,
-          } : undefined}
+          }}
         />
       </div>
 

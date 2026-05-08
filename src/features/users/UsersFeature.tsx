@@ -245,8 +245,7 @@ export default function UsersFeature() {
               <ExportButton onExport={handleExport} disabled={isLoading} />
               <button
                 onClick={() => setModal({ mode: 'import' })}
-                disabled={isLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-foreground text-sm font-medium hover:bg-muted/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-foreground text-sm font-medium hover:bg-muted/60 transition-colors"
               >
                 <UploadIcon size={15} />
                 <span className="hidden md:inline">{t('users.import.button')}</span>
@@ -255,7 +254,6 @@ export default function UsersFeature() {
                 icon={<PlusCircleIcon size={15} />}
                 label={t('users.addUser')}
                 onClick={() => setModal({ mode: 'add' })}
-                disabled={isLoading}
               />
             </div>
           }
@@ -266,7 +264,6 @@ export default function UsersFeature() {
           filters={filters}
           onChange={handleSetFilters}
           titleKey="users.filters.panel"
-          disabled={isLoading}
         />
 
         {someSelected && (
@@ -284,7 +281,7 @@ export default function UsersFeature() {
 
         {/* Table */}
         <div className="flex-1 min-h-0 relative border border-border rounded-lg overflow-hidden">
-          <div className="h-full overflow-auto">
+          <div className="h-full overflow-auto pb-14">
             <table className="w-full table-fixed text-sm">
               <thead className="sticky top-0 z-10">
                 <tr className="bg-background border-y border-border/60">
@@ -397,17 +394,29 @@ export default function UsersFeature() {
               </tbody>
             </table>
           </div>
+          <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card shadow-[0_-2px_10px_rgba(0,0,0,0.06)] px-3 py-2">
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-3 py-2">
+                <div className="h-5 w-16 rounded bg-border animate-pulse" />
+                <div className="flex gap-1">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-7 w-7 rounded-md bg-border animate-pulse" />
+                  ))}
+                </div>
+                <div className="h-5 w-16 rounded bg-border animate-pulse" />
+              </div>
+            ) : (
+              <TableFooter
+                page={page}
+                totalPages={totalPages}
+                onPrev={() => setPage((p) => Math.max(1, p - 1))}
+                onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+                onPageChange={setPage}
+                disabled={isLoading}
+              />
+            )}
+          </div>
         </div>
-        {totalPages > 1 && (
-          <TableFooter
-            page={page}
-            totalPages={totalPages}
-            onPrev={() => setPage((p) => Math.max(1, p - 1))}
-            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
-            onPageChange={setPage}
-            disabled={isLoading}
-          />
-        )}
 
       </div>
 

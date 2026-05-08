@@ -7,11 +7,11 @@ import { DownloadIcon } from '@/components/icons'
 type ExportFormat = 'json' | 'csv'
 
 type Props = {
-  onExport: (format: ExportFormat) => void
+  onExport?: (format: ExportFormat) => void
   disabled?: boolean
 }
 
-export default function ExportButton({ onExport, disabled = false }: Props) {
+export default function ExportButton({ onExport = () => {}, disabled = false }: Props) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)

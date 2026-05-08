@@ -212,7 +212,6 @@ export default function MoviesFeature() {
           setFilters(next)
           goToPage(1)
         }}
-        disabled={loading}
       />
 
       <div className="flex-1 min-h-0 overflow-hidden">
@@ -226,14 +225,14 @@ export default function MoviesFeature() {
           getRowKey={(row) => row.id}
           onRowClick={(row) => setSelectedId(row.id)}
           rowClassName={(row) => watchedMovies?.[row.id] ? 'opacity-60' : ''}
-          footer={filteredMovies.length > 0 ? {
+          footer={{
             page,
             totalPages: displayTotalPages,
             onPrev: () => goToPage(page - 1),
             onNext: () => goToPage(page + 1),
             onPageChange: goToPage,
             disabled: loading,
-          } : undefined}
+          }}
         />
       </div>
 

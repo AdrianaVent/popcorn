@@ -10,7 +10,7 @@ export default function TableHead<
   T extends Record<string, unknown>
 >({ columns }: TableHeadProps<T>) {
   return (
-    <thead className="sticky top-0 z-10">
+    <thead className="sticky top-0 z-10 bg-background will-change-transform">
       <tr className="
         bg-background
         border-y border-border/60

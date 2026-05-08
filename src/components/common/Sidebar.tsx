@@ -112,7 +112,7 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
             const content = (
               <>
                 <span className="shrink-0">{item.icon}</span>
-                {!collapsed && t(item.labelKey)}
+                {!collapsed && <span suppressHydrationWarning>{t(item.labelKey)}</span>}
               </>
             )
 
@@ -154,6 +154,7 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
               top: tooltipY,
               transform: 'translateY(-50%)'
             }}
+            suppressHydrationWarning
           >
             {t(item.labelKey)}
           </div>
