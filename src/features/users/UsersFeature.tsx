@@ -62,7 +62,7 @@ export default function UsersFeature() {
     setPage(1)
   }
 
-  const { data, isLoading: loading, isError } = useQuery<UsersPage>({
+  const { data, isLoading, isError } = useQuery<UsersPage>({
     queryKey: ['users', page, filters],
     queryFn: () => fetchUsers(page, filters),
   })
@@ -242,7 +242,7 @@ export default function UsersFeature() {
           title={t('users.title')}
           end={
             <div className="flex items-center gap-2">
-              <ExportButton onExport={handleExport} />
+              <ExportButton onExport={handleExport} disabled={isLoading} />
               <button
                 onClick={() => setModal({ mode: 'import' })}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-foreground text-sm font-medium hover:bg-muted/60 transition-colors"
@@ -281,7 +281,7 @@ export default function UsersFeature() {
 
         {/* Table */}
         <div className="flex-1 min-h-0 relative border border-border rounded-lg overflow-hidden">
-          <div className="h-full overflow-auto">
+          <div className="h-full overflow-auto pb-14">
             <table className="w-full table-fixed text-sm">
               <thead className="sticky top-0 z-10">
                 <tr className="bg-background border-y border-border/60">
@@ -306,7 +306,7 @@ export default function UsersFeature() {
               </thead>
 
               <tbody>
-                {loading && Array.from({ length: 9 }).map((_, i) => (
+                {isLoading && Array.from({ length: 9 }).map((_, i) => (
                   <tr key={i} className={i % 2 === 0 ? 'bg-cream-100 dark:bg-gray-900' : 'bg-cream-300 dark:bg-gray-800'}>
                     <td className="px-2 py-3"><div className="w-4 h-4 rounded bg-border animate-pulse mx-auto" /></td>
                     {(['w-1/3', 'w-16', 'w-24', 'w-24', 'w-12'] as const).map((w, j) => (
@@ -324,13 +324,13 @@ export default function UsersFeature() {
                     </td>
                   </tr>
                 )}
-                {!loading && !error && data?.totalResults === 0 && !Object.values(filters).some(Boolean) && (
+                {!isLoading && !error && data?.totalResults === 0 && !Object.values(filters).some(Boolean) && (
                   <tr><td colSpan={6} className="py-16 text-center text-muted-foreground text-sm">{t('users.empty')}</td></tr>
                 )}
-                {!loading && !error && data?.totalResults === 0 && Object.values(filters).some(Boolean) && (
+                {!isLoading && !error && data?.totalResults === 0 && Object.values(filters).some(Boolean) && (
                   <tr><td colSpan={6} className="py-16 text-center text-muted-foreground text-sm">{t('users.noResults')}</td></tr>
                 )}
-                {!loading && !error && users.map((user, i) => {
+                {!isLoading && !error && users.map((user, i) => {
                   const isSelf = user.id === currentUserId
                   const isSelected = selected.has(user.id)
 
@@ -394,16 +394,29 @@ export default function UsersFeature() {
               </tbody>
             </table>
           </div>
+          <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card shadow-[0_-2px_10px_rgba(0,0,0,0.06)] px-3 py-2">
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-3 py-2">
+                <div className="h-5 w-16 rounded bg-border animate-pulse" />
+                <div className="flex gap-1">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-7 w-7 rounded-md bg-border animate-pulse" />
+                  ))}
+                </div>
+                <div className="h-5 w-16 rounded bg-border animate-pulse" />
+              </div>
+            ) : (
+              <TableFooter
+                page={page}
+                totalPages={totalPages}
+                onPrev={() => setPage((p) => Math.max(1, p - 1))}
+                onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+                onPageChange={setPage}
+                disabled={isLoading}
+              />
+            )}
+          </div>
         </div>
-        {totalPages > 1 && (
-          <TableFooter
-            page={page}
-            totalPages={totalPages}
-            onPrev={() => setPage((p) => Math.max(1, p - 1))}
-            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
-            onPageChange={setPage}
-          />
-        )}
 
       </div>
 

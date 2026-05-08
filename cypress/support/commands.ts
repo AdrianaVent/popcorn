@@ -13,11 +13,11 @@ declare global {
   }
 }
 
-const forceEnglish = (win: Window) => {
-  win.localStorage.setItem('popcorn-lang-init', '1')
+const forceEnglish = (win: Window, userId?: string) => {
+  const userLanguages = userId ? { [userId]: 'en' } : {}
   win.localStorage.setItem(
     'popcorn-language',
-    JSON.stringify({ state: { language: 'en' }, version: 0 })
+    JSON.stringify({ state: { language: 'en', userLanguages }, version: 0 })
   )
 }
 
@@ -33,31 +33,31 @@ Cypress.Commands.add('login', (username: string, password: string) => {
   return cy.request({ method: 'POST', url: '/api/auth/login', body: { username, password } })
 })
 
-// Visit a page with English forced — prevents LanguageProvider from detecting navigator.language
+// Visit the login page — unauthenticated, no language override needed
 Cypress.Commands.add('visitWithEnglish', (path: string) => {
-  cy.visit(path, { onBeforeLoad: forceEnglish })
+  cy.visit(path)
 })
 
-// Login + force English + seed userStore + visit
+// Login + force English for that user + seed userStore + visit
 Cypress.Commands.add('visitAsAdmin', (path: string) => {
   cy.login('cypress_admin', 'CypressAdmin1!').then((resp) => {
     const { userId, role } = resp.body
     cy.visit(path, {
       onBeforeLoad: (win: Window) => {
-        forceEnglish(win)
+        forceEnglish(win, userId)
         setUserStore(win, userId, role)
       },
     })
   })
 })
 
-// Login as guest + force English + seed userStore + visit
+// Login as guest + force English for that user + seed userStore + visit
 Cypress.Commands.add('visitAsGuest', (path: string) => {
   cy.login('cypress_guest', 'CypressGuest1!').then((resp) => {
     const { userId, role } = resp.body
     cy.visit(path, {
       onBeforeLoad: (win: Window) => {
-        forceEnglish(win)
+        forceEnglish(win, userId)
         setUserStore(win, userId, role)
       },
     })

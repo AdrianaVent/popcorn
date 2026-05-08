@@ -203,7 +203,7 @@ export default function MoviesFeature() {
   return (
     <div className="h-full flex flex-col gap-4 p-4">
 
-      <Header title={t('movies.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} /> : undefined} />
+      <Header title={t('movies.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} disabled={loading} /> : undefined} />
 
       <FiltersPanel
         schema={filtersSchema}
@@ -225,13 +225,14 @@ export default function MoviesFeature() {
           getRowKey={(row) => row.id}
           onRowClick={(row) => setSelectedId(row.id)}
           rowClassName={(row) => watchedMovies?.[row.id] ? 'opacity-60' : ''}
-          footer={filteredMovies.length > 0 ? {
+          footer={{
             page,
             totalPages: displayTotalPages,
             onPrev: () => goToPage(page - 1),
             onNext: () => goToPage(page + 1),
             onPageChange: goToPage,
-          } : undefined}
+            disabled: loading,
+          }}
         />
       </div>
 

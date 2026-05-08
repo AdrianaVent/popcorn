@@ -82,6 +82,7 @@ describe('Users', () => {
   it('filters users by username', () => {
     cy.task('seedUser', { username: 'cy_filter_user', password: 'FilterUser1!', role: 'guest' as const })
     cy.reload()
+    cy.contains('tr', 'cypress_admin').should('be.visible')
     cy.get('[data-cy="filter-username"]').type('cy_filter')
     cy.contains('tr', 'cy_filter_user').should('be.visible')
     cy.contains('tr', 'cypress_admin').should('not.exist')
@@ -91,6 +92,7 @@ describe('Users', () => {
   it('filters users by role', () => {
     cy.task('seedUser', { username: 'cy_role_test', password: 'RoleTest1!', role: 'guest' as const })
     cy.reload()
+    cy.contains('tr', 'cypress_admin').should('be.visible')
     cy.get('[data-cy="filter-role"]').select('admin')
     cy.contains('tr', 'cypress_admin').should('be.visible')
     cy.contains('tr', 'cy_role_test').should('not.exist')

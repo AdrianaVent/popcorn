@@ -1,33 +1,47 @@
-import TableSkeleton from '@/components/ui/Table/TableSkeleton'
+'use client'
 
-type HeaderButton = { width: string }
+import { type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import TableSkeleton from '@/components/ui/Table/TableSkeleton'
+import Header from '@/components/ui/Header'
+import FiltersPanel from '@/components/common/FiltersPanel'
+import type { FilterField } from '@/types/table'
 
 type Props = {
-  titleWidth?: string
-  headerButtons?: HeaderButton[]
+  titleKey: string
+  headerEnd?: ReactNode
   hasImage?: boolean
   cols?: number
+  filterTitleKey?: string
+  filterSchema?: FilterField<Record<string, unknown>>[]
 }
 
 export default function PageSkeleton({
-  titleWidth = 'w-20',
-  headerButtons = [],
+  titleKey,
+  headerEnd,
   hasImage = true,
   cols = 5,
+  filterTitleKey,
+  filterSchema,
 }: Props) {
+  const { t } = useTranslation()
+
   return (
     <div className="h-full flex flex-col gap-4 p-4">
-      <div className="shrink-0 flex items-center justify-between">
-        <div className={`h-7 ${titleWidth} rounded-md bg-border animate-pulse`} />
-        {headerButtons.length > 0 && (
-          <div className="flex items-center gap-2">
-            {headerButtons.map((btn, i) => (
-              <div key={i} className={`h-8 ${btn.width} rounded-md bg-border animate-pulse`} />
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="rounded-lg border border-border bg-card/60 h-22 animate-pulse" />
+      <Header title={t(titleKey)} end={headerEnd} />
+
+      {filterSchema ? (
+        <FiltersPanel
+          schema={filterSchema}
+          filters={{}}
+          onChange={() => {}}
+          titleKey={filterTitleKey}
+          disabled
+        />
+      ) : (
+        <div className="rounded-lg border border-border bg-card/60 h-14 animate-pulse" />
+      )}
+
       <div className="flex-1 min-h-0 overflow-hidden">
         <TableSkeleton hasImage={hasImage} cols={cols} />
       </div>

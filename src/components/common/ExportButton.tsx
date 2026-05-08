@@ -7,10 +7,11 @@ import { DownloadIcon } from '@/components/icons'
 type ExportFormat = 'json' | 'csv'
 
 type Props = {
-  onExport: (format: ExportFormat) => void
+  onExport?: (format: ExportFormat) => void
+  disabled?: boolean
 }
 
-export default function ExportButton({ onExport }: Props) {
+export default function ExportButton({ onExport = () => {}, disabled = false }: Props) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -30,7 +31,8 @@ export default function ExportButton({ onExport }: Props) {
     <div className="relative group/export" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-foreground text-sm font-medium hover:bg-muted/60 transition-colors"
+        disabled={disabled}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-foreground text-sm font-medium hover:bg-muted/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <DownloadIcon size={15} />
         <span className="hidden md:inline">{t('export.button')}</span>

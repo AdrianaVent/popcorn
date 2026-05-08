@@ -11,6 +11,7 @@ export type TableFooterProps = {
   onPrev: () => void
   onNext: () => void
   onPageChange?: (page: number) => void
+  disabled?: boolean
 }
 
 function getVisiblePages(page: number, totalPages: number) {
@@ -33,6 +34,7 @@ export default function TableFooter({
   onPrev,
   onNext,
   onPageChange,
+  disabled = false,
 }: TableFooterProps) {
   const { t } = useTranslation()
   const pages = getVisiblePages(page, totalPages)
@@ -43,7 +45,7 @@ export default function TableFooter({
         {/* Prev */}
         <button
             onClick={onPrev}
-            disabled={page <= 1}
+            disabled={disabled || page <= 1}
             className="
             inline-flex items-center gap-1
             px-2 py-1 text-sm
@@ -65,7 +67,7 @@ export default function TableFooter({
             return (
                 <button
                 key={p}
-                onClick={() => onPageChange?.(p)}
+                onClick={() => !disabled && onPageChange?.(p)}
                 className={clsx(
                     'w-7 h-7 flex items-center justify-center rounded-md text-xs transition',
                     isActive
@@ -82,7 +84,7 @@ export default function TableFooter({
         {/* Next */}
         <button
             onClick={onNext}
-            disabled={page >= totalPages}
+            disabled={disabled || page >= totalPages}
             className="
             inline-flex items-center gap-1
             px-2 py-1 text-sm
