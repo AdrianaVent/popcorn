@@ -4,9 +4,10 @@ type Props = {
   rows?: number
   hasImage?: boolean
   cols?: number
+  showFooter?: boolean
 }
 
-export default function TableSkeleton({ rows = 9, hasImage = true, cols = 5 }: Props) {
+export default function TableSkeleton({ rows = 9, hasImage = true, cols = 5, showFooter = true }: Props) {
   return (
     <div className="relative flex flex-col h-full border border-border rounded-lg overflow-hidden">
       {/* Header */}
@@ -27,6 +28,20 @@ export default function TableSkeleton({ rows = 9, hasImage = true, cols = 5 }: P
           </div>
         ))}
       </div>
+      {/* Footer */}
+      {showFooter && (
+        <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card px-3 py-2">
+          <div className="flex items-center justify-center gap-3 py-2">
+            <div className="h-5 w-16 rounded bg-border animate-pulse" />
+            <div className="flex gap-1">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-7 w-7 rounded-md bg-border animate-pulse" />
+              ))}
+            </div>
+            <div className="h-5 w-16 rounded bg-border animate-pulse" />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
