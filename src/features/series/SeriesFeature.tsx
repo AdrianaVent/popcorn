@@ -284,7 +284,7 @@ export default function SeriesFeature() {
   return (
     <div className="h-full flex flex-col gap-4 p-4">
 
-      <Header title={t('series.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} /> : undefined} />
+      <Header title={t('series.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} disabled={loading} /> : undefined} />
 
       <FiltersPanel
         schema={filtersSchema}
@@ -294,6 +294,7 @@ export default function SeriesFeature() {
           goToPage(1)
         }}
         titleKey="series.filters.panel"
+        disabled={loading}
       />
 
       <div className="flex-1 min-h-0 overflow-hidden">
@@ -317,6 +318,7 @@ export default function SeriesFeature() {
             onPrev: () => goToPage(page - 1),
             onNext: () => goToPage(page + 1),
             onPageChange: goToPage,
+            disabled: loading,
           } : undefined}
         />
       </div>

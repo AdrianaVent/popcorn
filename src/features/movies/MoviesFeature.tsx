@@ -203,7 +203,7 @@ export default function MoviesFeature() {
   return (
     <div className="h-full flex flex-col gap-4 p-4">
 
-      <Header title={t('movies.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} /> : undefined} />
+      <Header title={t('movies.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} disabled={loading} /> : undefined} />
 
       <FiltersPanel
         schema={filtersSchema}
@@ -212,6 +212,7 @@ export default function MoviesFeature() {
           setFilters(next)
           goToPage(1)
         }}
+        disabled={loading}
       />
 
       <div className="flex-1 min-h-0 overflow-hidden">
@@ -231,6 +232,7 @@ export default function MoviesFeature() {
             onPrev: () => goToPage(page - 1),
             onNext: () => goToPage(page + 1),
             onPageChange: goToPage,
+            disabled: loading,
           } : undefined}
         />
       </div>
