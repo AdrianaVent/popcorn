@@ -1,6 +1,7 @@
 'use client' // required by Zustand
 
 import { ReactNode, useEffect } from 'react'
+import i18n from '@/config/i18n'
 import { useLanguageStore } from '@/store/languageStore'
 
 interface LanguageProviderProps {
@@ -8,7 +9,13 @@ interface LanguageProviderProps {
 }
 
 export default function LanguageProvider({ children }: LanguageProviderProps) {
-  const { setLanguage } = useLanguageStore()
+  const { language, setLanguage } = useLanguageStore()
+
+  useEffect(() => {
+    // Sync i18n after mount so server and client hydrate with the same language ('en'),
+    // then update to the persisted language on the client.
+    i18n.changeLanguage(language)
+  }, [language])
 
   useEffect(() => {
     const initialized = localStorage.getItem('popcorn-lang-init')

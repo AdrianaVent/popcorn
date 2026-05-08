@@ -1,5 +1,28 @@
 import type { TMDBSeriesDetail } from '@/types/tmdb'
 
+const TV_GENRE_ES: Record<number, string> = {
+  10759: 'Acción y aventura',
+  16:    'Animación',
+  35:    'Comedia',
+  80:    'Crimen',
+  99:    'Documental',
+  18:    'Drama',
+  10751: 'Familia',
+  10762: 'Niños',
+  9648:  'Misterio',
+  10763: 'Noticias',
+  10764: 'Reality',
+  10765: 'Ciencia ficción y fantasía',
+  10766: 'Telenovela',
+  10767: 'Tertulias',
+  10768: 'Guerra y política',
+  37:    'Western',
+}
+
+export function resolveSeriesGenreName(id: number, fallback: string, language: string): string {
+  return language === 'es' ? (TV_GENRE_ES[id] ?? fallback) : fallback
+}
+
 export type StatusConfig = {
   labelKey: string
   border: string

@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html className={openSans.variable}>
+    <html className={openSans.variable} suppressHydrationWarning>
       <body>
         <GlobalProvider>{children}</GlobalProvider>
       </body>

@@ -18,14 +18,6 @@ export const useLanguageStore = create<LanguageState>()(
         set({ language: lang })
       },
     }),
-    {
-      name: 'popcorn-language',
-      // onRehydrateStorage fires after Zustand restores state from localStorage.
-      // Without this, i18n would stay on its default language until the next
-      // setLanguage call, causing a flash of untranslated text on page reload.
-      onRehydrateStorage: () => (state) => {
-        if (state?.language) i18n.changeLanguage(state.language)
-      },
-    }
+    { name: 'popcorn-language' }
   )
 )

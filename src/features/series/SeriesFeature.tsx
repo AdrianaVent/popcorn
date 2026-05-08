@@ -2,12 +2,8 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRouter } from 'next/navigation'
 
-import DashboardLayout from '@/components/layouts/DashboardLayout'
 import Table from '@/components/ui/Table/Table'
-import Button from '@/components/ui/Button'
-import Text from '@/components/ui/Text'
 import Header from '@/components/ui/Header'
 import MediaPoster from '@/components/common/MediaPoster'
 import FiltersPanel from '@/components/common/FiltersPanel'
@@ -50,7 +46,6 @@ const initialFilters: SeriesFilters = {}
 
 export default function SeriesFeature() {
   const { t } = useTranslation()
-  const router = useRouter()
   const { language } = useLanguageStore()
   const addToast = useToastStore((s) => s.addToast)
 
@@ -64,10 +59,6 @@ export default function SeriesFeature() {
 
   const abortRef = useRef<AbortController | null>(null)
 
-  // Background enrichment: fetch status and episode count for each visible series.
-  // allSettled (not all) so a single failed detail request doesn't abort the whole batch.
-  // AbortController cancels the .then callback when the component unmounts or deps change
-  // — the in-flight fetches are not cancellable, but their results are discarded.
   useEffect(() => {
     if (!series.length) return
     abortRef.current?.abort()
@@ -95,7 +86,6 @@ export default function SeriesFeature() {
 
   const userId = useUserStore((s) => s.userId)
   const role = useUserStore((s) => s.role)
-  const clearUser = useUserStore((s) => s.clearUser)
   const userKey = String(userId ?? 'guest')
   const seriesEpisodes = useWatchedStore((s) => s.episodes[userKey])
 
@@ -123,7 +113,6 @@ export default function SeriesFeature() {
 
   const filteredSeries = useMemo(() => {
     if (filters.watched === 'watched') {
-      // store items: filter date as safety net (applyClientFilters doesn't run in this path)
       return watchedModeItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).filter((s) => s.first_air_date)
     }
     if (filters.watched === 'unwatched') {
@@ -139,12 +128,6 @@ export default function SeriesFeature() {
   const displayTotalPages = filters.watched === 'watched'
     ? Math.max(1, Math.ceil(watchedModeItems.length / PAGE_SIZE))
     : totalPages
-
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
-    clearUser()
-    router.push('/login')
-  }
 
   const handleExport = useCallback(async (format: 'json' | 'csv') => {
     setIsExporting(true)
@@ -173,10 +156,6 @@ export default function SeriesFeature() {
         }
       }
 
-      // Fetch all statuses fresh for export — the background enrichment Map only covers
-      // the current page, so we re-fetch all pages' details here. allSettled ensures
-      // a single failure doesn't abort the whole export; failed rows fall back to the
-      // component statuses Map or an empty string.
       const detailResults = await Promise.allSettled(
         baseRows.map((s) => fetchSeriesDetail(s.id, language))
       )
@@ -303,61 +282,43 @@ export default function SeriesFeature() {
   ]
 
   return (
-    <DashboardLayout activeNav="series" onLogout={handleLogout}>
-      <div className="h-full flex flex-col gap-4 p-4">
+    <div className="h-full flex flex-col gap-4 p-4">
 
-        <Header title={t('series.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} /> : undefined} />
+      <Header title={t('series.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} /> : undefined} />
 
-        <FiltersPanel
-          schema={filtersSchema}
-          filters={filters}
-          onChange={(next) => {
-            setFilters(next)
-            goToPage(1)
+      <FiltersPanel
+        schema={filtersSchema}
+        filters={filters}
+        onChange={(next) => {
+          setFilters(next)
+          goToPage(1)
+        }}
+        titleKey="series.filters.panel"
+      />
+
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <Table<SeriesRow>
+          loading={loading}
+          error={error ?? undefined}
+          onRetry={retry}
+          emptyMessage={t('series.empty')}
+          data={filteredSeries}
+          columns={columns}
+          getRowKey={(row) => row.id}
+          onRowClick={(row) => setSelectedId(row.id)}
+          rowClassName={(row) => {
+            const total = totals.get(row.id) ?? 0
+            const watched = Object.keys(seriesEpisodes?.[row.id] ?? {}).length
+            return total > 0 && watched >= total ? 'opacity-60' : ''
           }}
-          titleKey="series.filters.panel"
+          footer={filteredSeries.length > 0 ? {
+            page,
+            totalPages: displayTotalPages,
+            onPrev: () => goToPage(page - 1),
+            onNext: () => goToPage(page + 1),
+            onPageChange: goToPage,
+          } : undefined}
         />
-
-        <div className="flex-1 min-h-0 overflow-hidden">
-
-          {loading && <Text>{t('series.loading')}</Text>}
-
-          {!loading && error && (
-            <Button variant="secondary" onClick={() => retry()}>
-              {t('common.retry')}
-            </Button>
-          )}
-
-          {!loading && !error && filteredSeries.length === 0 && (
-            <div className="flex items-center justify-center h-full">
-              <Text variant="body" className="text-muted-foreground">
-                {t('series.empty')}
-              </Text>
-            </div>
-          )}
-
-          {!loading && !error && filteredSeries.length > 0 && (
-            <Table<SeriesRow>
-              data={filteredSeries}
-              columns={columns}
-              getRowKey={(row) => row.id}
-              onRowClick={(row) => setSelectedId(row.id)}
-              rowClassName={(row) => {
-                const total = totals.get(row.id) ?? 0
-                const watched = Object.keys(seriesEpisodes?.[row.id] ?? {}).length
-                return total > 0 && watched >= total ? 'opacity-60' : ''
-              }}
-              footer={{
-                page,
-                totalPages: displayTotalPages,
-                onPrev: () => goToPage(page - 1),
-                onNext: () => goToPage(page + 1),
-                onPageChange: goToPage,
-              }}
-            />
-          )}
-
-        </div>
       </div>
 
       {selectedId !== null && (
@@ -368,6 +329,6 @@ export default function SeriesFeature() {
       )}
 
       {isExporting && <LoadingOverlay message={t('export.loading')} />}
-    </DashboardLayout>
+    </div>
   )
 }
