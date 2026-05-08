@@ -5,13 +5,14 @@ import Modal from '@/components/ui/Modal'
 import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 import { useSeriesDetail } from '@/features/series/hooks/useSeriesDetail'
-import { useSeriesWatchProviders } from '@/features/series/hooks/useSeriesWatchProviders'
+import { useWatchProviders } from '@/hooks/useWatchProviders'
+import { fetchSeriesWatchProviders } from '@/features/series/series.service'
 import { getSeriesUI } from '@/features/series/getSeriesUI'
 import WatchProviders from '@/components/common/WatchProviders'
 import type { StoredSeries } from '@/store/watchedStore'
 
 import SeriesMetaGrid from './SeriesMetaGrid'
-import SeriesDetailSkeleton from './SeriesDetailSkeleton'
+import MediaDetailSkeleton from '@/components/common/MediaDetailSkeleton'
 import SeasonsAccordion from './SeasonsAccordion'
 
 type Props = {
@@ -22,7 +23,7 @@ type Props = {
 export default function SeriesDetailModal({ seriesId, onClose }: Props) {
   const { t } = useTranslation()
   const { detail, loading, error } = useSeriesDetail(seriesId)
-  const { flatrate, rent, loading: providersLoading } = useSeriesWatchProviders(seriesId)
+  const { flatrate, rent, loading: providersLoading } = useWatchProviders(seriesId, fetchSeriesWatchProviders, 'series')
 
   const ui = getSeriesUI(detail)
 
@@ -40,7 +41,7 @@ export default function SeriesDetailModal({ seriesId, onClose }: Props) {
   return (
     <Modal title={detail?.name ?? '...'} onClose={onClose} maxWidth="44rem">
 
-      {loading && <SeriesDetailSkeleton />}
+      {loading && <MediaDetailSkeleton />}
 
       {!loading && error && (
         <Text variant="body" className="text-muted-foreground text-center py-8">

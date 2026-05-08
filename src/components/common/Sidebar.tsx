@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
-import { FilmIcon, TvIcon, GearIcon, MenuIcon, UsersIcon } from '@/components/icons'
+import Link from 'next/link'
+import { FilmIcon, TvIcon, GearIcon, MenuIcon, UsersIcon, HomeIcon } from '@/components/icons'
 import SettingsModal from './SettingsModal'
 import Image from 'next/image'
 import { useUserStore } from '@/store/userStore'
@@ -24,7 +25,11 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
   const { t } = useTranslation()
   const { role } = useUserStore()
 
+  const [mounted, setMounted] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setMounted(true) }, [])
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [hoveredKey, setHoveredKey] = useState<string | null>(null)
   const [tooltipY, setTooltipY] = useState(0)
@@ -44,9 +49,10 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
   }, [])
 
   const navItems: NavItem[] = [
-    { key: 'movies',   labelKey: 'nav.movies',   icon: <FilmIcon size={16} />,   href: '/movies' },
-    { key: 'series',   labelKey: 'nav.series',   icon: <TvIcon size={16} />,     href: '/series' },
-    ...(role === 'admin' ? [{ key: 'users', labelKey: 'nav.users', icon: <UsersIcon size={16} />, href: '/users' }] : []),
+    { key: 'dashboard', labelKey: 'nav.home', icon: <HomeIcon size={16} />, href: '/home' },
+    { key: 'movies',    labelKey: 'nav.movies',    icon: <FilmIcon size={16} />, href: '/movies' },
+    { key: 'series',    labelKey: 'nav.series',    icon: <TvIcon size={16} />,   href: '/series' },
+    ...(mounted && role === 'admin' ? [{ key: 'users', labelKey: 'nav.users', icon: <UsersIcon size={16} />, href: '/users' }] : []),
     { key: 'settings', labelKey: 'nav.settings', icon: <GearIcon size={16} />,   onClick: () => setSettingsOpen(true) },
   ]
 
@@ -121,15 +127,15 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
                 {content}
               </button>
             ) : (
-              <a
+              <Link
                 key={item.key}
-                href={item.href}
+                href={item.href ?? '/'}
                 onMouseEnter={(e) => handleMouseEnter(item.key, e)}
                 onMouseLeave={() => setHoveredKey(null)}
                 className={itemClass(isActive)}
               >
                 {content}
-              </a>
+              </Link>
             )
           })}
         </nav>

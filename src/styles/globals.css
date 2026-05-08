@@ -121,6 +121,9 @@
 
   --destructive:        var(--color-red-500);
 
+  --chart-axis:         #111827;
+  --chart-bar:          var(--primary);
+
   --pattern-opacity: 0.04;
 }
 
@@ -142,6 +145,9 @@
 
   --destructive:        var(--color-red-400);
 
+  --chart-axis:         #9CA3AF;
+  --chart-bar:          var(--color-cream-600);
+
   --pattern-opacity: 0.15;
 }
 
@@ -149,6 +155,21 @@
 html {
   font-family: var(--font-open-sans), system-ui, -apple-system,
     BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+body {
+  background-color: var(--background);
+}
+
+/* Prevent flash before React hydrates: match system preference when data-theme is absent */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    background-color: #111827;
+    color: #F3F4F6;
+  }
 }
 
 /* ─── REACT-DAY-PICKER ───────────────────────── */

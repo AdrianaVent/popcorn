@@ -52,7 +52,7 @@
     "themeAuto": "Auto"
   },
   "nav": {
-    "dashboard": "Dashboard",
+    "home": "Home",
     "movies": "Movies",
     "series": "Series",
     "users": "Users",
@@ -237,7 +237,20 @@
     }
   },
   "dashboard": {
-    "recentlyAdded": "Recently added"
+    "recentlyAdded": "Recently added",
+    "genres": "Most watched genres",
+    "moviesGenres": "Most watched genres — Movies",
+    "seriesGenres": "Most watched genres — Series",
+    "mode": {
+      "user": "My profile",
+      "global": "Global"
+    },
+    "chart": {
+      "movies": "movies",
+      "series": "series",
+      "error": "Could not load data",
+      "noWatched": "Mark some titles as watched to see your genres"
+    }
   },
   "topbar": {
     "search": "Search...",

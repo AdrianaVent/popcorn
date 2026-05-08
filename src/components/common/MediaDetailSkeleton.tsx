@@ -1,4 +1,4 @@
-export default function SeriesDetailSkeleton() {
+export default function MediaDetailSkeleton() {
   return (
     <div className="flex gap-6 animate-pulse">
       <div className="w-24 h-36 rounded bg-border/50 shrink-0" />

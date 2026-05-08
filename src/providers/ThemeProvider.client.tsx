@@ -1,14 +1,19 @@
 'use client'
 
-import { ReactNode } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { useThemeStore } from '@/store/themeStore'
 import { resolveMode } from '@/styles/theme'
 
 export default function ThemeProvider({ children }: { children: ReactNode }) {
   const { mode } = useThemeStore()
+  const resolved = resolveMode(mode)
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', resolved)
+  }, [resolved])
 
   return (
-    <div data-theme={resolveMode(mode)} className="min-h-screen bg-background text-foreground transition-colors duration-300">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       {children}
     </div>
   )

@@ -11,3 +11,15 @@ export function deduplicateProviders<T extends WatchProvider>(providers: T[]): T
   }
   return kept
 }
+
+type ProviderOptionsSource = {
+  watchProviderOptions: (region: string) => Promise<{ results: WatchProvider[] }>
+}
+
+export async function fetchWatchProviderOptions(
+  service: ProviderOptionsSource,
+  region: string,
+): Promise<WatchProvider[]> {
+  const r = await service.watchProviderOptions(region)
+  return deduplicateProviders(r.results.sort((a, b) => a.display_priority - b.display_priority)).slice(0, 10)
+}
