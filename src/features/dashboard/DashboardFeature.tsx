@@ -63,6 +63,7 @@ export default function DashboardFeature() {
           key={contentTab}
           title={t('dashboard.genres')}
           orientation="horizontal"
+          tooltipLabel={isMovies ? t('dashboard.chart.movies') : t('dashboard.chart.series')}
           userQuery={isMovies ? userMovieGenres : userSeriesGenres}
           globalQuery={isMovies ? globalMovieGenres : globalSeriesGenres}
           defaultMode={isMovies ? movieDefaultMode : seriesDefaultMode}

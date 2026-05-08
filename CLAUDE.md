@@ -85,11 +85,11 @@ src/
 │   │   ├── getSeriesUI.ts      # status badge config; resolveSeriesGenreName — static ES translation map (TV genre IDs)
 │   │   └── index.ts
 │   └── users/                  # UsersFeature, UserFormModal, ImportUsersModal,
-│                               # users.service.ts, userFilters.schema.ts, applyUserFilters.ts, index.ts
+│                               # users.service.ts (fetchUsers — server-side paginated + filtered),
+│                               # userFilters.schema.ts, index.ts
 ├── hooks/
 │   ├── useFilters.ts
 │   ├── useMounted.ts           # returns false on server / during hydration, true after mount
-│   ├── useTranslation.ts
 │   └── useWatchProviders.ts    # generic hook — fetches + deduplicates flatrate/rent/buy per region (TanStack Query)
 ├── locales/                    # en.json, es.json
 ├── middleware.ts               # JWT verification + route protection (Edge Runtime)
@@ -143,7 +143,7 @@ data/
 | Export JSON + CSV (movies + series, admin only) | Done |
 | Unit & integration tests | Done |
 | User management UI | Done |
-| User management — pagination + toasts | Done |
+| User management — server-side pagination + toasts | Done |
 | E2E tests (Cypress) | Done |
 | Watch providers (Spain) — modal + platform filter | Done |
 | Export users (JSON + CSV, admin only) | Done |
@@ -207,6 +207,9 @@ Features using i18n or theme loaded with `dynamic(..., { ssr: false })` to avoid
 **TanStack Query (server state)**
 All TMDB data fetching and the users list use `useQuery` from `@tanstack/react-query`. `QueryClientProvider` wraps the entire app in `GlobalProvider`. Default `staleTime: 5min` avoids redundant refetches for TMDB data. `enabled: id !== null` replaces the old null-fetcher pattern. Query keys are structured arrays (`['movie-detail', id, language]`) so language changes automatically invalidate cached data. The `useAsync` custom hook has been removed. Hook tests wrap `renderHook` in a `QueryClientProvider` with `retry: false` for deterministic test behavior. `useWatchProviders` accepts a `type: 'movie' | 'series'` parameter so movie and series provider queries get distinct cache entries despite sharing the same generic hook. User mutations (create, update, delete, bulk delete) use `useMutation`: `onSuccess` invalidates the `['users']` cache and queues the toast via `pendingToast` (fires on modal close); `onError` shows a toast for all errors except `USERNAME_TAKEN`, which is re-thrown to the form for inline display. Delete loading state is derived from `deleteOneMutation.isPending || deleteManyMutation.isPending`.
 
+**User pagination (server-side)**
+`GET /api/users` accepts `page`, `pageSize` (default 20), `username`, `role`, `created_after`, `created_by` as query params. `usersDb.findPaginated` builds a dynamic SQL `WHERE` clause and returns `{ users, total }` with `LIMIT/OFFSET`. The response shape is `{ users, totalPages, totalResults, creators }` — `creators` is the distinct list of users who appear as `created_by`, used to populate the filter dropdown without a second request. `UsersFeature` query key is `['users', page, filters]`; filter changes reset the page to 1 synchronously via `handleSetFilters` (no `useEffect`). Export calls `fetchUsers(1, {}, 9999)` to get all users regardless of the current page. Page size matches TMDB (20 results per page).
+
 **Table loading/error/empty states**
 `Table` accepts `loading`, `error`, `onRetry` and `emptyMessage` props. When `loading=true`, `TableBody` renders skeleton rows matching the real column structure — same headers, same widths, animated pulse cells. Error and empty states render as absolute overlays inside the table container. This eliminates the mount/unmount swap between `TableSkeleton` and `Table` that caused layout shifts. `MoviesFeature` and `SeriesFeature` render a single `<Table>` unconditionally; `loading.tsx` files use `PageSkeleton` (shared component: header + filters skeleton + `TableSkeleton`) as the chunk-load placeholder.
 
@@ -260,8 +263,8 @@ npm run test:watch  # watch mode
 
 | Area | What's covered |
 |---|---|
-| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `deduplicateProviders` (generic, subtype preservation) |
-| Business logic | `applyClientFilters` (movies + series + language filter), `applyUserFilters` (username, role, date, creator), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
+| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10) |
+| Business logic | `applyClientFilters` (movies + series + language filter), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
 | Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation; `toastStore` — addToast, timers, removeToast |
 | Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window) — all wrapped in `QueryClientProvider` with `retry: false` |
 | Components | `Button`, `Modal`, `FiltersPanel`, `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset) |
