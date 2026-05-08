@@ -8,11 +8,12 @@ import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 
 import { useMovieDetail } from '@/features/movies/hooks/useMovieDetail'
-import { useMovieWatchProviders } from '@/features/movies/hooks/useMovieWatchProviders'
+import { useWatchProviders } from '@/hooks/useWatchProviders'
+import { fetchMovieWatchProviders } from '@/features/movies/movies.service'
 import { useMovieInTheaters } from '@/features/movies/hooks/useMovieInTheaters'
 import CollectionAccordion from './CollectionAccordion'
 import MovieMetaGrid from './MovieMetaGrid'
-import MovieDetailSkeleton from './MovieDetailSkeleton'
+import MediaDetailSkeleton from '@/components/common/MediaDetailSkeleton'
 import WatchProviders from '@/components/common/WatchProviders'
 import { getMovieUI } from '@/features/movies/getMovieUI'
 import { useLanguageStore } from '@/store/languageStore'
@@ -30,7 +31,7 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
   const { language } = useLanguageStore()
   const [currentId, setCurrentId] = useState(movieId)
   const { detail, loading, error } = useMovieDetail(currentId)
-  const { flatrate, rent, loading: providersLoading } = useMovieWatchProviders(currentId)
+  const { flatrate, rent, loading: providersLoading } = useWatchProviders(currentId, fetchMovieWatchProviders, 'movie')
   const { inTheaters, loading: inTheatersLoading } = useMovieInTheaters(currentId)
 
   const userId = useUserStore((s) => s.userId)
@@ -44,7 +45,7 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
   return (
     <Modal title={detail?.title ?? '...'} onClose={onClose} maxWidth="44rem">
 
-      {loading && <MovieDetailSkeleton />}
+      {loading && <MediaDetailSkeleton />}
 
       {!loading && error && (
         <Text variant="body" className="text-muted-foreground text-center py-8">
