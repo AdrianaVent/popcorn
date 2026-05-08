@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
@@ -21,12 +21,11 @@ import { PlusCircleIcon, TrashIcon, PencilIcon, UploadIcon } from '@/components/
 import { useUserStore } from '@/store/userStore'
 import { useLanguageStore } from '@/store/languageStore'
 import { useToastStore } from '@/store/toastStore'
-import { fetchUsers, createUser, updateUser, deleteUser, deleteUsers, type CreateUserInput, type UpdateUserInput } from './users.service'
+import { fetchUsers, createUser, updateUser, deleteUser, deleteUsers, type CreateUserInput, type UpdateUserInput, type UsersPage } from './users.service'
 import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
 import { formatShortDate } from '@/utils/formatDate'
 import { useFilters } from '@/hooks/useFilters'
-import { staticUserFiltersSchema, INITIAL_USER_FILTERS } from './userFilters.schema'
-import { applyUserFilters } from './applyUserFilters'
+import { staticUserFiltersSchema, INITIAL_USER_FILTERS, type UserFilters } from './userFilters.schema'
 import type { PublicUser } from '@/types/user'
 import type { UserRole } from '@/db/users'
 
@@ -55,10 +54,21 @@ export default function UsersFeature() {
   const pendingToast = useRef<(() => void) | null>(null)
 
   const queryClient = useQueryClient()
-  const { data: users = [], isLoading: loading, isError } = useQuery<PublicUser[]>({
-    queryKey: ['users'],
-    queryFn: fetchUsers,
+  const [page, setPage] = useState(1)
+  const { filters, setFilters } = useFilters(INITIAL_USER_FILTERS)
+
+  const handleSetFilters = (newFilters: UserFilters) => {
+    setFilters(newFilters)
+    setPage(1)
+  }
+
+  const { data, isLoading: loading, isError } = useQuery<UsersPage>({
+    queryKey: ['users', page, filters],
+    queryFn: () => fetchUsers(page, filters),
   })
+
+  const users = useMemo(() => data?.users ?? [], [data])
+  const totalPages = data?.totalPages ?? 1
   const error = isError ? t('users.error') : null
   const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: ['users'] })
 
@@ -66,8 +76,6 @@ export default function UsersFeature() {
   const [modal, setModal] = useState<ModalState>(null)
   const [confirmDelete, setConfirmDelete] = useState<ConfirmDeleteState>(null)
   const [isExporting, setIsExporting] = useState(false)
-  const [page, setPage] = useState(1)
-  const { filters, setFilters } = useFilters(INITIAL_USER_FILTERS)
 
   const createMutation = useMutation({
     mutationFn: createUser,
@@ -115,42 +123,22 @@ export default function UsersFeature() {
     pendingToast.current = null
   }
 
-  const PAGE_SIZE = 10
-
-  const usersById = useMemo(
-    () => new Map(users.map((u) => [u.id, u])),
-    [users]
+  const creatorsById = useMemo(
+    () => new Map((data?.creators ?? []).map((c) => [c.id, c.username])),
+    [data?.creators]
   )
 
   const filtersSchema = useMemo(() => {
-    const creatorIds = new Set(users.map((u) => u.created_by).filter(Boolean))
-    const creatorOptions = users
-      .filter((u) => creatorIds.has(u.id))
-      .map((u) => ({ value: u.id, label: u.username }))
-
+    const creatorOptions = (data?.creators ?? []).map((c) => ({ value: c.id, label: c.username }))
     return staticUserFiltersSchema.map((field) =>
       field.key === 'created_by' ? { ...field, options: creatorOptions } : field
     )
-  }, [users])
+  }, [data?.creators])
 
-  const filteredUsers = useMemo(() => applyUserFilters(users, filters), [users, filters])
-
-  const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE)),
-    [filteredUsers.length, PAGE_SIZE]
-  )
-
-  const paginatedUsers = useMemo(
-    () => filteredUsers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [filteredUsers, page, PAGE_SIZE]
-  )
-
-  useEffect(() => { setPage(1) }, [filters])
-
-  // Selectable = visible filtered users excluding self
+  // Selectable = visible page users excluding self
   const selectableUsers = useMemo(
-    () => filteredUsers.filter((u) => u.id !== currentUserId),
-    [filteredUsers, currentUserId]
+    () => users.filter((u) => u.id !== currentUserId),
+    [users, currentUserId]
   )
 
   const allSelected = selectableUsers.length > 0 && selectableUsers.every((u) => selected.has(u.id))
@@ -202,21 +190,23 @@ export default function UsersFeature() {
   const handleExport = async (format: 'json' | 'csv') => {
     setIsExporting(true)
     try {
+      const allData = await fetchUsers(1, {}, 9999)
+      const allCreators = new Map(allData.creators.map((c) => [c.id, c.username]))
       const date = new Date().toISOString().split('T')[0]
       if (format === 'json') {
-        const rows = users.map((u) => ({
+        const rows = allData.users.map((u) => ({
           username: u.username,
           role: u.role,
           created_at: u.created_at ? new Date(u.created_at).toISOString() : null,
-          created_by: u.created_by ? (usersById.get(u.created_by)?.username ?? u.created_by) : null,
+          created_by: u.created_by ? (allCreators.get(u.created_by) ?? u.created_by) : null,
         }))
         exportAsJSON(rows, `users-${date}.json`)
       } else {
-        const rows = users.map((u) => ({
+        const rows = allData.users.map((u) => ({
           username: u.username,
           role: u.role,
           created_at: u.created_at ? formatShortDate(new Date(u.created_at).toISOString(), language) : '',
-          created_by: u.created_by ? (usersById.get(u.created_by)?.username ?? '') : '',
+          created_by: u.created_by ? (allCreators.get(u.created_by) ?? '') : '',
         }))
         exportAsCSV(rows, ['username', 'role', 'created_at', 'created_by'], `users-${date}.csv`, [
           t('users.columns.username'),
@@ -272,7 +262,7 @@ export default function UsersFeature() {
         <FiltersPanel
           schema={filtersSchema}
           filters={filters}
-          onChange={setFilters}
+          onChange={handleSetFilters}
           titleKey="users.filters.panel"
         />
 
@@ -334,13 +324,13 @@ export default function UsersFeature() {
                     </td>
                   </tr>
                 )}
-                {!loading && !error && users.length === 0 && (
+                {!loading && !error && data?.totalResults === 0 && !Object.values(filters).some(Boolean) && (
                   <tr><td colSpan={6} className="py-16 text-center text-muted-foreground text-sm">{t('users.empty')}</td></tr>
                 )}
-                {!loading && !error && users.length > 0 && filteredUsers.length === 0 && (
+                {!loading && !error && data?.totalResults === 0 && Object.values(filters).some(Boolean) && (
                   <tr><td colSpan={6} className="py-16 text-center text-muted-foreground text-sm">{t('users.noResults')}</td></tr>
                 )}
-                {!loading && !error && paginatedUsers.map((user, i) => {
+                {!loading && !error && users.map((user, i) => {
                   const isSelf = user.id === currentUserId
                   const isSelected = selected.has(user.id)
 
@@ -372,9 +362,7 @@ export default function UsersFeature() {
                         {user.created_at ? formatShortDate(new Date(user.created_at).toISOString(), language) : '—'}
                       </td>
                       <td className="px-2 py-2 text-muted-foreground">
-                        {user.created_by
-                          ? (usersById.get(user.created_by)?.username ?? '—')
-                          : '—'}
+                        {user.created_by ? (creatorsById.get(user.created_by) ?? '—') : '—'}
                       </td>
                       <td className="px-2 py-2">
                         <div className="flex items-center justify-end gap-1">
@@ -411,8 +399,8 @@ export default function UsersFeature() {
           <TableFooter
             page={page}
             totalPages={totalPages}
-            onPrev={() => setPage((p) => p - 1)}
-            onNext={() => setPage((p) => p + 1)}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
             onPageChange={setPage}
           />
         )}

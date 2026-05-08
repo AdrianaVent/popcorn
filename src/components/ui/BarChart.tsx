@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useLayoutEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   BarChart as RechartsBarChart,
@@ -17,15 +17,13 @@ import type { GenreEntry } from '@/features/dashboard/hooks/useMovieGenres'
 type Props = {
   title: string
   orientation: 'horizontal' | 'vertical'
+  tooltipLabel: string
   userQuery: { data?: GenreEntry[]; isLoading: boolean; isError: boolean }
   globalQuery: { data?: GenreEntry[]; isLoading: boolean; isError: boolean }
   defaultMode?: 'user' | 'global'
   className?: string
 }
 
-const BAR_COLOR = 'var(--chart-bar)'
-const MUTED_COLOR = 'var(--color-muted-foreground)'
-const AXIS_COLOR = 'var(--chart-axis)'
 const CARD_BG = 'var(--color-card)'
 const BORDER_COLOR = 'var(--color-border)'
 
@@ -54,10 +52,23 @@ function ChartSkeleton({ orientation }: { orientation: 'horizontal' | 'vertical'
 
 type GenreTip = { label: string; x: number; y: number }
 
-export default function BarChart({ title, orientation, userQuery, globalQuery, defaultMode = 'user', className = '' }: Props) {
+export default function BarChart({ title, orientation, tooltipLabel, userQuery, globalQuery, defaultMode = 'user', className = '' }: Props) {
   const { t } = useTranslation()
   const [mode, setMode] = useState<'user' | 'global'>(defaultMode)
   const [genreTip, setGenreTip] = useState<GenreTip | null>(null)
+  const [isDark, setIsDark] = useState(false)
+
+  useLayoutEffect(() => {
+    const check = () => setIsDark(document.documentElement.getAttribute('data-theme') === 'dark')
+    check()
+    const obs = new MutationObserver(check)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
+  }, [])
+
+  const barColor  = isDark ? '#F5E6C8' : '#8E3B2E'
+  const axisColor = isDark ? '#9CA3AF' : '#111827'
+  const mutedColor = isDark ? '#D1D5DB' : '#4B5563'
 
   const effectiveMode = mode
 
@@ -73,12 +84,12 @@ export default function BarChart({ title, orientation, userQuery, globalQuery, d
         onMouseLeave={isTruncated ? () => setGenreTip(null) : undefined}
         style={{ cursor: 'default' }}
       >
-        <text textAnchor="end" fill={AXIS_COLOR} fontSize={12} dy="0.355em">
+        <text textAnchor="end" fill={axisColor} fontSize={12} dy="0.355em">
           {display}
         </text>
       </g>
     )
-  }, [])
+  }, [axisColor])
 
   // Vertical chart: genre names on X axis (bottom, rotated), truncate + hover
   const TruncatedXTick = useCallback(({ x, y, payload }: TickProps) => {
@@ -92,12 +103,12 @@ export default function BarChart({ title, orientation, userQuery, globalQuery, d
         onMouseLeave={isTruncated ? () => setGenreTip(null) : undefined}
         style={{ cursor: 'default' }}
       >
-        <text textAnchor="end" fill={AXIS_COLOR} fontSize={11} transform="rotate(-35)" dy={4}>
+        <text textAnchor="end" fill={axisColor} fontSize={11} transform="rotate(-35)" dy={4}>
           {display}
         </text>
       </g>
     )
-  }, [])
+  }, [axisColor])
 
   const query = effectiveMode === 'user' ? userQuery : globalQuery
   const data = query.data ?? []
@@ -152,7 +163,7 @@ export default function BarChart({ title, orientation, userQuery, globalQuery, d
                   <XAxis
                     type="number"
                     ticks={xTicks}
-                    tick={{ fontSize: 11, fill: MUTED_COLOR }}
+                    tick={{ fontSize: 11, fill: mutedColor }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -169,10 +180,10 @@ export default function BarChart({ title, orientation, userQuery, globalQuery, d
                     cursor={{ fill: 'var(--color-muted)', opacity: 0.4 }}
                     contentStyle={{ background: CARD_BG, border: `1px solid ${BORDER_COLOR}`, borderRadius: 8, fontSize: 12 }}
                     labelStyle={{ color: 'var(--color-foreground)', fontWeight: 600 }}
-                    itemStyle={{ color: MUTED_COLOR }}
-                    formatter={(value) => [value, t('dashboard.chart.movies')]}
+                    itemStyle={{ color: mutedColor }}
+                    formatter={(value) => [value, tooltipLabel]}
                   />
-                  <Bar dataKey="count" fill={BAR_COLOR} radius={[0, 4, 4, 0]} activeBar={{ fill: BAR_COLOR }} />
+                  <Bar dataKey="count" fill={barColor} radius={[0, 4, 4, 0]} activeBar={{ fill: barColor }} />
                 </RechartsBarChart>
               ) : (
                 <RechartsBarChart data={data} margin={{ top: 0, right: 8, left: 0, bottom: 48 }}>
@@ -183,15 +194,15 @@ export default function BarChart({ title, orientation, userQuery, globalQuery, d
                     tickLine={false}
                     interval={0}
                   />
-                  <YAxis tick={{ fontSize: 11, fill: MUTED_COLOR }} axisLine={false} tickLine={false} width={28} />
+                  <YAxis tick={{ fontSize: 11, fill: mutedColor }} axisLine={false} tickLine={false} width={28} />
                   <Tooltip
                     cursor={{ fill: 'var(--color-muted)', opacity: 0.4 }}
                     contentStyle={{ background: CARD_BG, border: `1px solid ${BORDER_COLOR}`, borderRadius: 8, fontSize: 12 }}
                     labelStyle={{ color: 'var(--color-foreground)', fontWeight: 600 }}
-                    itemStyle={{ color: MUTED_COLOR }}
-                    formatter={(value) => [value, t('dashboard.chart.series')]}
+                    itemStyle={{ color: mutedColor }}
+                    formatter={(value) => [value, tooltipLabel]}
                   />
-                  <Bar dataKey="count" fill={BAR_COLOR} radius={[4, 4, 0, 0]} maxBarSize={32} activeBar={{ fill: BAR_COLOR }} />
+                  <Bar dataKey="count" fill={barColor} radius={[4, 4, 0, 0]} maxBarSize={32} activeBar={{ fill: barColor }} />
                 </RechartsBarChart>
               )}
             </ResponsiveContainer>

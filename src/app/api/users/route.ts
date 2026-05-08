@@ -13,8 +13,24 @@ export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req)
   if (auth instanceof NextResponse) return auth
 
-  const users = usersDb.findAll().map(toPublic)
-  return NextResponse.json(users)
+  const { searchParams } = req.nextUrl
+  const page = Math.max(1, Number(searchParams.get('page') ?? 1))
+  const pageSize = Math.max(1, Number(searchParams.get('pageSize') ?? 20))
+  const filters = {
+    username: searchParams.get('username') ?? undefined,
+    role: searchParams.get('role') ?? undefined,
+    created_after: searchParams.get('created_after') ?? undefined,
+    created_by: searchParams.get('created_by') ?? undefined,
+  }
+
+  const { users, total } = usersDb.findPaginated(page, pageSize, filters)
+  const creators = usersDb.findCreators()
+  return NextResponse.json({
+    users: users.map(toPublic),
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    totalResults: total,
+    creators,
+  })
 }
 
 export async function POST(req: NextRequest) {

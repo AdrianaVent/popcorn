@@ -21,6 +21,28 @@ export const usersDb = {
   findAll: (): DbUser[] =>
     db.prepare('SELECT * FROM users ORDER BY created_at DESC').all() as DbUser[],
 
+  findPaginated: (
+    page: number,
+    pageSize: number,
+    filters: { username?: string; role?: string; created_after?: string; created_by?: string },
+  ): { users: DbUser[]; total: number } => {
+    const conditions: string[] = []
+    const values: unknown[] = []
+    if (filters.username) { conditions.push('LOWER(username) LIKE ?'); values.push(`%${filters.username.toLowerCase()}%`) }
+    if (filters.role) { conditions.push('role = ?'); values.push(filters.role) }
+    if (filters.created_after) { conditions.push('created_at >= ?'); values.push(new Date(filters.created_after).getTime()) }
+    if (filters.created_by) { conditions.push('created_by = ?'); values.push(filters.created_by) }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+    const { count } = db.prepare(`SELECT COUNT(*) as count FROM users ${where}`).get(...values) as { count: number }
+    const users = db.prepare(`SELECT * FROM users ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`).all(...values, pageSize, (page - 1) * pageSize) as DbUser[]
+    return { users, total: count }
+  },
+
+  findCreators: (): Pick<DbUser, 'id' | 'username'>[] =>
+    db.prepare(
+      'SELECT u.id, u.username FROM users u WHERE u.id IN (SELECT DISTINCT created_by FROM users WHERE created_by IS NOT NULL) ORDER BY u.username'
+    ).all() as Pick<DbUser, 'id' | 'username'>[],
+
   create: (user: Omit<DbUser, 'created_at'> & { created_at?: number }): DbUser => {
     const now = user.created_at ?? Date.now()
     db.prepare(
