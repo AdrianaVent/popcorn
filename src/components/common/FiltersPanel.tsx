@@ -14,6 +14,7 @@ type Props<T extends Record<string, unknown>> = {
   filters: T
   onChange: (next: T) => void
   titleKey?: string
+  disabled?: boolean
 }
 
 export default function FiltersPanel<T extends Record<string, unknown>>({
@@ -21,6 +22,7 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
   filters,
   onChange,
   titleKey = 'movies.filters.panel',
+  disabled = false,
 }: Props<T>) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(true)
@@ -33,7 +35,7 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
   }).length
 
   return (
-    <div className="rounded-lg border border-border bg-card/60 backdrop-blur-sm overflow-hidden">
+    <div className={clsx('rounded-lg border border-border bg-card/60 backdrop-blur-sm overflow-hidden', disabled && 'opacity-50 pointer-events-none')}>
 
       {/* Header */}
       <button

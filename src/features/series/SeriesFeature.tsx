@@ -284,7 +284,7 @@ export default function SeriesFeature() {
   return (
     <div className="h-full flex flex-col gap-4 p-4">
 
-      <Header title={t('series.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} /> : undefined} />
+      <Header title={t('series.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} disabled={loading} /> : undefined} />
 
       <FiltersPanel
         schema={filtersSchema}
@@ -311,13 +311,14 @@ export default function SeriesFeature() {
             const watched = Object.keys(seriesEpisodes?.[row.id] ?? {}).length
             return total > 0 && watched >= total ? 'opacity-60' : ''
           }}
-          footer={filteredSeries.length > 0 ? {
+          footer={{
             page,
             totalPages: displayTotalPages,
             onPrev: () => goToPage(page - 1),
             onNext: () => goToPage(page + 1),
             onPageChange: goToPage,
-          } : undefined}
+            disabled: loading,
+          }}
         />
       </div>
 
