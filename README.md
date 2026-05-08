@@ -90,7 +90,7 @@ Admins can export the full movie or series list as **JSON** (raw TMDB data) or *
 
 ### User management
 
-Admins can create, edit and delete users, assign roles (admin / guest), and filter the list by username, role, creation date or creator. Bulk delete is supported. Admins cannot delete or demote their own account.
+Admins can create, edit and delete users, assign roles (admin / guest), and filter the list by username, role, creation date or creator. Bulk delete is supported. Admins cannot delete or demote their own account. The list is paginated server-side (20 per page) — filtering and pagination happen entirely in SQL, keeping the response size constant regardless of total user count.
 
 ### Import users
 
@@ -144,6 +144,7 @@ The test suite covers:
 | Suite | What's tested |
 |---|---|
 | `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, login, logout, session expiry redirect |
+| `home.cy.ts` | Genre charts, Movies/Series tab switch, My profile/Global toggle, empty state, SVG renders |
 | `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, access control |
 | `series.cy.ts` | Series list, detail modal, watch providers, platform filter |
 | `users.cy.ts` | Create, edit, delete (single + bulk), toast notifications, import (JSON / CSV, errors, partial failures) |

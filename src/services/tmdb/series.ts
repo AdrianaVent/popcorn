@@ -3,15 +3,6 @@ import { DEFAULT_LANGUAGE } from '@/config/constants'
 import type { TMDBSeries, TMDBSeriesDetail, TMDBSeasonDetail, TMDBPagedResponse, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
 export const seriesService = {
-  popular: (page = 1, language = DEFAULT_LANGUAGE) =>
-    tmdbFetch<TMDBPagedResponse<TMDBSeries>>('/tv/popular', { page, language }),
-
-  topRated: (page = 1, language = DEFAULT_LANGUAGE) =>
-    tmdbFetch<TMDBPagedResponse<TMDBSeries>>('/tv/top_rated', { page, language }),
-
-  trending: (timeWindow: 'day' | 'week' = 'week') =>
-    tmdbFetch<TMDBPagedResponse<TMDBSeries>>(`/trending/tv/${timeWindow}`),
-
   detail: (id: number, language = DEFAULT_LANGUAGE) =>
     tmdbFetch<TMDBSeriesDetail>(`/tv/${id}`, { language }),
 
