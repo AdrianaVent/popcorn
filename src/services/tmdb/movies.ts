@@ -3,15 +3,6 @@ import { DEFAULT_LANGUAGE } from '@/config/constants'
 import type { ReleaseDatesResult, TMDBCollectionDetail, TMDBMovie, TMDBMovieDetail, TMDBPagedResponse, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
 export const moviesService = {
-  popular: (page = 1, language = DEFAULT_LANGUAGE) =>
-    tmdbFetch<TMDBPagedResponse<TMDBMovie>>('/movie/popular', { page, language }),
-
-  topRated: (page = 1) =>
-    tmdbFetch<TMDBPagedResponse<TMDBMovie>>('/movie/top_rated', { page }),
-
-  trending: (timeWindow: 'day' | 'week' = 'week') =>
-    tmdbFetch<TMDBPagedResponse<TMDBMovie>>(`/trending/movie/${timeWindow}`),
-
   detail: (id: number, language = DEFAULT_LANGUAGE) =>
     tmdbFetch<TMDBMovieDetail>(`/movie/${id}`, { language }),
 
