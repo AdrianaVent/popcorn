@@ -32,7 +32,7 @@ src/
 │   ├── api/users/              # GET · POST · DELETE (bulk) — list, create, bulk delete
 │   │   ├── [id]/               # PATCH · DELETE — update, delete single user
 │   │   └── import/             # POST — bulk create from parsed JSON/CSV rows; returns { created, failed[] }
-│   ├── (dashboard)/            # persistent layout group (Sidebar + Topbar never unmount)
+│   ├── (dashboard)/            # persistent layout group (Sidebar never unmounts)
 │   │   ├── layout.tsx          # client layout — derives activeNav from pathname, handles logout
 │   │   ├── movies/             # page.tsx + loading.tsx
 │   │   ├── series/             # page.tsx + loading.tsx
@@ -41,7 +41,7 @@ src/
 │   ├── login/page.tsx          # ssr: false (i18n)
 │   └── page.tsx                # → redirects to /home
 ├── components/
-│   ├── common/                 # FiltersPanel, MetaRow, Sidebar, Topbar, SettingsModal, ExportButton,
+│   ├── common/                 # FiltersPanel, MetaRow, Sidebar, SettingsModal, ExportButton,
 │   │                           # ImportModal (generic file upload → results), WatchProviders, ErrorBoundary,
 │   │                           # MediaDetailSkeleton (shared modal loading state),
 │   │                           # MediaPoster (poster image with FilmIcon fallback; loading prop: 'lazy' | 'eager')
@@ -165,10 +165,10 @@ data/
 ## Architecture Decisions
 
 **Persistent dashboard layout**
-All dashboard pages live inside the `(dashboard)` route group. The group layout (`src/app/(dashboard)/layout.tsx`) renders `DashboardLayout` (Sidebar + Topbar) once and keeps it mounted across client-side navigations — no blank screen between pages. `activeNav` is derived from `usePathname()`. Each page has a `loading.tsx` that shows a skeleton while the page chunk loads during client navigation.
+All dashboard pages live inside the `(dashboard)` route group. The group layout (`src/app/(dashboard)/layout.tsx`) renders `DashboardLayout` (Sidebar only — Topbar removed) once and keeps it mounted across client-side navigations — no blank screen between pages. `activeNav` is derived from `usePathname()`. Each page has a `loading.tsx` that shows a skeleton while the page chunk loads during client navigation. The Sidebar contains: bucket icon (collapsed) / Popcorn logo (expanded) at the top; a separator with a half-hanging circular toggle button (`ChevronLeft/Right`, `bg-primary`); nav items; Logout button pinned at the bottom.
 
 **SSR-safe hydration**
-Features that depend on Zustand `persist` stores (localStorage) are loaded with `dynamic(..., { ssr: false })` — they only render on the client, so store values are already rehydrated when the component mounts. No `useMounted` guard needed inside these components. The layout (`Sidebar`) is SSR'd and gates role-dependent nav items behind its own `mounted` state to avoid hydration mismatches. `DatePicker` uses `suppressHydrationWarning` on its placeholder span since the locale-specific placeholder text is non-critical and corrects itself after mount. Sidebar nav labels and Topbar logout button also carry `suppressHydrationWarning` — they are SSR'd in the persistent layout and contain translated text that diverges between server (always `'en'`, no localStorage) and client (user's stored language).
+Features that depend on Zustand `persist` stores (localStorage) are loaded with `dynamic(..., { ssr: false })` — they only render on the client, so store values are already rehydrated when the component mounts. No `useMounted` guard needed inside these components. The layout (`Sidebar`) is SSR'd and gates role-dependent nav items behind its own `mounted` state to avoid hydration mismatches. `DatePicker` uses `suppressHydrationWarning` on its placeholder span since the locale-specific placeholder text is non-critical and corrects itself after mount. Sidebar nav labels and the Sidebar logout button also carry `suppressHydrationWarning` — they are SSR'd in the persistent layout and contain translated text that diverges between server (always `'en'`, no localStorage) and client (user's stored language).
 
 **Auth — self-hosted**
 No external auth provider. Users in `data/popcorn.db` (gitignored, created on first run). Passwords hashed with bcrypt (cost 10). JWTs signed with `jose` using `JWT_SECRET` from env. Access token payload: `{ sub: userId, username, role }`. Refresh token payload: `{ sub: userId }`. Role is readable server-side without a DB roundtrip.
