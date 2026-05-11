@@ -46,6 +46,11 @@
   "settings": {
     "title": "Settings",
     "language": "Language",
+    "region": "Region",
+    "regions": {
+      "ES": "Spain",
+      "US": "United States"
+    },
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",
@@ -251,6 +256,18 @@
       "error": "Could not load data",
       "noWatched": "Mark some titles as watched to see your genres"
     }
+  },
+  "calendar": {
+    "title": "Release calendar",
+    "error": "Could not load releases",
+    "hint": "Select a day to see releases",
+    "empty": "No releases on this day",
+    "noOverview": "No synopsis available",
+    "season": "S{{number}}",
+    "episodes": "{{count}} ep.",
+    "today": "Today",
+    "new": "New",
+    "renewed": "Renewed"
   },
   "topbar": {
     "search": "Search...",

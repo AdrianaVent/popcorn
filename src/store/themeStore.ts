@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { ssrStorage } from './storage'
 import type { ThemeMode } from '@/styles/theme'
 
 interface ThemeState {
@@ -15,6 +16,7 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: 'popcorn-theme',
+      storage: ssrStorage,
     }
   )
 )

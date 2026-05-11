@@ -13,10 +13,15 @@ type SettingsModalProps = {
   onClose: () => void
 }
 
+const REGIONS: { code: string; labelKey: string }[] = [
+  { code: 'ES', labelKey: 'settings.regions.ES' },
+  { code: 'US', labelKey: 'settings.regions.US' },
+]
+
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const { t } = useTranslation()
   const { mode, setMode } = useThemeStore()
-  const { language, setLanguage } = useLanguageStore()
+  const { language, setLanguage, region, setRegion } = useLanguageStore()
   const userId = useUserStore((s) => s.userId)
 
   const themeModes: { key: ThemeMode; labelKey: string }[] = [
@@ -34,16 +39,14 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     'text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'
 
   const optionBase =
-    'flex-1 py-2 rounded-md text-small cursor-pointer transition-all duration-150'
+    'flex-1 py-2 rounded-md text-small cursor-pointer transition-all duration-150 outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset'
 
-  const optionActive =
-    'bg-primary text-primary-foreground shadow-sm'
+  const optionActive = 'bg-primary text-primary-foreground shadow-sm'
 
   const optionInactive =
     'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40'
 
-  const container =
-    'flex gap-1 p-1 border border-border rounded-lg bg-card'
+  const container = 'flex gap-1 p-1 border border-border rounded-lg bg-card'
 
   return (
     <Modal title={t('settings.title')} onClose={onClose}>
@@ -51,19 +54,13 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
         {/* LANGUAGE */}
         <div className="flex flex-col gap-2.5">
-          <p className={sectionTitle}>
-            {t('settings.language')}
-          </p>
-
+          <p className={sectionTitle}>{t('settings.language')}</p>
           <div className={container}>
             {languages.map(({ key, label }) => (
               <button
                 key={key}
                 onClick={() => setLanguage(key, userId ?? undefined)}
-                className={clsx(
-                  optionBase,
-                  language === key ? optionActive : optionInactive
-                )}
+                className={clsx(optionBase, language === key ? optionActive : optionInactive)}
               >
                 {label}
               </button>
@@ -71,21 +68,31 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           </div>
         </div>
 
+        {/* REGION */}
+        <div className="flex flex-col gap-2.5">
+          <p className={sectionTitle}>{t('settings.region')}</p>
+          <div className={container}>
+            {REGIONS.map(({ code, labelKey }) => (
+              <button
+                key={code}
+                onClick={() => setRegion(code, userId ?? undefined)}
+                className={clsx(optionBase, region === code ? optionActive : optionInactive)}
+              >
+                {t(labelKey)}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* THEME */}
         <div className="flex flex-col gap-2.5">
-          <p className={sectionTitle}>
-            {t('settings.theme')}
-          </p>
-
+          <p className={sectionTitle}>{t('settings.theme')}</p>
           <div className={container}>
             {themeModes.map(({ key, labelKey }) => (
               <button
                 key={key}
                 onClick={() => setMode(key)}
-                className={clsx(
-                  optionBase,
-                  mode === key ? optionActive : optionInactive
-                )}
+                className={clsx(optionBase, mode === key ? optionActive : optionInactive)}
               >
                 {t(labelKey)}
               </button>

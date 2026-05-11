@@ -48,11 +48,12 @@ export default function TableFooter({
             disabled={disabled || page <= 1}
             className="
             inline-flex items-center gap-1
-            px-2 py-1 text-sm
+            px-2 py-1 text-sm rounded-md
             text-muted-foreground
             hover:text-foreground
             transition
             disabled:opacity-40
+            outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset
             "
         >
             <ChevronLeftIcon size={14} />
@@ -69,7 +70,7 @@ export default function TableFooter({
                 key={p}
                 onClick={() => !disabled && onPageChange?.(p)}
                 className={clsx(
-                    'w-7 h-7 flex items-center justify-center rounded-md text-xs transition',
+                    'w-7 h-7 flex items-center justify-center rounded-md text-xs transition outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset',
                     isActive
                     ? 'bg-background border border-border text-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
@@ -87,11 +88,12 @@ export default function TableFooter({
             disabled={disabled || page >= totalPages}
             className="
             inline-flex items-center gap-1
-            px-2 py-1 text-sm
+            px-2 py-1 text-sm rounded-md
             text-muted-foreground
             hover:text-foreground
             transition
             disabled:opacity-40
+            outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset
             "
         >
             <span className="hidden md:inline">{t('common.next')}</span>

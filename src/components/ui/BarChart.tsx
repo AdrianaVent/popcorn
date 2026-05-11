@@ -12,7 +12,7 @@ import {
 } from 'recharts'
 import Text from '@/components/ui/Text'
 import ToggleSwitch from '@/components/ui/ToggleSwitch'
-import type { GenreEntry } from '@/features/dashboard/hooks/useMovieGenres'
+import type { GenreEntry } from '@/features/home/hooks/useMovieGenres'
 
 type Props = {
   title: string

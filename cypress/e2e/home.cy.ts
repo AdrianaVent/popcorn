@@ -1,3 +1,6 @@
+const now = new Date()
+const releaseDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-15`
+
 const movieGenres = {
   genres: [
     { id: 28, name: 'Action' },
@@ -40,6 +43,8 @@ describe('Dashboard', () => {
     cy.intercept('GET', /\/discover\/movie/, discoverMovies).as('discoverMovies')
     cy.intercept('GET', /\/genre\/tv\/list/, tvGenres).as('tvGenreList')
     cy.intercept('GET', /\/discover\/tv/, discoverTV).as('discoverTV')
+    // Disable series calendar releases (no provider IDs → query stays disabled)
+    cy.intercept('GET', /\/watch\/providers\/tv/, { results: [] }).as('tvProviders')
     cy.visitAsAdmin('/home')
   })
 
@@ -107,5 +112,60 @@ describe('Dashboard', () => {
     cy.contains('button', 'Series').click()
     cy.wait('@discoverTV')
     cy.get('svg').should('exist')
+  })
+
+  // ─── Release calendar ─────────────────────────────────────────
+
+  it('shows the release calendar title', () => {
+    cy.contains('Release calendar').should('be.visible')
+  })
+
+  it('shows the calendar navigation controls', () => {
+    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
+      cy.get('button[class*="rounded-md"]').should('have.length.gte', 2)
+    })
+  })
+})
+
+// ─── Calendar day selection ────────────────────────────────────────────────────
+
+const calendarMovies = {
+  page: 1,
+  results: [{ id: 100, title: 'Calendar Test Movie', release_date: releaseDate, poster_path: null, overview: 'A test overview.', genre_ids: [] }],
+  total_pages: 1,
+  total_results: 1,
+}
+
+describe('Release calendar interaction', () => {
+  beforeEach(() => {
+    cy.intercept('GET', /\/genre\/movie\/list/, movieGenres)
+    cy.intercept('GET', /\/discover\/movie/, calendarMovies).as('discoverMovies')
+    cy.intercept('GET', /\/genre\/tv\/list/, tvGenres)
+    cy.intercept('GET', /\/discover\/tv/, discoverTV)
+    cy.intercept('GET', /\/watch\/providers\/tv/, { results: [] })
+    cy.visitAsAdmin('/home')
+  })
+
+  it('shows a release dot on day 15', () => {
+    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
+      cy.contains('button', '15').find('.bg-primary').should('exist')
+    })
+  })
+
+  it('clicking a day with a release shows the releases panel', () => {
+    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
+      cy.contains('button', '15').click()
+      cy.contains('Calendar Test Movie').should('be.visible')
+    })
+  })
+
+  it('clicking X closes the panel and restores the calendar view', () => {
+    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
+      cy.contains('button', '15').click()
+      cy.contains('Calendar Test Movie').should('be.visible')
+      // X button is the only button in the header when the panel is open
+      cy.contains('Release calendar').parent().find('button').click()
+      cy.contains('Calendar Test Movie').should('not.exist')
+    })
   })
 })

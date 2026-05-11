@@ -43,7 +43,8 @@ src/
 ├── components/
 │   ├── common/                 # FiltersPanel, MetaRow, Sidebar, Topbar, SettingsModal, ExportButton,
 │   │                           # ImportModal (generic file upload → results), WatchProviders, ErrorBoundary,
-│   │                           # MediaDetailSkeleton (shared modal loading state)
+│   │                           # MediaDetailSkeleton (shared modal loading state),
+│   │                           # MediaPoster (poster image with FilmIcon fallback; loading prop: 'lazy' | 'eager')
 │   ├── layouts/                # AuthLayout, DashboardLayout
 │   └── ui/                     # Button, Input, Text (polymorphic), Modal, ModalFooter,
 │                               # Header, AccordionList, Table/, TableSkeleton, LoadingOverlay,
@@ -60,12 +61,14 @@ src/
 │   └── users.ts                # DbUser, UserRole types; findByUsername, findById, create
 ├── features/
 │   ├── auth/login/             # LoginFeature, LoginForm, useLogin, login.service.ts
-│   ├── dashboard/              # DashboardFeature — genre bar charts (movies + series), user/global toggle
+│   ├── home/                   # HomeFeature — genre bar charts + release calendar (movies + series)
+│   │   ├── components/         # ReleaseCalendar (month grid, dots on release days, navigation)
 │   │   └── hooks/              # useMovieGenres (user + global), useSeriesGenres (user + global),
-│   │                           # buildGenreCounts (shared genre aggregation utility)
+│   │                           # buildGenreCounts (shared genre aggregation utility),
+│   │                           # useMovieReleases, useSeriesReleases (monthly TMDB releases)
 │   ├── movies/
 │   │   ├── components/         # MovieDetailModal, MovieMetaGrid,
-│   │   │                       # CollectionAccordion, MediaPoster
+│   │   │                       # CollectionAccordion
 │   │   ├── hooks/              # useMovies, useMovieDetail, useCollectionDetail,
 │   │   │                       # useMovieInTheaters
 │   │   ├── MoviesFeature.tsx
@@ -98,7 +101,8 @@ src/
 │   ├── apiFetch.ts             # apiFetch wrapper — auto-refresh on 401, redirect to /login on failure
 │   ├── auth/index.ts           # authService.login (bcrypt + sign), authService.refresh (verify + re-sign)
 │   │   └── requireAdmin.ts     # Route Handler guard — verifies JWT + asserts admin role
-│   └── tmdb/                   # tmdbFetch, movies, series, search clients
+│   └── tmdb/                   # tmdbFetch, movies, series, search clients,
+│                               # releases (monthly movie/series releases — EN/ES filtered, up to 5 pages)
 ├── store/
 │   ├── themeStore.ts           # light / dark / auto
 │   ├── languageStore.ts        # en / es
@@ -154,6 +158,7 @@ data/
 | CI pipeline (GitHub Actions — tsc, lint, jest, build) | Done |
 | Home (genre bar charts — movies + series, user/global toggle) | Done |
 | Persistent dashboard layout + SSR-safe hydration | Done |
+| Home release calendar (monthly EN/ES releases, dots per day, movie/series tabs) | Done |
 
 ---
 
@@ -266,8 +271,8 @@ npm run test:watch  # watch mode
 | Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10) |
 | Business logic | `applyClientFilters` (movies + series + language filter), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
 | Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation; `toastStore` — addToast, timers, removeToast |
-| Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window) — all wrapped in `QueryClientProvider` with `retry: false` |
-| Components | `Button`, `Modal`, `FiltersPanel`, `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset) |
+| Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window), `useMovieReleases` (service call args), `useSeriesReleases` (disabled when no providers, enabled with providers) — all wrapped in `QueryClientProvider` with `retry: false` |
+| Components | `Button`, `Modal`, `FiltersPanel`, `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states) |
 | Services | `apiFetch` (401 auto-refresh, redirect on session expiry) |
 | API routes | `/api/users/import` (per-row validation: missing fields, invalid role/password, intra-file duplicate, DB duplicate, invalid creator, invalid date) |
 
@@ -290,7 +295,7 @@ Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test user
 | `series.cy.ts` | Series list, detail modal, watch providers section, platform filter |
 | `users.cy.ts` | List, create + toast, edit + toast, delete + toast, bulk delete + toast, self-protection, filters, import JSON + CSV, partial import failures, post-import cleanup |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
-| `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders |
+| `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation |
 
 ---
 

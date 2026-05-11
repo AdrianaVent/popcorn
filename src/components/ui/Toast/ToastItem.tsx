@@ -50,7 +50,7 @@ export default function ToastItem({ toast, onDismiss }: Props) {
       <button
         type="button"
         onClick={onDismiss}
-        className="shrink-0 opacity-50 hover:opacity-100 transition-opacity leading-none"
+        className="shrink-0 opacity-50 hover:opacity-100 transition-opacity leading-none outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset rounded-sm"
         aria-label="Dismiss"
       >
         <XIcon size={14} />
