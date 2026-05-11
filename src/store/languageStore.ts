@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { ssrStorage } from './storage'
 import i18n from '@/config/i18n'
 
 export type Language = 'en' | 'es'
@@ -7,7 +8,10 @@ export type Language = 'en' | 'es'
 interface LanguageState {
   language: Language
   userLanguages: Record<string, Language>
+  region: string
+  userRegions: Record<string, string>
   setLanguage: (lang: Language, userId?: string) => void
+  setRegion: (region: string, userId?: string) => void
   applyUserLanguage: (userId: string | null) => void
 }
 
@@ -16,6 +20,8 @@ export const useLanguageStore = create<LanguageState>()(
     (set, get) => ({
       language: 'es',
       userLanguages: {},
+      region: 'ES',
+      userRegions: {},
       setLanguage: (lang, userId) => {
         i18n.changeLanguage(lang)
         set((state) => ({
@@ -25,12 +31,22 @@ export const useLanguageStore = create<LanguageState>()(
             : state.userLanguages,
         }))
       },
+      setRegion: (region, userId) => {
+        set((state) => ({
+          region,
+          userRegions: userId
+            ? { ...state.userRegions, [userId]: region }
+            : state.userRegions,
+        }))
+      },
       applyUserLanguage: (userId) => {
-        const lang = userId ? (get().userLanguages[userId] ?? 'es') : 'es'
+        const state = get()
+        const lang = userId ? (state.userLanguages[userId] ?? 'es') : 'es'
+        const region = userId ? (state.userRegions[userId] ?? 'ES') : 'ES'
         i18n.changeLanguage(lang)
-        set({ language: lang })
+        set({ language: lang, region })
       },
     }),
-    { name: 'popcorn-language' }
+    { name: 'popcorn-language', storage: ssrStorage }
   )
 )

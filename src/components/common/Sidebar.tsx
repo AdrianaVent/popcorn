@@ -8,6 +8,7 @@ import { FilmIcon, TvIcon, GearIcon, MenuIcon, UsersIcon, HomeIcon } from '@/com
 import SettingsModal from './SettingsModal'
 import Image from 'next/image'
 import { useUserStore } from '@/store/userStore'
+import type { UserRole } from '@/db/users'
 
 type NavItem = {
   key: string
@@ -15,45 +16,43 @@ type NavItem = {
   icon: React.ReactNode
   href?: string
   onClick?: () => void
+  adminOnly?: boolean
 }
 
 type SidebarProps = {
   activeKey?: string
+  serverRole: UserRole | null
 }
 
-export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
+export default function Sidebar({ activeKey = 'dashboard', serverRole }: SidebarProps) {
   const { t } = useTranslation()
-  const { role } = useUserStore()
+  const storeRole = useUserStore((s) => s.role)
 
-  const [mounted, setMounted] = useState(false)
+  // serverRole comes from the JWT cookie (read server-side), so the first render
+  // already has the correct value — no flash or layout shift.
+  // storeRole takes over on login/logout without a page reload.
+  const role = storeRole ?? serverRole
+
   const [collapsed, setCollapsed] = useState(false)
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setMounted(true) }, [])
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [hoveredKey, setHoveredKey] = useState<string | null>(null)
   const [tooltipY, setTooltipY] = useState(0)
 
   /* ─── Auto collapse (iPad / tablet) ─── */
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 1024px)') // lg breakpoint
-
-    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      setCollapsed(e.matches)
-    }
-
+    const mq = window.matchMedia('(max-width: 1024px)')
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => { setCollapsed(e.matches) }
     handleChange(mq)
     mq.addEventListener('change', handleChange)
-
     return () => mq.removeEventListener('change', handleChange)
   }, [])
 
   const navItems: NavItem[] = [
-    { key: 'dashboard', labelKey: 'nav.home', icon: <HomeIcon size={16} />, href: '/home' },
-    { key: 'movies',    labelKey: 'nav.movies',    icon: <FilmIcon size={16} />, href: '/movies' },
-    { key: 'series',    labelKey: 'nav.series',    icon: <TvIcon size={16} />,   href: '/series' },
-    ...(mounted && role === 'admin' ? [{ key: 'users', labelKey: 'nav.users', icon: <UsersIcon size={16} />, href: '/users' }] : []),
-    { key: 'settings', labelKey: 'nav.settings', icon: <GearIcon size={16} />,   onClick: () => setSettingsOpen(true) },
+    { key: 'dashboard', labelKey: 'nav.home',     icon: <HomeIcon size={16} />,  href: '/home' },
+    { key: 'movies',    labelKey: 'nav.movies',   icon: <FilmIcon size={16} />,  href: '/movies' },
+    { key: 'series',    labelKey: 'nav.series',   icon: <TvIcon size={16} />,    href: '/series' },
+    { key: 'users',     labelKey: 'nav.users',    icon: <UsersIcon size={16} />, href: '/users', adminOnly: true },
+    { key: 'settings',  labelKey: 'nav.settings', icon: <GearIcon size={16} />,  onClick: () => setSettingsOpen(true) },
   ]
 
   const handleMouseEnter = (key: string, e: React.MouseEvent) => {
@@ -65,7 +64,7 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
 
   const itemClass = (isActive: boolean) =>
     clsx(
-      'flex items-center gap-2 px-3 py-2 rounded-lg text-small cursor-pointer w-full border-0 text-left transition-colors',
+      'flex items-center gap-2 px-3 py-2 rounded-lg text-small cursor-pointer w-full border-0 text-left transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset',
       isActive
         ? 'bg-primary/10 text-primary font-semibold'
         : 'bg-transparent text-muted-foreground hover:text-foreground'
@@ -85,7 +84,7 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
           <button
             onClick={() => setCollapsed((v) => !v)}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="flex items-center justify-center w-7 h-7 text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center justify-center w-7 h-7 text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset rounded-md"
           >
             <MenuIcon size={16} />
           </button>
@@ -108,6 +107,7 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
         <nav className="flex-1 flex flex-col gap-1 p-2">
           {navItems.map((item) => {
             const isActive = item.key === activeKey
+            const isHidden = item.adminOnly && role !== 'admin'
 
             const content = (
               <>
@@ -122,7 +122,7 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
                 onClick={item.onClick}
                 onMouseEnter={(e) => handleMouseEnter(item.key, e)}
                 onMouseLeave={() => setHoveredKey(null)}
-                className={itemClass(isActive)}
+                className={clsx(itemClass(isActive), isHidden ? 'hidden' : '')}
               >
                 {content}
               </button>
@@ -132,7 +132,7 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
                 href={item.href ?? '/'}
                 onMouseEnter={(e) => handleMouseEnter(item.key, e)}
                 onMouseLeave={() => setHoveredKey(null)}
-                className={itemClass(isActive)}
+                className={clsx(itemClass(isActive), isHidden ? 'hidden' : '')}
               >
                 {content}
               </Link>
@@ -145,15 +145,10 @@ export default function Sidebar({ activeKey = 'dashboard' }: SidebarProps) {
       {collapsed && hoveredKey && (() => {
         const item = navItems.find((i) => i.key === hoveredKey)
         if (!item) return null
-
         return (
           <div
             className="fixed z-50 bg-primary text-primary-foreground text-caption font-medium px-2 py-1 rounded-md pointer-events-none whitespace-nowrap shadow-md"
-            style={{
-              left: '4.5rem',
-              top: tooltipY,
-              transform: 'translateY(-50%)'
-            }}
+            style={{ left: '4.5rem', top: tooltipY, transform: 'translateY(-50%)' }}
             suppressHydrationWarning
           >
             {t(item.labelKey)}

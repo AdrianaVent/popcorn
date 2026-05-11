@@ -44,7 +44,7 @@ export default function IconButton({
       <button
         disabled={disabled}
         className={clsx(
-          'flex items-center gap-1.5 rounded-md transition-colors cursor-pointer',
+          'flex items-center gap-1.5 rounded-md transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset',
           isGhost
             ? 'p-1.5 text-muted-foreground'
             : 'px-3 py-1.5 border border-border bg-card text-foreground hover:bg-muted/60 text-sm font-medium',

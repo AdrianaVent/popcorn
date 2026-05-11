@@ -27,8 +27,8 @@ export default function ToggleSwitch<T extends string>({
           onClick={() => onChange(opt.value)}
           className={
             value === opt.value
-              ? 'rounded-full bg-primary px-3 py-1 font-medium text-primary-foreground shadow-sm transition-all duration-150'
-              : 'rounded-full px-3 py-1 text-muted-foreground transition-all duration-150 hover:text-foreground'
+              ? 'rounded-full bg-primary px-3 py-1 font-medium text-primary-foreground shadow-sm transition-all duration-150 outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset'
+              : 'rounded-full px-3 py-1 text-muted-foreground transition-all duration-150 hover:text-foreground outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset'
           }
         >
           {opt.label}
