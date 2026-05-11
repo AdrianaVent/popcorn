@@ -46,6 +46,11 @@
   "settings": {
     "title": "Configuración",
     "language": "Idioma",
+    "region": "Región",
+    "regions": {
+      "ES": "España",
+      "US": "Estados Unidos"
+    },
     "theme": "Tema",
     "themeLight": "Claro",
     "themeDark": "Oscuro",
@@ -251,6 +256,18 @@
       "error": "No se han podido cargar los datos",
       "noWatched": "Marca títulos como vistos para ver tus géneros"
     }
+  },
+  "calendar": {
+    "title": "Calendario de estrenos",
+    "error": "No se han podido cargar los estrenos",
+    "hint": "Selecciona un día para ver los estrenos",
+    "empty": "Sin estrenos este día",
+    "noOverview": "Sinopsis no disponible",
+    "season": "T{{number}}",
+    "episodes": "{{count}} ep.",
+    "today": "Hoy",
+    "new": "Nuevo",
+    "renewed": "Renovada"
   },
   "topbar": {
     "search": "Buscar...",

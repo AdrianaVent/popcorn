@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { ssrStorage } from './storage'
 
 // Minimal snapshots stored at mark-time so the "watched" filter can render rows
 // without any TMDB call. Only the fields needed for the table/modal are kept.
@@ -83,6 +84,6 @@ export const useWatchedStore = create<WatchedState>()(
           }
         }),
     }),
-    { name: 'popcorn-watched-v3' }
+    { name: 'popcorn-watched-v3', storage: ssrStorage }
   )
 )

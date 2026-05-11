@@ -4,15 +4,15 @@ import dynamic from 'next/dynamic'
 import ErrorBoundary from '@/components/common/ErrorBoundary'
 import Loading from './loading'
 
-const Dashboard = dynamic(() => import('@/features/dashboard'), {
+const Home = dynamic(() => import('@/features/home'), {
   ssr: false,
   loading: Loading,
 })
 
-export default function DashboardPage() {
+export default function HomePage() {
   return (
     <ErrorBoundary>
-      <Dashboard />
+      <Home />
     </ErrorBoundary>
   )
 }

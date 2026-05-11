@@ -1,31 +1,24 @@
-'use client'
-
 import { type ReactNode } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-import DashboardLayout from '@/components/layouts/DashboardLayout'
-import { useUserStore } from '@/store/userStore'
+import { cookies } from 'next/headers'
+import DashboardGroupLayoutClient from './DashboardGroupLayoutClient'
+import type { UserRole } from '@/db/users'
 
-export default function DashboardGroupLayout({ children }: { children: ReactNode }) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const clearUser = useUserStore((s) => s.clearUser)
+async function getRoleFromCookie(): Promise<UserRole | null> {
+  const token = (await cookies()).get('token')?.value
+  if (!token) return null
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(base64))
+    return (payload.role as UserRole) ?? null
+  } catch { return null }
+}
 
-  const activeNav =
-    pathname.startsWith('/home') ? 'dashboard'
-    : pathname.startsWith('/movies') ? 'movies'
-    : pathname.startsWith('/series') ? 'series'
-    : pathname.startsWith('/users') ? 'users'
-    : 'dashboard'
-
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
-    clearUser()
-    router.push('/login')
-  }
+export default async function DashboardGroupLayout({ children }: { children: ReactNode }) {
+  const serverRole = await getRoleFromCookie()
 
   return (
-    <DashboardLayout activeNav={activeNav} onLogout={handleLogout}>
+    <DashboardGroupLayoutClient serverRole={serverRole}>
       {children}
-    </DashboardLayout>
+    </DashboardGroupLayoutClient>
   )
 }

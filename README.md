@@ -70,7 +70,10 @@ Open [http://localhost:3000](http://localhost:3000) and sign in. After login you
 
 ### Home
 
-A personal dashboard at `/home` with two genre distribution charts — one for movies and one for series. Each chart lets you toggle between **My profile** (genres from your watched list) and **Global** (genres from the TMDB popular catalogue). Bar charts are built with Recharts; long labels truncate with an ellipsis and reveal the full name on hover.
+A personal dashboard at `/home` with two side-by-side cards:
+
+- **Genre distribution** — one chart for movies and one for series. Each chart lets you toggle between **My profile** (genres from your watched list) and **Global** (genres from the TMDB popular catalogue). Bar charts are built with Recharts.
+- **Release calendar** — monthly view of upcoming EN/ES movie and series releases from TMDB. Days with releases are marked with a dot. Click a day to select it. Navigate month by month; switch between movies and series with the tabs above.
 
 ### Movies & Series
 
@@ -144,7 +147,7 @@ The test suite covers:
 | Suite | What's tested |
 |---|---|
 | `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, login, logout, session expiry redirect |
-| `home.cy.ts` | Genre charts, Movies/Series tab switch, My profile/Global toggle, empty state, SVG renders |
+| `home.cy.ts` | Genre charts, Movies/Series tab switch, My profile/Global toggle, empty state, SVG renders, release calendar title and navigation |
 | `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, access control |
 | `series.cy.ts` | Series list, detail modal, watch providers, platform filter |
 | `users.cy.ts` | Create, edit, delete (single + bulk), toast notifications, import (JSON / CSV, errors, partial failures) |
@@ -187,7 +190,7 @@ src/
 ├── db/                 # client.ts (SQLite singleton) · users.ts (typed queries)
 ├── features/
 │   ├── auth/login/     # LoginFeature · useLogin · login.service.ts
-│   ├── dashboard/      # DashboardFeature · useMovieGenres · useSeriesGenres
+│   ├── home/           # HomeFeature · useMovieGenres · useSeriesGenres · ReleaseCalendar
 │   ├── movies/         # MoviesFeature · hooks · components · service
 │   ├── series/         # SeriesFeature · hooks · components · service
 │   └── users/          # UsersFeature · UserFormModal · ImportUsersModal · users.service.ts

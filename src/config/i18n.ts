@@ -6,6 +6,7 @@ import en from '@/locales/en.json'
 import es from '@/locales/es.json'
 
 function getStoredLanguage(): string {
+  if (typeof window === 'undefined') return 'es'
   try {
     const userRaw = localStorage.getItem('popcorn-user')
     const userId = JSON.parse(userRaw ?? '')?.state?.userId as string | null

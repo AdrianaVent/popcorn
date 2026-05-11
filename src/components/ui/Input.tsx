@@ -21,7 +21,7 @@ export default function Input({ label, error, id, rightElement, className, ...pr
         <input
           id={id}
           className={clsx(
-            'w-full px-3 py-2.5 rounded-md border text-small text-foreground bg-card outline-none transition-colors [&:-webkit-autofill]:shadow-[0_0_0px_1000px_var(--card)_inset] [&:-webkit-autofill]:[webkit-text-fill-color:var(--foreground)]',
+            'w-full px-3 py-2.5 rounded-md border text-small text-foreground bg-card outline-none transition-colors [&:-webkit-autofill]:shadow-[0_0_0px_1000px_var(--color-card)_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:var(--color-foreground)]',
             rightElement && 'pr-10',
             error ? 'border-destructive' : 'border-border',
             className,

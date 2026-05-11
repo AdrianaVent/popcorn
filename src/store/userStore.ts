@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { ssrStorage } from './storage'
 import type { UserRole } from '@/db/users'
 
 export type { UserRole }
@@ -19,6 +20,6 @@ export const useUserStore = create<UserState>()(
       setUser: (id, role) => set({ userId: id, role }),
       clearUser: () => set({ userId: null, role: null }),
     }),
-    { name: 'popcorn-user' }
+    { name: 'popcorn-user', storage: ssrStorage }
   )
 )
