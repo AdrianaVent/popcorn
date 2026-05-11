@@ -40,7 +40,7 @@ export default function Button({
       className={clsx(
         'inline-flex items-center justify-center gap-2',
         'w-full px-4 py-2 rounded-md text-small font-semibold',
-        'transition-colors duration-150 cursor-pointer',
+        'transition-colors duration-150 cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset',
         isPrimary
           ? 'bg-primary text-primary-foreground border-0 hover:opacity-80'
           : 'bg-transparent text-foreground border border-border hover:bg-gray-100 dark:hover:bg-gray-700',

@@ -54,7 +54,7 @@ export default function AccordionList<T>({
       <div className="flex items-center justify-between bg-muted/40 border-b border-border px-3 py-2">
         <button
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-2 min-w-0 flex-1 text-left"
+          className="flex items-center gap-2 min-w-0 flex-1 text-left outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset rounded-sm"
         >
           <Chevron open={open} />
           <div className="min-w-0 truncate">

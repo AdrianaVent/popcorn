@@ -79,6 +79,7 @@ export default function Modal({
               text-xl leading-none
               px-2
               rounded-md
+              outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset
             "
           >
             ×
