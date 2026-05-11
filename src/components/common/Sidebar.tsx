@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import Link from 'next/link'
-import { FilmIcon, TvIcon, GearIcon, MenuIcon, UsersIcon, HomeIcon } from '@/components/icons'
+import { FilmIcon, TvIcon, GearIcon, UsersIcon, HomeIcon, LogOutIcon, ChevronLeftIcon, ChevronRightIcon } from '@/components/icons'
 import SettingsModal from './SettingsModal'
 import Image from 'next/image'
 import { useUserStore } from '@/store/userStore'
@@ -22,9 +22,10 @@ type NavItem = {
 type SidebarProps = {
   activeKey?: string
   serverRole: UserRole | null
+  onLogout?: () => void
 }
 
-export default function Sidebar({ activeKey = 'dashboard', serverRole }: SidebarProps) {
+export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout }: SidebarProps) {
   const { t } = useTranslation()
   const storeRole = useUserStore((s) => s.role)
 
@@ -74,37 +75,54 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole }: Sidebar
     <>
       <aside
         className={clsx(
-          'flex flex-col min-h-screen bg-card border-r border-border shrink-0',
+          'relative flex flex-col min-h-screen bg-card border-r border-border shrink-0',
           'transition-all duration-200 ease-in-out',
           collapsed ? 'w-16 items-center px-2' : 'w-48 px-3'
         )}
       >
-        {/* Header */}
-        <div className="h-14 flex items-center px-2 gap-2 border-b border-border overflow-hidden">
+        {/* Logo / bucket icon — decorative only */}
+        {collapsed ? (
+          <div className="flex justify-center w-full py-4">
+            <Image src="/icons/bucket-light.svg" alt="Popcorn" width={44} height={44} className="rounded-full dark:hidden" loading="eager" />
+            <Image src="/icons/bucket-dark.svg"  alt="Popcorn" width={44} height={44} className="rounded-full hidden dark:block" loading="eager" />
+          </div>
+        ) : (
+          <div className="pt-4 pb-2">
+            <Image
+              src="/icons/popcorn.svg"
+              alt="Popcorn"
+              width={200}
+              height={54}
+              className="w-full h-auto"
+              loading="eager"
+            />
+          </div>
+        )}
+
+        {/* Separator + sidebar toggle.
+            w-full ensures the wrapper fills the full content area in both states.
+            right offset = content-right-to-border-center + half-button:
+              expanded (px-3 = 12px): 12 + 13 = 25px → -right-6.5 (26px, ~half-circle)
+              collapsed (px-2 = 8px):  8 + 13 = 21px → -right-5.5 (22px, ~half-circle) */}
+        <div className="relative flex items-center w-full mb-2">
+          <div className="flex-1 border-t border-border" />
           <button
             onClick={() => setCollapsed((v) => !v)}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="flex items-center justify-center w-7 h-7 text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset rounded-md"
+            className={clsx(
+              'absolute top-1/2 -translate-y-1/2 w-7 h-7 rounded-full',
+              'bg-primary text-primary-foreground flex items-center justify-center',
+              'shadow-md hover:opacity-90 transition-opacity z-10',
+              'outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
+              collapsed ? '-right-5.5' : '-right-6.5'
+            )}
           >
-            <MenuIcon size={16} />
+            {collapsed ? <ChevronRightIcon size={14} /> : <ChevronLeftIcon size={14} />}
           </button>
-
-          {!collapsed && (
-            <div className="ml-2 flex items-center">
-              <Image
-                src="/icons/popcorn.svg"
-                alt="Popcorn"
-                width={200}
-                height={54}
-                className="h-9 w-auto"
-                loading="eager"
-              />
-            </div>
-          )}
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 flex flex-col gap-1 p-2">
+        <nav className="flex-1 flex flex-col gap-1 p-2 pt-1">
           {navItems.map((item) => {
             const isActive = item.key === activeKey
             const isHidden = item.adminOnly && role !== 'admin'
@@ -139,19 +157,34 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole }: Sidebar
             )
           })}
         </nav>
+
+        {/* Logout */}
+        <div className="p-2 border-t border-border">
+          <button
+            onClick={onLogout}
+            onMouseEnter={(e) => handleMouseEnter('logout', e)}
+            onMouseLeave={() => setHoveredKey(null)}
+            className={itemClass(false)}
+            suppressHydrationWarning
+          >
+            <span className="shrink-0"><LogOutIcon size={16} /></span>
+            {!collapsed && <span suppressHydrationWarning>{t('topbar.logout')}</span>}
+          </button>
+        </div>
       </aside>
 
       {/* Tooltip */}
       {collapsed && hoveredKey && (() => {
         const item = navItems.find((i) => i.key === hoveredKey)
-        if (!item) return null
+        const label = hoveredKey === 'logout' ? t('topbar.logout') : item ? t(item.labelKey) : null
+        if (!label) return null
         return (
           <div
             className="fixed z-50 bg-primary text-primary-foreground text-caption font-medium px-2 py-1 rounded-md pointer-events-none whitespace-nowrap shadow-md"
             style={{ left: '4.5rem', top: tooltipY, transform: 'translateY(-50%)' }}
             suppressHydrationWarning
           >
-            {t(item.labelKey)}
+            {label}
           </div>
         )
       })()}
