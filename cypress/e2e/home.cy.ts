@@ -67,7 +67,50 @@ describe('Dashboard', () => {
     cy.contains('button', 'Movies').should('not.have.class', 'bg-card')
   })
 
-  // ─── Mode toggle ─────────────────────────────────────────────
+  // ─── Mode toggle (admin) ─────────────────────────────────────
+
+  it('does not show the user/global toggle for admin', () => {
+    cy.wait('@discoverMovies')
+    cy.get('[role="group"]').should('not.exist')
+  })
+
+  // ─── Chart content ────────────────────────────────────────────
+
+  it('renders the genre chart when global data loads', () => {
+    cy.wait('@discoverMovies')
+    cy.get('svg').should('exist')
+  })
+
+  it('shows the series chart after switching to the Series tab', () => {
+    cy.contains('button', 'Series').click()
+    cy.wait('@discoverTV')
+    cy.get('svg').should('exist')
+  })
+
+  // ─── Release calendar ─────────────────────────────────────────
+
+  it('shows the release calendar title', () => {
+    cy.contains('Release calendar').should('be.visible')
+  })
+
+  it('shows the calendar navigation controls', () => {
+    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
+      cy.get('button[class*="rounded-md"]').should('have.length.gte', 2)
+    })
+  })
+})
+
+// ─── Mode toggle (guest) ──────────────────────────────────────────────────────
+
+describe('Mode toggle (guest)', () => {
+  beforeEach(() => {
+    cy.intercept('GET', /\/genre\/movie\/list/, movieGenres).as('movieGenreList')
+    cy.intercept('GET', /\/discover\/movie/, discoverMovies).as('discoverMovies')
+    cy.intercept('GET', /\/genre\/tv\/list/, tvGenres).as('tvGenreList')
+    cy.intercept('GET', /\/discover\/tv/, discoverTV).as('discoverTV')
+    cy.intercept('GET', /\/watch\/providers\/tv/, { results: [] }).as('tvProviders')
+    cy.visitAsGuest('/home')
+  })
 
   it('defaults to Global mode when the user has no watched movies', () => {
     cy.wait('@discoverMovies')
@@ -95,35 +138,10 @@ describe('Dashboard', () => {
     })
   })
 
-  // ─── Chart content ────────────────────────────────────────────
-
-  it('renders the genre chart when global data loads', () => {
-    cy.wait('@discoverMovies')
-    cy.get('svg').should('exist')
-  })
-
   it('shows the empty state when My profile has no watched titles', () => {
     cy.wait('@discoverMovies')
     cy.get('[role="group"]').contains('My profile').click()
     cy.contains('Mark some titles as watched to see your genres').should('be.visible')
-  })
-
-  it('shows the series chart after switching to the Series tab', () => {
-    cy.contains('button', 'Series').click()
-    cy.wait('@discoverTV')
-    cy.get('svg').should('exist')
-  })
-
-  // ─── Release calendar ─────────────────────────────────────────
-
-  it('shows the release calendar title', () => {
-    cy.contains('Release calendar').should('be.visible')
-  })
-
-  it('shows the calendar navigation controls', () => {
-    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
-      cy.get('button[class*="rounded-md"]').should('have.length.gte', 2)
-    })
   })
 })
 

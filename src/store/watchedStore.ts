@@ -39,6 +39,7 @@ interface WatchedState {
   seriesData: SeriesMap
   toggleMovie:   (userId: string, movie: StoredMovie) => void
   toggleEpisode: (userId: string, seriesId: number, episodeId: number, seasonNumber: number, series?: StoredSeries) => void
+  markSeason:    (userId: string, seriesId: number, seasonNumber: number, episodeIds: number[], series?: StoredSeries) => void
 }
 
 export const useWatchedStore = create<WatchedState>()(
@@ -61,7 +62,6 @@ export const useWatchedStore = create<WatchedState>()(
 
       toggleEpisode: (userId, seriesId, episodeId, seasonNumber, series) =>
         set((s) => {
-          // Update episode
           const userEps    = { ...s.episodes[userId] }
           const seriesEps  = { ...userEps[seriesId] }
           if (seriesEps[episodeId]) {
@@ -75,6 +75,30 @@ export const useWatchedStore = create<WatchedState>()(
           // overwriting with stale data if the series details change later.
           const userSeries = { ...s.seriesData[userId] }
           if (series && !userSeries[seriesId]) {
+            userSeries[seriesId] = series
+          }
+
+          return {
+            episodes:   { ...s.episodes,   [userId]: userEps },
+            seriesData: { ...s.seriesData, [userId]: userSeries },
+          }
+        }),
+
+      markSeason: (userId, seriesId, seasonNumber, episodeIds, series) =>
+        set((s) => {
+          const userEps   = { ...s.episodes[userId] }
+          const seriesEps = { ...userEps[seriesId] }
+
+          const allWatched = episodeIds.length > 0 && episodeIds.every((id) => !!seriesEps[id])
+          if (allWatched) {
+            episodeIds.forEach((id) => { delete seriesEps[id] })
+          } else {
+            episodeIds.forEach((id) => { seriesEps[id] = { seasonNumber } })
+          }
+          userEps[seriesId] = seriesEps
+
+          const userSeries = { ...s.seriesData[userId] }
+          if (series && !userSeries[seriesId] && !allWatched) {
             userSeries[seriesId] = series
           }
 
