@@ -93,12 +93,13 @@ export default function SeriesFeature() {
 
   const { data: providerOptions } = useQuery<WatchProvider[]>({ queryKey: ['series-provider-options'], queryFn: fetchSeriesWatchProviderOptions, staleTime: Infinity })
 
-  const filtersSchema = useMemo(() => staticSeriesFiltersSchema.map((field) => {
+  const filtersSchema = useMemo(() => staticSeriesFiltersSchema.flatMap((field) => {
+    if (field.key === 'watched' && role === 'admin') return []
     if (field.key === 'provider_id' && providerOptions?.length) {
-      return { ...field, options: providerOptions.map((p) => ({ value: String(p.provider_id), label: p.provider_name })) }
+      return [{ ...field, options: providerOptions.map((p) => ({ value: String(p.provider_id), label: p.provider_name })) }]
     }
-    return field
-  }), [providerOptions])
+    return [field]
+  }), [providerOptions, role])
 
   const watchedSeriesData = useWatchedStore((s) => s.seriesData[userKey])
 

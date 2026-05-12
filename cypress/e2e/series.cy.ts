@@ -92,6 +92,123 @@ describe('Series', () => {
     })
   })
 
+  // ─── Watched — admin ──────────────────────────────────────────
+
+  describe('Watched controls (admin)', () => {
+    const mockDetailWithSeason = {
+      id: 1396,
+      name: 'Breaking Bad',
+      first_air_date: '2008-01-20',
+      vote_average: 9.5,
+      vote_count: 12000,
+      overview: 'A chemistry teacher turns to manufacturing meth.',
+      genres: [{ id: 18, name: 'Drama' }],
+      original_language: 'en',
+      poster_path: '/poster.jpg',
+      number_of_seasons: 1,
+      number_of_episodes: 2,
+      episode_run_time: [47],
+      status: 'Ended',
+      tagline: '',
+      seasons: [
+        { id: 3739, name: 'Season 1', season_number: 1, episode_count: 2, poster_path: null, air_date: '2008-01-20' },
+      ],
+    }
+
+    const mockSeason = {
+      episodes: [
+        { id: 62085, name: 'Pilot', episode_number: 1, runtime: 58 },
+        { id: 62086, name: 'Cat\'s in the Bag', episode_number: 2, runtime: 48 },
+      ],
+    }
+
+    it('does not show the Watched filter', () => {
+      cy.wait('@tmdb')
+      cy.get('[data-cy="filter-watched"]').should('not.exist')
+    })
+
+    it('does not show episode watched buttons or season mark button', () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetailWithSeason).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/tv\/1396\/season\/1/, mockSeason).as('season')
+
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.get('[role="dialog"]').should('contain', 'Breaking Bad')
+
+      // AccordionList is closed by default — open it to render the season items
+      cy.get('[role="dialog"]').contains('button', 'Seasons').click()
+      cy.get('[role="dialog"]').find('[data-cy="season-watched-btn"]').should('not.exist')
+
+      cy.get('[role="dialog"]').contains('Season 1').click()
+      cy.wait('@season')
+
+      cy.get('[role="dialog"]').contains('Pilot').should('be.visible')
+      cy.get('[role="dialog"]').find('[data-cy="episode-watched-btn"]').should('not.exist')
+    })
+  })
+
+  // ─── Watched — guest ──────────────────────────────────────────
+
+  describe('Watched controls (guest)', () => {
+    const mockDetailWithSeason = {
+      id: 1396,
+      name: 'Breaking Bad',
+      first_air_date: '2008-01-20',
+      vote_average: 9.5,
+      vote_count: 12000,
+      overview: 'A chemistry teacher turns to manufacturing meth.',
+      genres: [{ id: 18, name: 'Drama' }],
+      original_language: 'en',
+      poster_path: '/poster.jpg',
+      number_of_seasons: 1,
+      number_of_episodes: 2,
+      episode_run_time: [47],
+      status: 'Ended',
+      tagline: '',
+      seasons: [
+        { id: 3739, name: 'Season 1', season_number: 1, episode_count: 2, poster_path: null, air_date: '2008-01-20' },
+      ],
+    }
+
+    const mockSeason = {
+      episodes: [
+        { id: 62085, name: 'Pilot', episode_number: 1, runtime: 58 },
+        { id: 62086, name: 'Cat\'s in the Bag', episode_number: 2, runtime: 48 },
+      ],
+    }
+
+    beforeEach(() => {
+      cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'series.json' }).as('tmdb-guest')
+      cy.visitAsGuest('/series')
+    })
+
+    it('shows the Watched filter', () => {
+      cy.wait('@tmdb-guest')
+      cy.get('[data-cy="filter-watched"]').should('exist')
+    })
+
+    it('shows episode watched buttons and season mark button', () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetailWithSeason).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/tv\/1396\/season\/1/, mockSeason).as('season')
+
+      cy.wait('@tmdb-guest')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.get('[role="dialog"]').should('contain', 'Breaking Bad')
+
+      // AccordionList is closed by default — open it to render the season items
+      cy.get('[role="dialog"]').contains('button', 'Seasons').click()
+      cy.get('[role="dialog"]').find('[data-cy="season-watched-btn"]').should('exist')
+
+      cy.get('[role="dialog"]').contains('Season 1').click()
+      cy.wait('@season')
+
+      cy.get('[role="dialog"]').contains('Pilot').should('be.visible')
+      cy.get('[role="dialog"]').find('[data-cy="episode-watched-btn"]').should('have.length', 2)
+    })
+  })
+
   // ─── Platform filter ──────────────────────────────────────────
 
   it('filters series by platform', () => {

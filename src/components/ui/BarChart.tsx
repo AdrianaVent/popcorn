@@ -21,6 +21,7 @@ type Props = {
   userQuery: { data?: GenreEntry[]; isLoading: boolean; isError: boolean }
   globalQuery: { data?: GenreEntry[]; isLoading: boolean; isError: boolean }
   defaultMode?: 'user' | 'global'
+  showUserToggle?: boolean
   className?: string
 }
 
@@ -52,9 +53,9 @@ function ChartSkeleton({ orientation }: { orientation: 'horizontal' | 'vertical'
 
 type GenreTip = { label: string; x: number; y: number }
 
-export default function BarChart({ title, orientation, tooltipLabel, userQuery, globalQuery, defaultMode = 'user', className = '' }: Props) {
+export default function BarChart({ title, orientation, tooltipLabel, userQuery, globalQuery, defaultMode = 'user', showUserToggle = true, className = '' }: Props) {
   const { t } = useTranslation()
-  const [mode, setMode] = useState<'user' | 'global'>(defaultMode)
+  const [mode, setMode] = useState<'user' | 'global'>(showUserToggle ? defaultMode : 'global')
   const [genreTip, setGenreTip] = useState<GenreTip | null>(null)
   const [isDark, setIsDark] = useState(false)
 
@@ -130,14 +131,16 @@ export default function BarChart({ title, orientation, tooltipLabel, userQuery, 
       <div className={`flex flex-col gap-2 rounded-xl border border-border bg-card p-3 select-none [&_svg]:outline-none [&_svg_*]:outline-none${className ? ` ${className}` : ''}`}>
         <div className="flex items-center justify-between gap-3">
           <Text variant="body" className="font-semibold text-foreground">{title}</Text>
-          <ToggleSwitch
-            options={[
-              { value: 'user', label: t('dashboard.mode.user') },
-              { value: 'global', label: t('dashboard.mode.global') },
-            ]}
-            value={effectiveMode}
-            onChange={setMode}
-          />
+          {showUserToggle && (
+            <ToggleSwitch
+              options={[
+                { value: 'user', label: t('dashboard.mode.user') },
+                { value: 'global', label: t('dashboard.mode.global') },
+              ]}
+              value={effectiveMode}
+              onChange={setMode}
+            />
+          )}
         </div>
 
         {query.isLoading && <ChartSkeleton orientation={orientation} />}

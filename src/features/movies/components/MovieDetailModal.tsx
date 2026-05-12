@@ -35,6 +35,7 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
   const { inTheaters, loading: inTheatersLoading } = useMovieInTheaters(currentId)
 
   const userId = useUserStore((s) => s.userId)
+  const role   = useUserStore((s) => s.role)
   const userKey = String(userId ?? 'guest')
   const watchedMovies = useWatchedStore((s) => s.movies[userKey])
   const toggleMovie = useWatchedStore((s) => s.toggleMovie)
@@ -78,28 +79,30 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
                 >
                   {detail.title}
                 </Text>
-                <button
-                  onClick={() => toggleMovie(userKey, {
-                    id: detail.id,
-                    title: detail.title,
-                    release_date: detail.release_date,
-                    vote_average: detail.vote_average,
-                    vote_count: detail.vote_count,
-                    poster_path: detail.poster_path,
-                    original_language: detail.original_language,
-                  })}
-                  className={clsx(
-                    'shrink-0 mt-1 flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md border transition-colors whitespace-nowrap',
-                    isWatched
-                      ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400 hover:bg-green-500/20'
-                      : 'bg-muted border-border/50 text-muted-foreground hover:border-green-400 hover:text-green-600'
-                  )}
-                >
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <path d="M2 5L4.2 7.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  {isWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
-                </button>
+                {role !== 'admin' && (
+                  <button
+                    onClick={() => toggleMovie(userKey, {
+                      id: detail.id,
+                      title: detail.title,
+                      release_date: detail.release_date,
+                      vote_average: detail.vote_average,
+                      vote_count: detail.vote_count,
+                      poster_path: detail.poster_path,
+                      original_language: detail.original_language,
+                    })}
+                    className={clsx(
+                      'shrink-0 mt-1 flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md border transition-colors whitespace-nowrap',
+                      isWatched
+                        ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400 hover:bg-green-500/20'
+                        : 'bg-muted border-border/50 text-muted-foreground hover:border-green-400 hover:text-green-600'
+                    )}
+                  >
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M2 5L4.2 7.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {isWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
+                  </button>
+                )}
               </div>
 
               {detail.tagline && (

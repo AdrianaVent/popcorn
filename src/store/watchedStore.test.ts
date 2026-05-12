@@ -82,6 +82,59 @@ describe('toggleEpisode', () => {
   })
 })
 
+describe('markSeason', () => {
+  const episodeIds = [101, 102, 103]
+
+  it('marks all episodes of a season as watched', () => {
+    useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds, mockSeries)
+    const eps = useWatchedStore.getState().episodes['user1'][10]
+    episodeIds.forEach((id) => {
+      expect(eps[id]).toEqual({ seasonNumber: 1 })
+    })
+  })
+
+  it('unmarks all episodes when all are already watched', () => {
+    useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds, mockSeries)
+    useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds, mockSeries)
+    const eps = useWatchedStore.getState().episodes['user1'][10]
+    episodeIds.forEach((id) => {
+      expect(eps[id]).toBeUndefined()
+    })
+  })
+
+  it('marks remaining episodes when some are already watched', () => {
+    useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1)
+    useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds, mockSeries)
+    const eps = useWatchedStore.getState().episodes['user1'][10]
+    episodeIds.forEach((id) => {
+      expect(eps[id]).toEqual({ seasonNumber: 1 })
+    })
+  })
+
+  it('stores the series snapshot on first mark', () => {
+    useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds, mockSeries)
+    expect(useWatchedStore.getState().seriesData['user1'][10]).toEqual(mockSeries)
+  })
+
+  it('does not overwrite an existing series snapshot', () => {
+    useWatchedStore.getState().markSeason('user1', 10, 1, [101], mockSeries)
+    const updated = { ...mockSeries, name: 'Updated' }
+    useWatchedStore.getState().markSeason('user1', 10, 2, [201], updated)
+    expect(useWatchedStore.getState().seriesData['user1'][10].name).toBe('Test Series')
+  })
+
+  it('does not affect episodes in other seasons', () => {
+    useWatchedStore.getState().toggleEpisode('user1', 10, 201, 2)
+    useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds, mockSeries)
+    expect(useWatchedStore.getState().episodes['user1'][10][201]).toEqual({ seasonNumber: 2 })
+  })
+
+  it('isolates data between users', () => {
+    useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds, mockSeries)
+    expect(useWatchedStore.getState().episodes['user2']).toBeUndefined()
+  })
+})
+
 describe('per-season watched count derivation', () => {
   it('correctly counts watched episodes per season', () => {
     useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1)
