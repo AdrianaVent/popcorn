@@ -85,7 +85,7 @@ The detail panel shows where each title is available in Spain — subscription p
 
 ### Watched tracking
 
-Mark movies as watched and track individual episodes per series. Your progress is saved per user in the browser's localStorage.
+Guest users can mark movies as watched and track individual episodes per series. Progress is saved per user in the browser's localStorage. Admins browse content in read-only mode — the watched toggle and episode checkboxes are hidden, and the genre chart always shows global data.
 
 ### Export
 

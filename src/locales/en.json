@@ -139,7 +139,9 @@
       "statusBadge": "Status",
       "noEpisodes": "No episodes available",
       "watched": "Watched",
-      "markSeriesWatched": "Mark as watched"
+      "markSeriesWatched": "Mark as watched",
+      "markSeasonWatched": "Mark season as watched",
+      "unmarkSeason": "Unmark season"
     },
     "status": {
       "returning": "Returning",
@@ -199,7 +201,7 @@
       "role": "Role"
     },
     "import": {
-    "noFile": "Please select a file before importing",
+      "noFile": "Please select a file before importing",
       "button": "Import",
       "title": "Import users",
       "description": "Upload a JSON or CSV file to bulk-create users.",

@@ -59,6 +59,83 @@ describe('Movies', () => {
     cy.contains('Export').should('not.exist')
   })
 
+  // ─── Watched — admin ──────────────────────────────────────────
+
+  describe('Watched controls (admin)', () => {
+    const mockDetail = {
+      id: 550,
+      title: 'Fight Club',
+      release_date: '1999-10-15',
+      vote_average: 8.4,
+      vote_count: 26000,
+      runtime: 139,
+      overview: 'A depressed man forms an underground fight club.',
+      genres: [{ id: 18, name: 'Drama' }],
+      original_language: 'en',
+      poster_path: '/poster.jpg',
+      belongs_to_collection: null,
+      status: 'Released',
+      tagline: '',
+    }
+
+    it('does not show the Watched filter', () => {
+      cy.wait('@tmdb')
+      cy.get('[data-cy="filter-watched"]').should('not.exist')
+    })
+
+    it('does not show the Mark as watched button in the detail modal', () => {
+      cy.intercept('GET', /\/movie\/550(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/movie\/550\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/movie\/550\/release_dates/, { results: [] }).as('releaseDates')
+
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.get('[role="dialog"]').contains('Mark as watched').should('not.exist')
+    })
+  })
+
+  // ─── Watched — guest ──────────────────────────────────────────
+
+  describe('Watched controls (guest)', () => {
+    const mockDetail = {
+      id: 550,
+      title: 'Fight Club',
+      release_date: '1999-10-15',
+      vote_average: 8.4,
+      vote_count: 26000,
+      runtime: 139,
+      overview: 'A depressed man forms an underground fight club.',
+      genres: [{ id: 18, name: 'Drama' }],
+      original_language: 'en',
+      poster_path: '/poster.jpg',
+      belongs_to_collection: null,
+      status: 'Released',
+      tagline: '',
+    }
+
+    beforeEach(() => {
+      cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'movies.json' }).as('tmdb-guest')
+      cy.visitAsGuest('/movies')
+    })
+
+    it('shows the Watched filter', () => {
+      cy.wait('@tmdb-guest')
+      cy.get('[data-cy="filter-watched"]').should('exist')
+    })
+
+    it('shows the Mark as watched button in the detail modal', () => {
+      cy.intercept('GET', /\/movie\/550(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/movie\/550\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/movie\/550\/release_dates/, { results: [] }).as('releaseDates')
+
+      cy.wait('@tmdb-guest')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.get('[role="dialog"]').contains('Mark as watched').should('be.visible')
+    })
+  })
+
   // ─── Watch providers ──────────────────────────────────────────
 
   describe('Watch providers in detail modal', () => {

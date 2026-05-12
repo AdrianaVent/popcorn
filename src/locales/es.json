@@ -139,7 +139,9 @@
       "statusBadge": "Estado",
       "noEpisodes": "No hay episodios disponibles",
       "watched": "Visto",
-      "markSeriesWatched": "Marcar como visto"
+      "markSeriesWatched": "Marcar como visto",
+      "markSeasonWatched": "Mark season as watched",
+      "unmarkSeason": "Unmark season"
     },
     "status": {
       "returning": "En emisión",
@@ -199,7 +201,7 @@
       "role": "Rol"
     },
     "import": {
-    "noFile": "Selecciona un fichero antes de importar",
+      "noFile": "Selecciona un fichero antes de importar",
       "button": "Importar",
       "title": "Importar usuarios",
       "description": "Sube un fichero JSON o CSV para crear usuarios en bloque.",
