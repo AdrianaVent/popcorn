@@ -64,6 +64,7 @@ export default function HomeFeature() {
   const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null)
 
   const userId   = useUserStore((s) => s.userId) ?? ''
+  const role     = useUserStore((s) => s.role)
   const language = useLanguageStore((s) => s.language)
   const tmdbLang = TMDB_LANGUAGE[language] ?? 'es-ES'
   const watchedMovies   = useWatchedStore((s) => s.movies[userId])
@@ -130,6 +131,7 @@ export default function HomeFeature() {
             userQuery={isGenreMovies ? userMovieGenres : userSeriesGenres}
             globalQuery={isGenreMovies ? globalMovieGenres : globalSeriesGenres}
             defaultMode={isGenreMovies ? movieDefaultMode : seriesDefaultMode}
+            showUserToggle={role !== 'admin'}
             className="rounded-tr-none"
           />
         </div>

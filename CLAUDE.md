@@ -174,7 +174,7 @@ Features that depend on Zustand `persist` stores (localStorage) are loaded with 
 No external auth provider. Users in `data/popcorn.db` (gitignored, created on first run). Passwords hashed with bcrypt (cost 10). JWTs signed with `jose` using `JWT_SECRET` from env. Access token payload: `{ sub: userId, username, role }`. Refresh token payload: `{ sub: userId }`. Role is readable server-side without a DB roundtrip.
 
 **Roles**
-`admin` — full access. `guest` — browse + mark watched; no export, no user management. ExportButton is conditionally rendered based on `role` from `userStore`.
+`admin` — full browse access + export + user management; cannot mark movies or episodes as watched. `guest` — browse + mark movies/episodes as watched; no export, no user management. Role-based UI: ExportButton and watched-filter hidden for admin; "Mark as watched" button in MovieDetailModal and episode toggle buttons in SeasonsAccordion hidden for admin; BarChart user/global toggle hidden for admin (always shows global view).
 
 **Sessions**
 Two HttpOnly cookies: `token` (1h) + `refresh_token` (7d). Set on login, both cleared on logout or failed refresh. Refresh verifies the refresh JWT, looks up the user in the DB, and re-signs both tokens.

@@ -70,12 +70,13 @@ export default function MoviesFeature() {
 
   const { data: providerOptions } = useQuery<WatchProvider[]>({ queryKey: ['movie-provider-options'], queryFn: fetchMovieWatchProviderOptions, staleTime: Infinity })
 
-  const filtersSchema = useMemo(() => staticMovieFiltersSchema.map((field) => {
+  const filtersSchema = useMemo(() => staticMovieFiltersSchema.flatMap((field) => {
+    if (field.key === 'watched' && role === 'admin') return []
     if (field.key === 'provider_id' && providerOptions?.length) {
-      return { ...field, options: providerOptions.map((p) => ({ value: String(p.provider_id), label: p.provider_name })) }
+      return [{ ...field, options: providerOptions.map((p) => ({ value: String(p.provider_id), label: p.provider_name })) }]
     }
-    return field
-  }), [providerOptions])
+    return [field]
+  }), [providerOptions, role])
 
   const watchedModeItems = useMemo(() => {
     if (filters.watched !== 'watched') return null
