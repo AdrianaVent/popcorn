@@ -270,6 +270,10 @@
       "series": "series",
       "error": "No se han podido cargar los datos",
       "noWatched": "Marca títulos como vistos para ver tus géneros"
+    },
+    "top10": {
+      "title": "Top 10",
+      "empty": "Marca algunos títulos como vistos para ver tu top 10"
     }
   },
   "calendar": {

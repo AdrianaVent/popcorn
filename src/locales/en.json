@@ -270,6 +270,10 @@
       "series": "series",
       "error": "Could not load data",
       "noWatched": "Mark some titles as watched to see your genres"
+    },
+    "top10": {
+      "title": "Top 10",
+      "empty": "Mark some titles as watched to build your top 10"
     }
   },
   "calendar": {

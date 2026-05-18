@@ -5,9 +5,11 @@ import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import Text from '@/components/ui/Text'
 import DatePicker from '@/components/ui/DatePicker'
+import StarRating from '@/components/ui/StarRating'
 import { ChevronDownIcon } from '@/components/icons'
 import type { FiltersSchema } from '@/types/table'
 import { updateFilterValue } from '@/utils/updateFilterValue'
+import { tmdbToStarRating } from '@/utils/formatNumber'
 
 type Props<T extends Record<string, unknown>> = {
   schema: FiltersSchema<T>
@@ -107,6 +109,27 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
                     }
                     className="w-16 px-2 py-1 text-sm border border-border rounded-md bg-background text-foreground outline-none focus:border-primary/50 transition-colors"
                   />
+                )}
+
+                {field.type === 'star' && (
+                  <div data-cy={`filter-${String(field.key)}`} className="flex items-center gap-1.5">
+                    <StarRating
+                      value={typeof value === 'number' && value > 0 ? tmdbToStarRating(value) : null}
+                      onChange={(rating) =>
+                        onChange(updateFilterValue(filters, field.key, (rating * 2) as T[keyof T]))
+                      }
+                      size={16}
+                    />
+                    {typeof value === 'number' && value > 0 && (
+                      <button
+                        onClick={() => onChange(updateFilterValue(filters, field.key, 0 as T[keyof T]))}
+                        className="text-[13px] leading-none text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="Clear"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {field.type === 'boolean' && (

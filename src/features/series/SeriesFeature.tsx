@@ -21,7 +21,9 @@ import { useToastStore } from '@/store/toastStore'
 import { useFilters } from '@/hooks/useFilters'
 import { useQuery } from '@tanstack/react-query'
 import { staticSeriesFiltersSchema } from './seriesFilters.schema'
-import { formatVoteCount } from '@/utils/formatNumber'
+import { formatVoteCount, tmdbToStarRating } from '@/utils/formatNumber'
+import StarRating from '@/components/ui/StarRating'
+import Tooltip from '@/components/ui/Tooltip'
 import { formatShortDate } from '@/utils/formatDate'
 import type { Column } from '@/types/table'
 import type { SeriesRow, SeriesFilters } from '@/types/series'
@@ -249,7 +251,13 @@ export default function SeriesFeature() {
     {
       key: 'vote_average',
       header: t('series.columns.rating'),
-      render: (row) => `${row.vote_average.toFixed(1)} / 10`,
+      render: (row) => (
+        <Tooltip content={`${row.vote_average.toFixed(1)} / 10`} placement="top">
+          <div className="flex justify-center">
+            <StarRating value={tmdbToStarRating(row.vote_average)} readonly size={14} />
+          </div>
+        </Tooltip>
+      ),
       width: 'sm',
       align: 'center',
     },
@@ -297,6 +305,7 @@ export default function SeriesFeature() {
 
       <div className="flex-1 min-h-0 overflow-hidden">
         <Table<SeriesRow>
+          scrollKey={`${page}-${JSON.stringify(filters)}`}
           loading={loading}
           error={error ?? undefined}
           onRetry={retry}

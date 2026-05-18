@@ -1,13 +1,16 @@
+import type { ReactNode } from 'react'
+
 export type Column<T extends Record<string, unknown>> = {
   key: keyof T
   header: string
-  render?: (row: T) => React.ReactNode
+  headerNode?: ReactNode
+  render?: (row: T) => ReactNode
   className?: string
   align?: 'left' | 'center' | 'right'
   width?: 'xs' | 'sm' | 'md' | 'lg' | 'flex'
 }
 
-export type FilterFieldType = 'text' | 'number' | 'boolean' | 'select' | 'date'
+export type FilterFieldType = 'text' | 'number' | 'boolean' | 'select' | 'date' | 'star'
 
 export type FilterOption = { value: string | number; label: string }
 
