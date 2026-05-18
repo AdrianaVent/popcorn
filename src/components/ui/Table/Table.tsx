@@ -20,6 +20,7 @@ type TableProps<T extends Record<string, unknown>> = {
   error?: string | null
   onRetry?: () => void
   emptyMessage?: string
+  scrollKey?: string | number
 }
 
 export const widthMap = {
@@ -42,13 +43,14 @@ export default function Table<T extends Record<string, unknown>>({
   error,
   onRetry,
   emptyMessage,
+  scrollKey,
 }: TableProps<T>) {
   const { t } = useTranslation()
   const showOverlay = !loading && (error || (!error && data.length === 0 && emptyMessage))
 
   return (
     <div className="relative flex flex-col h-full border border-border rounded-lg overflow-hidden">
-      <div className="flex-1 min-h-0 overflow-auto pb-14">
+      <div key={scrollKey} className="flex-1 min-h-0 overflow-auto pb-14">
         <table className="w-full table-fixed text-sm">
           <TableHead columns={columns} />
           <TableBody

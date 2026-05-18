@@ -34,7 +34,7 @@ export async function middleware(req: NextRequest) {
   }
 
   if (isAuthRoute) {
-    return NextResponse.redirect(new URL('/movies', req.url))
+    return NextResponse.redirect(new URL('/home', req.url))
   }
 
   // Admin-only routes: guests are redirected to /movies

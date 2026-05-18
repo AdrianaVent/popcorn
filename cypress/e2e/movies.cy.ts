@@ -50,6 +50,17 @@ describe('Movies', () => {
     cy.contains('Fight Club').should('be.visible')
   })
 
+  // ─── Rating filter ───────────────────────────────────────────
+
+  it('filters movies by minimum rating', () => {
+    cy.intercept('GET', /\/discover\/movie.*vote_average\.gte=8/, { fixture: 'movies.json' }).as('filtered')
+
+    cy.wait('@tmdb')
+    cy.get('[data-cy="filter-vote_average_gte"]').find('svg').eq(3).click('right')
+    cy.wait('@filtered')
+    cy.contains('Fight Club').should('be.visible')
+  })
+
   // ─── Access control ───────────────────────────────────────────
 
   it('does not show the Export button for guest users', () => {

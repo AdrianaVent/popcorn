@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import BarChart from '@/components/ui/BarChart'
@@ -10,7 +10,11 @@ import SeriesDetailModal from '@/features/series/components/SeriesDetailModal'
 import { useUserMovieGenres, useGlobalMovieGenres } from '@/features/home/hooks/useMovieGenres'
 import { useUserSeriesGenres, useGlobalSeriesGenres } from '@/features/home/hooks/useSeriesGenres'
 import { useMovieReleases, useSeriesReleases } from '@/features/home/hooks/useReleases'
+import { useGlobalMovieTop10, useGlobalSeriesTop10, buildUserMovieTop10, buildUserSeriesTop10 } from '@/features/home/hooks/useTop10'
+import Top10Card from '@/features/home/components/Top10Card'
+import HomeCard from '@/features/home/components/HomeCard'
 import { useWatchedStore } from '@/store/watchedStore'
+import { useRatingsStore } from '@/store/ratingsStore'
 import { useUserStore } from '@/store/userStore'
 import { useLanguageStore } from '@/store/languageStore'
 import { genresService } from '@/services/tmdb/genres'
@@ -23,39 +27,15 @@ type ContentTab = 'movies' | 'series'
 
 const EMPTY_GENRE_MAP: Record<number, string> = {}
 
-const TABS: { value: ContentTab; labelKey: string }[] = [
-  { value: 'movies', labelKey: 'nav.movies' },
-  { value: 'series', labelKey: 'nav.series' },
+const TABS = [
+  { value: 'movies' as ContentTab, labelKey: 'nav.movies' },
+  { value: 'series' as ContentTab, labelKey: 'nav.series' },
 ]
-
-function TabBar({ activeTab, onSelect }: { activeTab: ContentTab; onSelect: (t: ContentTab) => void }) {
-  const { t } = useTranslation()
-  return (
-    <div className="flex w-full items-end">
-      <div className="flex-1 border-b border-border" />
-      {TABS.map((tab) => (
-        <button
-          key={tab.value}
-          type="button"
-          onClick={() => onSelect(tab.value)}
-          className={[
-            'px-5 py-2 text-sm font-medium border transition-colors -mb-px relative z-10 rounded-t-lg',
-            activeTab === tab.value
-              ? 'bg-card border-border text-foreground'
-              : 'bg-transparent border-transparent text-muted-foreground hover:text-foreground',
-          ].join(' ')}
-          style={activeTab === tab.value ? { borderBottomColor: 'var(--color-card)' } : {}}
-        >
-          {t(tab.labelKey)}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 export default function HomeFeature() {
   const { t } = useTranslation()
   const [genreTab, setGenreTab]       = useState<ContentTab>('movies')
+  const [top10Tab, setTop10Tab]       = useState<ContentTab>('movies')
   const [calendarTab, setCalendarTab] = useState<ContentTab>('movies')
   const [calendar, setCalendar]       = useState(() => {
     const now = new Date()
@@ -70,6 +50,8 @@ export default function HomeFeature() {
   const tmdbLang = TMDB_LANGUAGE[language] ?? 'es-ES'
   const watchedMovies   = useWatchedStore((s) => s.movies[userId])
   const watchedEpisodes = useWatchedStore((s) => s.episodes[userId])
+  const watchedSeries   = useWatchedStore((s) => s.seriesData[userId])
+  const userRatings     = useRatingsStore((s) => s.ratings[userId])
 
   const movieDefaultMode  = Object.keys(watchedMovies   ?? {}).length > 0 ? 'user' : 'global'
   const seriesDefaultMode = Object.keys(watchedEpisodes ?? {}).length > 0 ? 'user' : 'global'
@@ -81,6 +63,21 @@ export default function HomeFeature() {
 
   const movieReleases  = useMovieReleases(calendar.year, calendar.month)
   const seriesReleases = useSeriesReleases(calendar.year, calendar.month)
+
+  const globalMovieTop10  = useGlobalMovieTop10(tmdbLang)
+  const globalSeriesTop10 = useGlobalSeriesTop10(tmdbLang)
+  const userMovieTop10  = useMemo(
+    () => buildUserMovieTop10(watchedMovies, userRatings?.movies),
+    [watchedMovies, userRatings]
+  )
+  const userSeriesTop10 = useMemo(
+    () => buildUserSeriesTop10(watchedSeries, watchedEpisodes, userRatings?.series),
+    [watchedSeries, watchedEpisodes, userRatings]
+  )
+  const top10DefaultMode = useMemo(() => (
+    Object.keys(userRatings?.movies ?? {}).length > 0 ||
+    Object.keys(userRatings?.series ?? {}).length > 0
+  ) ? 'user' : 'global', [userRatings])
 
   const { data: movieGenreMap } = useQuery({
     queryKey: ['genre-map-movie', tmdbLang],
@@ -116,12 +113,46 @@ export default function HomeFeature() {
     else setSelectedSeriesId(id)
   }
 
+  const handleTop10Click = (type: 'movie' | 'series', id: number) => {
+    if (type === 'movie') setSelectedMovieId(id)
+    else setSelectedSeriesId(id)
+  }
+
   return (
-    <PageLayout title={t('nav.home')} start={<HomeIcon size={32} strokeWidth={1.5} />} className="min-h-full pb-10 xl:pb-4">
-      <div className="flex flex-col xl:flex-row gap-4">
+    <PageLayout title={t('nav.home')} start={<HomeIcon size={32} strokeWidth={1.5} />}>
+      <div className="flex-1 min-h-0 overflow-y-auto 2xl:overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 auto-rows-[60vh] 2xl:h-full 2xl:auto-rows-[1fr]">
+        {/* Top 10 card */}
+        <HomeCard tabs={TABS} activeTab={top10Tab} onTabChange={setTop10Tab}>
+          <Top10Card
+            tab={top10Tab}
+            globalMovieQuery={globalMovieTop10}
+            globalSeriesQuery={globalSeriesTop10}
+            userMovieItems={userMovieTop10}
+            userSeriesItems={userSeriesTop10}
+            defaultMode={top10DefaultMode}
+            showUserToggle={role !== 'admin'}
+            onItemClick={handleTop10Click}
+          />
+        </HomeCard>
+
+        {/* Calendar card */}
+        <HomeCard tabs={TABS} activeTab={calendarTab} onTabChange={setCalendarTab}>
+          <ReleaseCalendar
+            key={`${calendar.year}-${calendar.month}-${calendarTab}`}
+            year={calendar.year}
+            month={calendar.month}
+            onPrevMonth={handlePrevMonth}
+            onNextMonth={handleNextMonth}
+            onToday={handleToday}
+            query={calendarQuery}
+            genreMap={calendarGenres}
+            onEntryClick={handleEntryClick}
+          />
+        </HomeCard>
+
         {/* Genres card */}
-        <div className="w-full xl:flex-1 flex flex-col">
-          <TabBar activeTab={genreTab} onSelect={setGenreTab} />
+        <HomeCard tabs={TABS} activeTab={genreTab} onTabChange={setGenreTab}>
           <BarChart
             key={genreTab}
             title={t('dashboard.genres')}
@@ -131,26 +162,9 @@ export default function HomeFeature() {
             globalQuery={isGenreMovies ? globalMovieGenres : globalSeriesGenres}
             defaultMode={isGenreMovies ? movieDefaultMode : seriesDefaultMode}
             showUserToggle={role !== 'admin'}
-            className="rounded-tr-none"
           />
-        </div>
-
-        {/* Calendar card */}
-        <div className="w-full xl:flex-1 flex flex-col">
-          <TabBar activeTab={calendarTab} onSelect={setCalendarTab} />
-          <ReleaseCalendar
-            key={`${calendar.year}-${calendar.month}`}
-            year={calendar.year}
-            month={calendar.month}
-            onPrevMonth={handlePrevMonth}
-            onNextMonth={handleNextMonth}
-            onToday={handleToday}
-            query={calendarQuery}
-            genreMap={calendarGenres}
-            onEntryClick={handleEntryClick}
-            className="rounded-tr-none"
-          />
-        </div>
+        </HomeCard>
+      </div>
       </div>
 
       {selectedMovieId !== null && (

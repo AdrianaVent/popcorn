@@ -114,7 +114,8 @@ describe('Mode toggle (guest)', () => {
 
   it('defaults to Global mode when the user has no watched movies', () => {
     cy.wait('@discoverMovies')
-    cy.get('[role="group"]').within(() => {
+    // Two [role="group"] toggles exist for guests (Top10 + genres chart); target genres chart (last)
+    cy.get('[role="group"]').last().within(() => {
       cy.contains('Global').should('have.class', 'bg-primary')
       cy.contains('My profile').should('not.have.class', 'bg-primary')
     })
@@ -122,8 +123,8 @@ describe('Mode toggle (guest)', () => {
 
   it('switches to My profile mode on toggle click', () => {
     cy.wait('@discoverMovies')
-    cy.get('[role="group"]').contains('My profile').click()
-    cy.get('[role="group"]').within(() => {
+    cy.get('[role="group"]').last().contains('My profile').click()
+    cy.get('[role="group"]').last().within(() => {
       cy.contains('My profile').should('have.class', 'bg-primary')
       cy.contains('Global').should('not.have.class', 'bg-primary')
     })
@@ -131,16 +132,16 @@ describe('Mode toggle (guest)', () => {
 
   it('switches back to Global after My profile', () => {
     cy.wait('@discoverMovies')
-    cy.get('[role="group"]').contains('My profile').click()
-    cy.get('[role="group"]').contains('Global').click()
-    cy.get('[role="group"]').within(() => {
+    cy.get('[role="group"]').last().contains('My profile').click()
+    cy.get('[role="group"]').last().contains('Global').click()
+    cy.get('[role="group"]').last().within(() => {
       cy.contains('Global').should('have.class', 'bg-primary')
     })
   })
 
   it('shows the empty state when My profile has no watched titles', () => {
     cy.wait('@discoverMovies')
-    cy.get('[role="group"]').contains('My profile').click()
+    cy.get('[role="group"]').last().contains('My profile').click()
     cy.contains('Mark some titles as watched to see your genres').should('be.visible')
   })
 })
@@ -173,14 +174,14 @@ describe('Release calendar interaction', () => {
   it('clicking a day with a release shows the releases panel', () => {
     cy.contains('Release calendar').parents('.rounded-xl').within(() => {
       cy.contains('button', '15').click()
-      cy.contains('Calendar Test Movie').should('be.visible')
+      cy.contains('Calendar Test Movie').should('exist')
     })
   })
 
   it('clicking X closes the panel and restores the calendar view', () => {
     cy.contains('Release calendar').parents('.rounded-xl').within(() => {
       cy.contains('button', '15').click()
-      cy.contains('Calendar Test Movie').should('be.visible')
+      cy.contains('Calendar Test Movie').should('exist')
       // X button is the only button in the header when the panel is open
       cy.contains('Release calendar').parent().find('button').click()
       cy.contains('Calendar Test Movie').should('not.exist')

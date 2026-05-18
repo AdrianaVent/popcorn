@@ -28,6 +28,9 @@ export const seriesService = {
   watchProviders: (id: number) =>
     tmdbFetch<WatchProvidersResult>(`/tv/${id}/watch/providers`),
 
+  topRated: (page = 1, language = DEFAULT_LANGUAGE) =>
+    tmdbFetch<TMDBPagedResponse<TMDBSeries>>('/tv/top_rated', { page, language }),
+
   watchProviderOptions: (region: string) =>
     tmdbFetch<{ results: WatchProvider[] }>('/watch/providers/tv', { watch_region: region, language: 'en-US' }),
 }
