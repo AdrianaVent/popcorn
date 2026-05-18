@@ -12,6 +12,8 @@ export type StoredMovie = {
   vote_count: number
   poster_path: string | null
   original_language: string
+  collection_id?: number
+  collection_name?: string
 }
 
 export type StoredSeries = {
@@ -71,11 +73,13 @@ export const useWatchedStore = create<WatchedState>()(
           }
           userEps[seriesId] = seriesEps
 
-          // Series snapshot is only written on the first episode mark to avoid
-          // overwriting with stale data if the series details change later.
           const userSeries = { ...s.seriesData[userId] }
           if (series && !userSeries[seriesId]) {
+            // Series snapshot is only written on the first episode mark to avoid
+            // overwriting with stale data if the series details change later.
             userSeries[seriesId] = series
+          } else if (Object.keys(seriesEps).length === 0) {
+            delete userSeries[seriesId]
           }
 
           return {
@@ -100,6 +104,8 @@ export const useWatchedStore = create<WatchedState>()(
           const userSeries = { ...s.seriesData[userId] }
           if (series && !userSeries[seriesId] && !allWatched) {
             userSeries[seriesId] = series
+          } else if (allWatched && Object.keys(seriesEps).length === 0) {
+            delete userSeries[seriesId]
           }
 
           return {

@@ -1,6 +1,6 @@
 import { IconProps } from './types'
 
-export default function HomeIcon({ size = 20, color = 'currentColor', strokeWidth = 2 }: IconProps) {
+export default function BookmarkIcon({ size = 20, color = 'currentColor', strokeWidth = 2 }: IconProps) {
   return (
     <svg
       width={size}
@@ -12,8 +12,7 @@ export default function HomeIcon({ size = 20, color = 'currentColor', strokeWidt
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" />
-      <polyline points="9 21 9 12 15 12 15 21" />
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
     </svg>
   )
 }

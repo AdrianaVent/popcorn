@@ -1,3 +1,4 @@
+export { default as BookmarkIcon } from './BookmarkIcon'
 export { default as GridIcon } from './GridIcon'
 export { default as HomeIcon } from './HomeIcon'
 export { default as FilmIcon } from './FilmIcon'
