@@ -89,6 +89,8 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
                       vote_count: detail.vote_count,
                       poster_path: detail.poster_path,
                       original_language: detail.original_language,
+                      collection_id: detail.belongs_to_collection?.id,
+                      collection_name: detail.belongs_to_collection?.name,
                     })}
                     className={clsx(
                       'shrink-0 mt-1 flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md border transition-colors whitespace-nowrap',

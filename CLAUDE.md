@@ -36,6 +36,7 @@ src/
 │   │   ├── layout.tsx          # client layout — derives activeNav from pathname, handles logout
 │   │   ├── movies/             # page.tsx + loading.tsx
 │   │   ├── series/             # page.tsx + loading.tsx
+│   │   ├── my-list/            # page.tsx + loading.tsx (guest only)
 │   │   ├── users/              # page.tsx + loading.tsx (admin only)
 │   │   └── home/               # page.tsx + loading.tsx — genre dashboard
 │   ├── login/page.tsx          # ssr: false (i18n)
@@ -45,12 +46,15 @@ src/
 │   │                           # ImportModal (generic file upload → results), WatchProviders, ErrorBoundary,
 │   │                           # MediaDetailSkeleton (shared modal loading state),
 │   │                           # MediaPoster (poster image with FilmIcon fallback; loading prop: 'lazy' | 'eager')
-│   ├── layouts/                # AuthLayout, DashboardLayout
+│   ├── layouts/                # AuthLayout, DashboardLayout,
+│   │                           # PageLayout (shared h-full flex-col wrapper + Header; start/end slots)
 │   └── ui/                     # Button, Input, Text (polymorphic), Modal, ModalFooter,
 │                               # Header, AccordionList, Table/, TableSkeleton, LoadingOverlay,
 │                               # DatePicker, ConfirmModal, IconButton,
 │                               # Toast/ToastItem, Toast/ToastContainer,
-│                               # BarChart (Recharts wrapper), ToggleSwitch, PageSkeleton
+│                               # BarChart (Recharts wrapper), ToggleSwitch, PageSkeleton,
+│                               # StarRating (5-star, half-star; value: 0.5–5 | null),
+│                               # Tooltip (portal-based, 150ms delay, placement: top/right/bottom/left)
 ├── config/
 │   ├── auth.ts                 # TOKEN_MAX_TIME, REFRESH_TOKEN_MAX_TIME, JWT_SECRET
 │   ├── constants.ts            # DEFAULT_LANGUAGE, ALLOWED_ORIGINAL_LANGUAGES
@@ -87,12 +91,15 @@ src/
 │   │   ├── seriesFilters.schema.ts
 │   │   ├── getSeriesUI.ts      # status badge config; resolveSeriesGenreName — static ES translation map (TV genre IDs)
 │   │   └── index.ts
+│   ├── myList/                 # MyListFeature — Movies/Series tabs, saga grouping toggle
+│   │   └── components/         # MovieCard (poster, year, StarRating), SeriesCard (ribbon, progress, StarRating)
 │   └── users/                  # UsersFeature, UserFormModal, ImportUsersModal,
 │                               # users.service.ts (fetchUsers — server-side paginated + filtered),
 │                               # userFilters.schema.ts, index.ts
 ├── hooks/
 │   ├── useFilters.ts
 │   ├── useMounted.ts           # returns false on server / during hydration, true after mount
+│   ├── useTruncated.ts         # ResizeObserver-based truncation detection; returns { ref, isTruncated }
 │   └── useWatchProviders.ts    # generic hook — fetches + deduplicates flatrate/rent/buy per region (TanStack Query)
 ├── locales/                    # en.json, es.json
 ├── middleware.ts               # JWT verification + route protection (Edge Runtime)
@@ -107,7 +114,8 @@ src/
 │   ├── themeStore.ts           # light / dark / auto
 │   ├── languageStore.ts        # en / es
 │   ├── userStore.ts            # userId (string) + role ('admin' | 'guest')
-│   ├── watchedStore.ts         # per-user movies Map, episodes Map, seriesData Map (v3)
+│   ├── watchedStore.ts         # per-user movies Map, episodes Map, seriesData Map (v3); StoredMovie includes collection_id/name
+│   ├── ratingsStore.ts         # per-user movie/series ratings (Rating: 0.5–5); persisted as 'popcorn-ratings-v1'
 │   └── toastStore.ts           # transient toast queue — addToast(type, message) / removeToast(id)
 ├── styles/
 │   ├── theme/                  # resolveTheme.ts (auto = time-of-day), types.ts
@@ -159,6 +167,7 @@ data/
 | Home (genre bar charts — movies + series, user/global toggle) | Done |
 | Persistent dashboard layout + SSR-safe hydration | Done |
 | Home release calendar (monthly EN/ES releases, dots per day, movie/series tabs) | Done |
+| My list (guest-only: watched movies/series, saga grouping, 5-star ratings) | Done |
 
 ---
 
@@ -174,7 +183,7 @@ Features that depend on Zustand `persist` stores (localStorage) are loaded with 
 No external auth provider. Users in `data/popcorn.db` (gitignored, created on first run). Passwords hashed with bcrypt (cost 10). JWTs signed with `jose` using `JWT_SECRET` from env. Access token payload: `{ sub: userId, username, role }`. Refresh token payload: `{ sub: userId }`. Role is readable server-side without a DB roundtrip.
 
 **Roles**
-`admin` — full browse access + export + user management; cannot mark movies or episodes as watched. `guest` — browse + mark movies/episodes as watched; no export, no user management. Role-based UI: ExportButton and watched-filter hidden for admin; "Mark as watched" button in MovieDetailModal and episode toggle buttons in SeasonsAccordion hidden for admin; BarChart user/global toggle hidden for admin (always shows global view).
+`admin` — full browse access + export + user management; cannot mark movies or episodes as watched. `guest` — browse + mark movies/episodes as watched + My list; no export, no user management. Role-based UI: ExportButton and watched-filter hidden for admin; "Mark as watched" button in MovieDetailModal and episode toggle buttons in SeasonsAccordion hidden for admin; BarChart user/global toggle hidden for admin (always shows global view); My list nav item hidden for admin.
 
 **Sessions**
 Two HttpOnly cookies: `token` (1h) + `refresh_token` (7d). Set on login, both cleared on logout or failed refresh. Refresh verifies the refresh JWT, looks up the user in the DB, and re-signs both tokens.
@@ -270,9 +279,9 @@ npm run test:watch  # watch mode
 |---|---|
 | Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10) |
 | Business logic | `applyClientFilters` (movies + series + language filter), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
-| Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation; `toastStore` — addToast, timers, removeToast |
+| Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation; `toastStore` — addToast, timers, removeToast; `ratingsStore` — setRating, removeRating, per-user isolation |
 | Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window), `useMovieReleases` (service call args), `useSeriesReleases` (disabled when no providers, enabled with providers) — all wrapped in `QueryClientProvider` with `retry: false` |
-| Components | `Button`, `Modal`, `FiltersPanel`, `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states) |
+| Components | `Button`, `Modal`, `FiltersPanel`, `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, fluid variant, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states), `StarRating` (5 stars, readonly mode, onChange, hover, half-star gradient) |
 | Services | `apiFetch` (401 auto-refresh, redirect on session expiry) |
 | API routes | `/api/users/import` (per-row validation: missing fields, invalid role/password, intra-file duplicate, DB duplicate, invalid creator, invalid date) |
 
@@ -296,6 +305,7 @@ Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test user
 | `users.cy.ts` | List, create + toast, edit + toast, delete + toast, bulk delete + toast, self-protection, filters, import JSON + CSV, partial import failures, post-import cleanup |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
 | `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation |
+| `my-list.cy.ts` | Page header + tabs, empty state (movies/series), watched movie with count badge, saga grouping button, series tab with watched series, nav item hidden for admin / visible for guest |
 
 ---
 
