@@ -24,7 +24,9 @@ import { useFilters } from '@/hooks/useFilters'
 import { useQuery } from '@tanstack/react-query'
 
 import { staticMovieFiltersSchema } from './movieFilters.schema'
-import { formatVoteCount } from '@/utils/formatNumber'
+import { formatVoteCount, tmdbToStarRating } from '@/utils/formatNumber'
+import StarRating from '@/components/ui/StarRating'
+import Tooltip from '@/components/ui/Tooltip'
 import { formatShortDate } from '@/utils/formatDate'
 import PageLayout from '@/components/layouts/PageLayout'
 import { FilmIcon } from '@/components/icons'
@@ -189,7 +191,13 @@ export default function MoviesFeature() {
     {
       key: 'vote_average',
       header: t('movies.columns.rating'),
-      render: (row) => `${row.vote_average.toFixed(1)} / 10`,
+      render: (row) => (
+        <Tooltip content={`${row.vote_average.toFixed(1)} / 10`} placement="top">
+          <div className="flex justify-center">
+            <StarRating value={tmdbToStarRating(row.vote_average)} readonly size={14} />
+          </div>
+        </Tooltip>
+      ),
       width: 'sm',
       align: 'center',
     },
@@ -215,6 +223,7 @@ export default function MoviesFeature() {
 
       <div className="flex-1 min-h-0 overflow-hidden">
         <Table<MovieRow>
+          scrollKey={`${page}-${JSON.stringify(filters)}`}
           loading={loading}
           error={error ?? undefined}
           onRetry={retry}

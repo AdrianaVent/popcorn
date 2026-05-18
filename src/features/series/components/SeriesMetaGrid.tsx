@@ -3,9 +3,10 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import MetaRow from '@/components/common/MetaRow'
+import StarRating from '@/components/ui/StarRating'
 import { useLanguageStore } from '@/store/languageStore'
 import { resolveSeriesGenreName } from '@/features/series/getSeriesUI'
-import { formatVoteCount } from '@/utils/formatNumber'
+import { formatVoteCount, tmdbToStarRating } from '@/utils/formatNumber'
 import type { TMDBSeriesDetail } from '@/types/tmdb'
 
 type Props = {
@@ -19,13 +20,21 @@ export default function SeriesMetaGrid({ detail, firstAirYear, avgRuntime }: Pro
   const { language } = useLanguageStore()
 
   const rows = useMemo(() => [
-    { label: t('series.detail.rating'),   value: `${detail.vote_average.toFixed(1)} / 10` },
+    {
+      label: t('series.detail.rating'),
+      value: (
+        <div className="flex items-center gap-2">
+          <StarRating value={tmdbToStarRating(detail.vote_average)} readonly size={16} />
+          <span className="text-sm text-foreground">{detail.vote_average.toFixed(1)}</span>
+        </div>
+      ),
+    },
     { label: t('series.detail.votes'),    value: formatVoteCount(detail.vote_count, language) },
     { label: t('series.detail.seasons'),  value: detail.number_of_seasons.toString() },
     { label: t('series.detail.episodes'), value: detail.number_of_episodes.toString() },
     avgRuntime && { label: t('series.detail.runtime'), value: `${avgRuntime} min` },
     firstAirYear && { label: t('series.detail.year'), value: firstAirYear.toString() },
-  ].filter(Boolean) as Array<{ label: string; value: string }>, [detail, firstAirYear, avgRuntime, language, t])
+  ].filter(Boolean) as Array<{ label: string; value: React.ReactNode }>, [detail, firstAirYear, avgRuntime, language, t])
 
   return (
     <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-2">

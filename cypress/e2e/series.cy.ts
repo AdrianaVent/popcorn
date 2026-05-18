@@ -209,6 +209,17 @@ describe('Series', () => {
     })
   })
 
+  // ─── Rating filter ───────────────────────────────────────────
+
+  it('filters series by minimum rating', () => {
+    cy.intercept('GET', /\/discover\/tv.*vote_average\.gte=8/, { fixture: 'series.json' }).as('filtered')
+
+    cy.wait('@tmdb')
+    cy.get('[data-cy="filter-vote_average_gte"]').find('svg').eq(3).click('right')
+    cy.wait('@filtered')
+    cy.contains('Breaking Bad').should('be.visible')
+  })
+
   // ─── Platform filter ──────────────────────────────────────────
 
   it('filters series by platform', () => {

@@ -200,7 +200,7 @@ export default function ReleaseCalendar({ year, month, onPrevMonth, onNextMonth,
 
         {/* Releases panel — overlays the calendar, same bounding box */}
         {showingReleases && (
-          <div className="absolute inset-0 overflow-y-auto">
+          <div key={selectedDay} className="absolute inset-0 overflow-y-auto">
             {selectedReleases.length === 0 ? (
               <div className="flex h-full items-center justify-center">
                 <Text variant="small" className="text-muted-foreground text-center">{t('calendar.empty')}</Text>
