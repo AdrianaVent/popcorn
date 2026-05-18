@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import Link from 'next/link'
-import { FilmIcon, TvIcon, GearIcon, UsersIcon, HomeIcon, LogOutIcon, ChevronLeftIcon, ChevronRightIcon } from '@/components/icons'
+import { FilmIcon, TvIcon, GearIcon, UsersIcon, HomeIcon, LogOutIcon, ChevronLeftIcon, ChevronRightIcon, BookmarkIcon } from '@/components/icons'
 import SettingsModal from './SettingsModal'
+import Tooltip from '@/components/ui/Tooltip'
 import Image from 'next/image'
 import { useUserStore } from '@/store/userStore'
 import type { UserRole } from '@/db/users'
@@ -17,6 +18,7 @@ type NavItem = {
   href?: string
   onClick?: () => void
   adminOnly?: boolean
+  guestOnly?: boolean
 }
 
 type SidebarProps = {
@@ -36,8 +38,6 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
 
   const [collapsed, setCollapsed] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [hoveredKey, setHoveredKey] = useState<string | null>(null)
-  const [tooltipY, setTooltipY] = useState(0)
 
   /* ─── Auto collapse (iPad / tablet) ─── */
   useEffect(() => {
@@ -49,19 +49,13 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
   }, [])
 
   const navItems: NavItem[] = [
-    { key: 'dashboard', labelKey: 'nav.home',     icon: <HomeIcon size={16} />,  href: '/home' },
-    { key: 'movies',    labelKey: 'nav.movies',   icon: <FilmIcon size={16} />,  href: '/movies' },
-    { key: 'series',    labelKey: 'nav.series',   icon: <TvIcon size={16} />,    href: '/series' },
-    { key: 'users',     labelKey: 'nav.users',    icon: <UsersIcon size={16} />, href: '/users', adminOnly: true },
-    { key: 'settings',  labelKey: 'nav.settings', icon: <GearIcon size={16} />,  onClick: () => setSettingsOpen(true) },
+    { key: 'dashboard', labelKey: 'nav.home',     icon: <HomeIcon size={16} />,     href: '/home' },
+    { key: 'movies',    labelKey: 'nav.movies',   icon: <FilmIcon size={16} />,     href: '/movies' },
+    { key: 'series',    labelKey: 'nav.series',   icon: <TvIcon size={16} />,       href: '/series' },
+    { key: 'my-list',   labelKey: 'nav.myList',   icon: <BookmarkIcon size={16} />, href: '/my-list', guestOnly: true },
+    { key: 'users',     labelKey: 'nav.users',    icon: <UsersIcon size={16} />,    href: '/users', adminOnly: true },
+    { key: 'settings',  labelKey: 'nav.settings', icon: <GearIcon size={16} />,     onClick: () => setSettingsOpen(true) },
   ]
-
-  const handleMouseEnter = (key: string, e: React.MouseEvent) => {
-    if (!collapsed) return
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    setTooltipY(rect.top + rect.height / 2)
-    setHoveredKey(key)
-  }
 
   const itemClass = (isActive: boolean) =>
     clsx(
@@ -125,7 +119,7 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
         <nav className="flex-1 flex flex-col gap-1 p-2 pt-1">
           {navItems.map((item) => {
             const isActive = item.key === activeKey
-            const isHidden = item.adminOnly && role !== 'admin'
+            const isHidden = (item.adminOnly && role !== 'admin') || (item.guestOnly && role === 'admin')
 
             const content = (
               <>
@@ -134,60 +128,41 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
               </>
             )
 
-            return item.onClick ? (
-              <button
-                key={item.key}
-                onClick={item.onClick}
-                onMouseEnter={(e) => handleMouseEnter(item.key, e)}
-                onMouseLeave={() => setHoveredKey(null)}
-                className={clsx(itemClass(isActive), isHidden ? 'hidden' : '')}
-              >
+            if (isHidden) return null
+
+            const label = t(item.labelKey)
+            const el = item.onClick ? (
+              <button onClick={item.onClick} className={itemClass(isActive)}>
                 {content}
               </button>
             ) : (
-              <Link
-                key={item.key}
-                href={item.href ?? '/'}
-                onMouseEnter={(e) => handleMouseEnter(item.key, e)}
-                onMouseLeave={() => setHoveredKey(null)}
-                className={clsx(itemClass(isActive), isHidden ? 'hidden' : '')}
-              >
+              <Link href={item.href ?? '/'} className={itemClass(isActive)}>
                 {content}
               </Link>
+            )
+
+            return (
+              <Tooltip key={item.key} content={label} placement="right" disabled={!collapsed} className="w-full">
+                {el}
+              </Tooltip>
             )
           })}
         </nav>
 
         {/* Logout */}
         <div className="p-2 border-t border-border">
-          <button
-            onClick={onLogout}
-            onMouseEnter={(e) => handleMouseEnter('logout', e)}
-            onMouseLeave={() => setHoveredKey(null)}
-            className={itemClass(false)}
-            suppressHydrationWarning
-          >
-            <span className="shrink-0"><LogOutIcon size={16} /></span>
-            {!collapsed && <span suppressHydrationWarning>{t('topbar.logout')}</span>}
-          </button>
+          <Tooltip content={t('topbar.logout')} placement="right" disabled={!collapsed} className="w-full">
+            <button
+              onClick={onLogout}
+              className={itemClass(false)}
+              suppressHydrationWarning
+            >
+              <span className="shrink-0"><LogOutIcon size={16} /></span>
+              {!collapsed && <span suppressHydrationWarning>{t('topbar.logout')}</span>}
+            </button>
+          </Tooltip>
         </div>
       </aside>
-
-      {/* Tooltip */}
-      {collapsed && hoveredKey && (() => {
-        const item = navItems.find((i) => i.key === hoveredKey)
-        const label = hoveredKey === 'logout' ? t('topbar.logout') : item ? t(item.labelKey) : null
-        if (!label) return null
-        return (
-          <div
-            className="fixed z-50 bg-primary text-primary-foreground text-caption font-medium px-2 py-1 rounded-md pointer-events-none whitespace-nowrap shadow-md"
-            style={{ left: '4.5rem', top: tooltipY, transform: 'translateY(-50%)' }}
-            suppressHydrationWarning
-          >
-            {label}
-          </div>
-        )
-      })()}
 
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
     </>

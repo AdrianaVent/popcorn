@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Table from '@/components/ui/Table/Table'
-import Header from '@/components/ui/Header'
 import MovieDetailModal from './components/MovieDetailModal'
 import MediaPoster from '@/components/common/MediaPoster'
 import FiltersPanel from '@/components/common/FiltersPanel'
@@ -27,6 +26,8 @@ import { useQuery } from '@tanstack/react-query'
 import { staticMovieFiltersSchema } from './movieFilters.schema'
 import { formatVoteCount } from '@/utils/formatNumber'
 import { formatShortDate } from '@/utils/formatDate'
+import PageLayout from '@/components/layouts/PageLayout'
+import { FilmIcon } from '@/components/icons'
 
 type MovieCSVRow = {
   title: string
@@ -202,10 +203,7 @@ export default function MoviesFeature() {
   ]
 
   return (
-    <div className="h-full flex flex-col gap-4 p-4">
-
-      <Header title={t('movies.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} disabled={loading} /> : undefined} />
-
+    <PageLayout title={t('movies.title')} start={<FilmIcon size={32} strokeWidth={1.5} />} end={role === 'admin' ? <ExportButton onExport={handleExport} disabled={loading} /> : undefined}>
       <FiltersPanel
         schema={filtersSchema}
         filters={filters}
@@ -245,6 +243,6 @@ export default function MoviesFeature() {
       )}
 
       {isExporting && <LoadingOverlay message={t('export.loading')} />}
-    </div>
+    </PageLayout>
   )
 }

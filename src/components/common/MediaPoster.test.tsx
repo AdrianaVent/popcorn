@@ -42,6 +42,12 @@ describe('MediaPoster', () => {
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
 
+  it('applies fluid container classes for fluid variant', () => {
+    const { container } = render(<MediaPoster posterPath="/test.jpg" title="Test Movie" variant="fluid" />)
+    expect((container.firstChild as HTMLElement).className).toContain('aspect-2/3')
+    expect((container.firstChild as HTMLElement).className).toContain('w-full')
+  })
+
   it('recovers from error if posterPath changes', () => {
     const { rerender } = render(<MediaPoster posterPath="/broken.jpg" title="Test Movie" />)
     fireEvent.error(screen.getByRole('img', { name: 'Test Movie' }))

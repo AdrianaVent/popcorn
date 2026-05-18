@@ -6,6 +6,7 @@ import clsx from 'clsx'
 import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 import AccordionList from '@/components/ui/AccordionList'
+import Tooltip from '@/components/ui/Tooltip'
 import { fetchSeasonDetail } from '@/features/series/series.service'
 import { useLanguageStore } from '@/store/languageStore'
 import { useWatchedStore } from '@/store/watchedStore'
@@ -195,6 +196,7 @@ function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot
         </button>
 
         {canWatch && (
+          <Tooltip content={allWatched ? t('series.detail.unmarkSeason') : t('series.detail.markSeasonWatched')} placement="top">
           <button
             data-cy="season-watched-btn"
             onClick={async () => {
@@ -216,7 +218,6 @@ function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot
               }
             }}
             disabled={markLoading}
-            title={allWatched ? t('series.detail.unmarkSeason') : t('series.detail.markSeasonWatched')}
             className={clsx(
               'shrink-0 w-5 h-5 mr-4 rounded-full border flex items-center justify-center transition-colors',
               markLoading && 'opacity-50 cursor-wait',
@@ -236,6 +237,7 @@ function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot
               </svg>
             )}
           </button>
+          </Tooltip>
         )}
       </div>
 
