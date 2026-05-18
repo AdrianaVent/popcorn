@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Table from '@/components/ui/Table/Table'
-import Header from '@/components/ui/Header'
 import MediaPoster from '@/components/common/MediaPoster'
 import FiltersPanel from '@/components/common/FiltersPanel'
 import ExportButton from '@/components/common/ExportButton'
@@ -27,6 +26,8 @@ import { formatShortDate } from '@/utils/formatDate'
 import type { Column } from '@/types/table'
 import type { SeriesRow, SeriesFilters } from '@/types/series'
 import type { WatchProvider } from '@/types/tmdb'
+import PageLayout from '@/components/layouts/PageLayout'
+import { TvIcon } from '@/components/icons'
 
 type SeriesExportRow = SeriesRow & { status: string }
 
@@ -283,10 +284,7 @@ export default function SeriesFeature() {
   ]
 
   return (
-    <div className="h-full flex flex-col gap-4 p-4">
-
-      <Header title={t('series.title')} end={role === 'admin' ? <ExportButton onExport={handleExport} disabled={loading} /> : undefined} />
-
+    <PageLayout title={t('series.title')} start={<TvIcon size={32} strokeWidth={1.5} />} end={role === 'admin' ? <ExportButton onExport={handleExport} disabled={loading} /> : undefined}>
       <FiltersPanel
         schema={filtersSchema}
         filters={filters}
@@ -331,6 +329,6 @@ export default function SeriesFeature() {
       )}
 
       {isExporting && <LoadingOverlay message={t('export.loading')} />}
-    </div>
+    </PageLayout>
   )
 }

@@ -10,7 +10,8 @@ Personal movie & series dashboard. Track what you watch, explore collections, an
 |---|---|---|
 | Browse movies & series (TMDB) | ✓ | ✓ |
 | Filter by title, rating, year, language, platform | ✓ | ✓ |
-| Mark movies and episodes as watched | ✓ | ✓ |
+| Mark movies and episodes as watched | — | ✓ |
+| View and rate watched titles (My list) | — | ✓ |
 | Switch language (English / Spanish) | ✓ | ✓ |
 | Switch theme (Light / Dark / Auto) | ✓ | ✓ |
 | Export your data (JSON / CSV) | ✓ | — |
@@ -87,6 +88,15 @@ The detail panel shows where each title is available in Spain — subscription p
 
 Guest users can mark movies as watched and track individual episodes per series. Progress is saved per user in the browser's localStorage. Admins browse content in read-only mode — the watched toggle and episode checkboxes are hidden, and the genre chart always shows global data.
 
+### My list
+
+Guest users have a dedicated **My list** section (`/my-list`) showing everything they have marked as watched:
+
+- **Movies tab** — card grid (poster, title, year, 5-star rating with half-star precision). Movies can be grouped by saga with a single toggle button.
+- **Series tab** — same card layout. Series in progress (not all episodes watched) show a diagonal **Watching** ribbon and cannot be rated yet; completed series show their episode count badge in green and expose the star rating.
+
+Ratings are stored locally per user in `ratingsStore` (persisted in localStorage) — no TMDB connection.
+
 ### Export
 
 Admins can export the full movie or series list as **JSON** (raw TMDB data) or **CSV** (formatted for spreadsheets). The export fetches all pages before downloading.
@@ -151,6 +161,7 @@ The test suite covers:
 | `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, access control |
 | `series.cy.ts` | Series list, detail modal, watch providers, platform filter |
 | `users.cy.ts` | Create, edit, delete (single + bulk), toast notifications, import (JSON / CSV, errors, partial failures) |
+| `my-list.cy.ts` | Page header + tabs, empty state, watched movies/series, saga toggle, nav access control |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
 
 Cypress creates and cleans up its own test users in the local database automatically.
@@ -182,19 +193,21 @@ src/
 ├── app/api/auth/       # login · logout · refresh — thin Route Handlers
 ├── components/
 │   ├── common/         # FiltersPanel, ExportButton, Sidebar, SettingsModal, ...
-│   ├── layouts/        # AuthLayout, DashboardLayout
+│   ├── layouts/        # AuthLayout, DashboardLayout, PageLayout
 │   └── ui/             # Button, Input, Text, Modal, ModalFooter, Header,
 │                       # DatePicker, ConfirmModal, IconButton, Table/, LoadingOverlay,
-│                       # Toast/ToastItem, Toast/ToastContainer, BarChart, ToggleSwitch, ...
+│                       # Toast/ToastItem, Toast/ToastContainer, BarChart, ToggleSwitch,
+│                       # StarRating, Tooltip, ...
 ├── config/             # auth.ts · tmdb.ts · i18n.ts · constants.ts
 ├── db/                 # client.ts (SQLite singleton) · users.ts (typed queries)
 ├── features/
 │   ├── auth/login/     # LoginFeature · useLogin · login.service.ts
 │   ├── home/           # HomeFeature · useMovieGenres · useSeriesGenres · ReleaseCalendar
 │   ├── movies/         # MoviesFeature · hooks · components · service
+│   ├── myList/         # MyListFeature · MovieCard · SeriesCard (tabs, saga grouping, ratings)
 │   ├── series/         # SeriesFeature · hooks · components · service
 │   └── users/          # UsersFeature · UserFormModal · ImportUsersModal · users.service.ts
-├── hooks/              # useFilters · useWatchProviders
+├── hooks/              # useFilters · useWatchProviders · useTruncated
 ├── locales/            # en.json · es.json
 ├── middleware.ts        # JWT verification + route protection
 ├── providers/          # GlobalProvider · ThemeProvider · LanguageProvider
@@ -202,7 +215,7 @@ src/
 │   ├── apiFetch.ts     # fetch wrapper — auto-refresh on 401, redirect to /login on expiry
 │   ├── auth/           # authService — bcrypt verify, JWT sign/refresh
 │   └── tmdb/           # TMDB client — movies, series, search
-├── store/              # themeStore · languageStore · userStore · watchedStore · toastStore
+├── store/              # themeStore · languageStore · userStore · watchedStore · ratingsStore · toastStore
 └── utils/              # formatDate · formatNumber · exportData · getTMDBImageUrl · ...
 cypress/
 ├── e2e/                # auth · movies · users test suites

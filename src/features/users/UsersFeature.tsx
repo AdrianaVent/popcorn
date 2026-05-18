@@ -5,7 +5,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 
-import Header from '@/components/ui/Header'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/Text'
@@ -16,7 +15,7 @@ import TableFooter from '@/components/ui/Table/TableFooter'
 import UserFormModal from './UserFormModal'
 import ImportUsersModal from './ImportUsersModal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
-import { PlusCircleIcon, TrashIcon, PencilIcon, UploadIcon } from '@/components/icons'
+import { PlusCircleIcon, TrashIcon, PencilIcon, UploadIcon, UsersIcon } from '@/components/icons'
 
 import { useUserStore } from '@/store/userStore'
 import { useLanguageStore } from '@/store/languageStore'
@@ -28,6 +27,7 @@ import { useFilters } from '@/hooks/useFilters'
 import { staticUserFiltersSchema, INITIAL_USER_FILTERS, type UserFilters } from './userFilters.schema'
 import type { PublicUser } from '@/types/user'
 import type { UserRole } from '@/db/users'
+import PageLayout from '@/components/layouts/PageLayout'
 
 type ModalState =
   | { mode: 'add' }
@@ -236,29 +236,27 @@ export default function UsersFeature() {
 
   return (
     <>
-    <div className="h-full flex flex-col gap-4 p-4">
-
-        <Header
-          title={t('users.title')}
-          end={
-            <div className="flex items-center gap-2">
-              <ExportButton onExport={handleExport} disabled={isLoading} />
-              <button
-                onClick={() => setModal({ mode: 'import' })}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-foreground text-sm font-medium hover:bg-muted/60 transition-colors"
-              >
-                <UploadIcon size={15} />
-                <span className="hidden md:inline">{t('users.import.button')}</span>
-              </button>
-              <IconButton
-                icon={<PlusCircleIcon size={15} />}
-                label={t('users.addUser')}
-                onClick={() => setModal({ mode: 'add' })}
-              />
-            </div>
-          }
-        />
-
+    <PageLayout
+      title={t('users.title')}
+      start={<UsersIcon size={32} strokeWidth={1.5} />}
+      end={
+        <div className="flex items-center gap-2">
+          <ExportButton onExport={handleExport} disabled={isLoading} />
+          <button
+            onClick={() => setModal({ mode: 'import' })}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-foreground text-sm font-medium hover:bg-muted/60 transition-colors"
+          >
+            <UploadIcon size={15} />
+            <span className="hidden md:inline">{t('users.import.button')}</span>
+          </button>
+          <IconButton
+            icon={<PlusCircleIcon size={15} />}
+            label={t('users.addUser')}
+            onClick={() => setModal({ mode: 'add' })}
+          />
+        </div>
+      }
+    >
         <FiltersPanel
           schema={filtersSchema}
           filters={filters}
@@ -418,7 +416,7 @@ export default function UsersFeature() {
           </div>
         </div>
 
-      </div>
+      </PageLayout>
 
       {confirmDelete && (
         <ConfirmModal

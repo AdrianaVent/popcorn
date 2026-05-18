@@ -17,10 +17,11 @@ export default function DashboardGroupLayoutClient({ children, serverRole }: Pro
   const clearUser = useUserStore((s) => s.clearUser)
 
   const activeNav =
-    pathname.startsWith('/home')   ? 'dashboard'
-    : pathname.startsWith('/movies') ? 'movies'
-    : pathname.startsWith('/series') ? 'series'
-    : pathname.startsWith('/users')  ? 'users'
+    pathname.startsWith('/home')    ? 'dashboard'
+    : pathname.startsWith('/movies')  ? 'movies'
+    : pathname.startsWith('/series')  ? 'series'
+    : pathname.startsWith('/my-list') ? 'my-list'
+    : pathname.startsWith('/users')   ? 'users'
     : 'dashboard'
 
   const handleLogout = async () => {

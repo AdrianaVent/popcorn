@@ -1,6 +1,6 @@
 import { IconProps } from './types'
 
-export default function TvIcon({ size = 20, color = 'currentColor' }: IconProps) {
+export default function TvIcon({ size = 20, color = 'currentColor', strokeWidth = 2 }: IconProps) {
   return (
     <svg
       width={size}
@@ -8,7 +8,7 @@ export default function TvIcon({ size = 20, color = 'currentColor' }: IconProps)
       viewBox="0 0 24 24"
       fill="none"
       stroke={color}
-      strokeWidth={2}
+      strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
     >

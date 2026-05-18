@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import Header from '@/components/ui/Header'
 import BarChart from '@/components/ui/BarChart'
 import ReleaseCalendar from '@/features/home/components/ReleaseCalendar'
 import MovieDetailModal from '@/features/movies/components/MovieDetailModal'
@@ -17,6 +16,8 @@ import { useLanguageStore } from '@/store/languageStore'
 import { genresService } from '@/services/tmdb/genres'
 import { TMDB_LANGUAGE } from '@/config/tmdb'
 import { resolveSeriesGenreName } from '@/features/series/getSeriesUI'
+import PageLayout from '@/components/layouts/PageLayout'
+import { HomeIcon } from '@/components/icons'
 
 type ContentTab = 'movies' | 'series'
 
@@ -116,9 +117,7 @@ export default function HomeFeature() {
   }
 
   return (
-    <div className="min-h-full flex flex-col gap-4 p-4 pb-10 xl:pb-4">
-      <Header title={t('nav.home')} />
-
+    <PageLayout title={t('nav.home')} start={<HomeIcon size={32} strokeWidth={1.5} />} className="min-h-full pb-10 xl:pb-4">
       <div className="flex flex-col xl:flex-row gap-4">
         {/* Genres card */}
         <div className="w-full xl:flex-1 flex flex-col">
@@ -160,6 +159,6 @@ export default function HomeFeature() {
       {selectedSeriesId !== null && (
         <SeriesDetailModal seriesId={selectedSeriesId} onClose={() => setSelectedSeriesId(null)} />
       )}
-    </div>
+    </PageLayout>
   )
 }
