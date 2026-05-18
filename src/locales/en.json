@@ -60,6 +60,7 @@
     "home": "Home",
     "movies": "Movies",
     "series": "Series",
+    "myList": "My list",
     "users": "Users",
     "settings": "Settings"
   },
@@ -242,6 +243,18 @@
       "deleted": "User deleted",
       "deletedMany": "{{count}} users deleted"
     }
+  },
+  "myList": {
+    "title": "My list",
+    "moviesCount": "{{count}} movies",
+    "seriesCount": "{{count}} series",
+    "groupBySaga": "Group by saga",
+    "emptyMovies": "No watched movies yet",
+    "emptySeries": "No series started yet",
+    "watching": "Watching",
+    "rate": "Rate it",
+    "finishToRate": "Finish to rate",
+    "noSaga": "Standalone films"
   },
   "dashboard": {
     "recentlyAdded": "Recently added",

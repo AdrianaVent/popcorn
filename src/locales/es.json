@@ -60,6 +60,7 @@
     "home": "Inicio",
     "movies": "Películas",
     "series": "Series",
+    "myList": "Mi lista",
     "users": "Usuarios",
     "settings": "Configuración"
   },
@@ -140,8 +141,8 @@
       "noEpisodes": "No hay episodios disponibles",
       "watched": "Visto",
       "markSeriesWatched": "Marcar como visto",
-      "markSeasonWatched": "Mark season as watched",
-      "unmarkSeason": "Unmark season"
+      "markSeasonWatched": "Marcar temporada como vista",
+      "unmarkSeason": "Desmarcar temporada"
     },
     "status": {
       "returning": "En emisión",
@@ -242,6 +243,18 @@
       "deleted": "Usuario eliminado",
       "deletedMany": "{{count}} usuarios eliminados"
     }
+  },
+  "myList": {
+    "title": "Mi lista",
+    "moviesCount": "{{count}} películas",
+    "seriesCount": "{{count}} series",
+    "groupBySaga": "Agrupar por saga",
+    "emptyMovies": "Todavía no has marcado ninguna película",
+    "emptySeries": "Todavía no has empezado ninguna serie",
+    "watching": "Viendo",
+    "rate": "Valórala",
+    "finishToRate": "Termínala para valorarla",
+    "noSaga": "Películas independientes"
   },
   "dashboard": {
     "recentlyAdded": "Añadido recientemente",

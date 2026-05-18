@@ -7,9 +7,10 @@ import { FilmIcon } from '@/components/icons'
 import type { TMDBImageSize } from '@/utils/tmdb'
 
 const variants = {
-  sm:   { container: 'w-9 h-14',   imageSize: 'w92'  as TMDBImageSize, w: 36,  h: 56  },
-  list: { container: 'w-14 h-20',  imageSize: 'w92'  as TMDBImageSize, w: 56,  h: 80  },
-  md:   { container: 'w-24 h-36',  imageSize: 'w185' as TMDBImageSize, w: 96,  h: 144 },
+  sm:    { container: 'w-9 h-14',       imageSize: 'w92'  as TMDBImageSize, w: 36,  h: 56  },
+  list:  { container: 'w-14 h-20',      imageSize: 'w92'  as TMDBImageSize, w: 56,  h: 80  },
+  md:    { container: 'w-24 h-36',      imageSize: 'w185' as TMDBImageSize, w: 96,  h: 144 },
+  fluid: { container: 'w-full aspect-2/3', imageSize: 'w185' as TMDBImageSize, w: 96,  h: 144 },
 }
 
 type MoviePosterProps = {

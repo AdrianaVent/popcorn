@@ -18,7 +18,7 @@ export default function Header({
   return (
     <div className={`shrink-0 flex items-center justify-between ${className}`}>
       
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5">
         {start}
 
         <h1 className="text-title font-semibold text-foreground tracking-wide">
@@ -26,9 +26,7 @@ export default function Header({
         </h1>
       </div>
 
-      <div className="flex items-center gap-2">
-        {end}
-      </div>
+      {end && <div className="flex items-center gap-2">{end}</div>}
 
     </div>
   )

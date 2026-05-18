@@ -68,6 +68,19 @@ describe('toggleEpisode', () => {
     expect(useWatchedStore.getState().seriesData['user1'][10].name).toBe('Test Series')
   })
 
+  it('removes the series from seriesData when the last episode is unmarked', () => {
+    useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1, mockSeries)
+    useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1)
+    expect(useWatchedStore.getState().seriesData['user1']?.[10]).toBeUndefined()
+  })
+
+  it('keeps seriesData when other episodes remain after unmark', () => {
+    useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1, mockSeries)
+    useWatchedStore.getState().toggleEpisode('user1', 10, 102, 1)
+    useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1)
+    expect(useWatchedStore.getState().seriesData['user1'][10]).toEqual(mockSeries)
+  })
+
   it('marks multiple episodes for the same series independently', () => {
     useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1)
     useWatchedStore.getState().toggleEpisode('user1', 10, 102, 1)
@@ -121,6 +134,19 @@ describe('markSeason', () => {
     const updated = { ...mockSeries, name: 'Updated' }
     useWatchedStore.getState().markSeason('user1', 10, 2, [201], updated)
     expect(useWatchedStore.getState().seriesData['user1'][10].name).toBe('Test Series')
+  })
+
+  it('removes the series from seriesData when the last episodes are unmarked via markSeason', () => {
+    useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds, mockSeries)
+    useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds)
+    expect(useWatchedStore.getState().seriesData['user1']?.[10]).toBeUndefined()
+  })
+
+  it('keeps seriesData when episodes in other seasons remain after season unmark', () => {
+    useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds, mockSeries)
+    useWatchedStore.getState().toggleEpisode('user1', 10, 201, 2)
+    useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds)
+    expect(useWatchedStore.getState().seriesData['user1'][10]).toEqual(mockSeries)
   })
 
   it('does not affect episodes in other seasons', () => {
