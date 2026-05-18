@@ -27,23 +27,25 @@ export default function PageSkeleton({
   const { t } = useTranslation()
 
   return (
-    <div className="h-full flex flex-col gap-4 p-4">
+    <div className="h-full flex flex-col px-4 pt-4 pb-6">
       <Header title={t(titleKey)} end={headerEnd} />
 
-      {filterSchema ? (
-        <FiltersPanel
-          schema={filterSchema}
-          filters={{}}
-          onChange={() => {}}
-          titleKey={filterTitleKey}
-          disabled
-        />
-      ) : (
-        <div className="rounded-lg border border-border bg-card/60 h-14 animate-pulse" />
-      )}
+      <div className="mt-2 flex-1 min-h-0 flex flex-col gap-4">
+        {filterSchema ? (
+          <FiltersPanel
+            schema={filterSchema}
+            filters={{}}
+            onChange={() => {}}
+            titleKey={filterTitleKey}
+            disabled
+          />
+        ) : (
+          <div className="rounded-lg border border-border bg-card/60 h-14 animate-pulse" />
+        )}
 
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <TableSkeleton hasImage={hasImage} cols={cols} />
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <TableSkeleton hasImage={hasImage} cols={cols} />
+        </div>
       </div>
     </div>
   )

@@ -93,6 +93,7 @@ export function useLogin(): UseLoginReturn {
           setUser(userId, role)
           applyUserLanguage(userId)
         }
+        router.refresh()
         router.push('/home')
         return
       }

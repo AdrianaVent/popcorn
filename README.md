@@ -78,7 +78,7 @@ A personal dashboard at `/home` with two side-by-side cards:
 
 ### Movies & Series
 
-Browse titles powered by TMDB. Filter by title, minimum rating, release year, original language and streaming platform. Click any row to open a detail panel with the overview, genres, runtime, vote count and collection info.
+Browse titles powered by TMDB. Filter by title, star rating (click or drag), release year, original language and streaming platform. Click any row to open a detail panel with the overview, genres, runtime, vote count and collection info. Ratings in the table and detail panel are displayed as stars (TMDB score mapped to 0.5–5 scale); hover over the stars in the list to see the exact numeric value.
 
 ### Watch providers
 
@@ -158,8 +158,8 @@ The test suite covers:
 |---|---|
 | `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, login, logout, session expiry redirect |
 | `home.cy.ts` | Genre charts, Movies/Series tab switch, My profile/Global toggle, empty state, SVG renders, release calendar title and navigation |
-| `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, access control |
-| `series.cy.ts` | Series list, detail modal, watch providers, platform filter |
+| `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, star rating filter, access control |
+| `series.cy.ts` | Series list, detail modal, watch providers, platform filter, star rating filter |
 | `users.cy.ts` | Create, edit, delete (single + bulk), toast notifications, import (JSON / CSV, errors, partial failures) |
 | `my-list.cy.ts` | Page header + tabs, empty state, watched movies/series, saga toggle, nav access control |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |

@@ -19,9 +19,7 @@ export const staticMovieFiltersSchema: FiltersSchema<MovieFilters> = [
   {
     key: 'vote_average_gte',
     label: 'movies.filters.ratingGte',
-    type: 'number',
-    min: 0,
-    max: 10,
+    type: 'star',
   },
   {
     key: 'provider_id',

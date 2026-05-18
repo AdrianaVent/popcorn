@@ -35,7 +35,7 @@ export default function TableHead<
               col.className
             )}
           >
-            {col.header}
+            {col.headerNode ?? col.header}
           </th>
         ))}
       </tr>

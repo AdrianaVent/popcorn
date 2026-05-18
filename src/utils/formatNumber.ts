@@ -1,3 +1,11 @@
+import type { Rating } from '@/store/ratingsStore'
+
+// Converts a TMDB 0–10 score to a 0.5–5 star rating (or null when unrated)
+export function tmdbToStarRating(score: number): Rating | null {
+  if (score <= 0) return null
+  return Math.max(0.5, Math.round(score) / 2) as Rating
+}
+
 const THOUSAND_SEP: Record<string, string> = {
   es: '.',
 }

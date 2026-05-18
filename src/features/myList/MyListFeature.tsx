@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import Text from '@/components/ui/Text'
+import Tabs from '@/components/ui/Tabs'
 import MovieDetailModal from '@/features/movies/components/MovieDetailModal'
 import SeriesDetailModal from '@/features/series/components/SeriesDetailModal'
 import MovieCard from '@/features/myList/components/MovieCard'
@@ -101,48 +102,36 @@ export default function MyListFeature() {
   return (
     <PageLayout title={t('myList.title')} start={<BookmarkIcon size={32} strokeWidth={1.5} />}>
       {/* Tabs + count badge */}
-      <div className="relative flex w-full items-end">
-        {/* Full-width border so the inactive tab doesn't appear hanging */}
-        <div className="absolute inset-x-0 bottom-0 border-b border-border" />
-        <div className="flex-1 flex items-end justify-between pb-1.5 pl-0.5 pr-2">
-          {(tab === 'movies' ? movieList.length : seriesList.length) > 0 && (
-            <span className="text-[13px] font-semibold px-2 py-0.5 rounded-full bg-muted text-foreground capitalize">
-              {tab === 'movies'
-                ? t('myList.moviesCount', { count: movieList.length })
-                : t('myList.seriesCount', { count: seriesList.length })}
-            </span>
-          )}
-          {tab === 'movies' && movieList.length > 0 && (
-            <button
-              onClick={() => setGroupBySaga((v) => !v)}
-              className={[
-                'text-[11px] px-2.5 py-0.5 rounded-md border transition-colors',
-                groupBySaga
-                  ? 'bg-primary/10 border-primary/30 text-primary'
-                  : 'bg-muted border-border text-foreground/70 hover:text-foreground',
-              ].join(' ')}
-            >
-              {t('myList.groupBySaga')}
-            </button>
-          )}
-        </div>
-        {TABS.map((t_) => (
-          <button
-            key={t_.value}
-            type="button"
-            onClick={() => setTab(t_.value)}
-            className={[
-              'px-5 py-2 text-sm font-medium border transition-colors -mb-px relative z-10 rounded-t-lg',
-              tab === t_.value
-                ? 'bg-card border-border text-foreground'
-                : 'bg-transparent border-transparent text-muted-foreground hover:text-foreground',
-            ].join(' ')}
-            style={tab === t_.value ? { borderBottomColor: 'var(--color-card)' } : {}}
-          >
-            {t(t_.labelKey)}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        tabs={TABS.map((t_) => ({ value: t_.value, label: t(t_.labelKey) }))}
+        activeTab={tab}
+        onTabChange={setTab}
+        variant="plain"
+        start={
+          <>
+            {(tab === 'movies' ? movieList.length : seriesList.length) > 0 && (
+              <span className="text-[13px] font-semibold px-2 py-0.5 rounded-full bg-muted text-foreground capitalize">
+                {tab === 'movies'
+                  ? t('myList.moviesCount', { count: movieList.length })
+                  : t('myList.seriesCount', { count: seriesList.length })}
+              </span>
+            )}
+            {tab === 'movies' && movieList.length > 0 && (
+              <button
+                onClick={() => setGroupBySaga((v) => !v)}
+                className={[
+                  'text-[11px] px-2.5 py-0.5 rounded-md border transition-colors mr-3',
+                  groupBySaga
+                    ? 'bg-primary/10 border-primary/30 text-primary'
+                    : 'bg-muted border-border text-foreground/70 hover:text-foreground',
+                ].join(' ')}
+              >
+                {t('myList.groupBySaga')}
+              </button>
+            )}
+          </>
+        }
+      />
 
 
       {/* Empty state */}
@@ -156,7 +145,7 @@ export default function MyListFeature() {
 
       {/* Movies grid */}
       {tab === 'movies' && !isEmpty && (
-        <div className="flex-1 overflow-y-auto">
+        <div key={String(groupBySaga)} className="flex-1 overflow-y-auto">
           {groupBySaga ? (
             <div className="flex flex-col gap-8 pb-6">
               {sagaGroups.filter((g) => g.name).map((group) => (
@@ -164,7 +153,7 @@ export default function MyListFeature() {
                   <Text variant="small" className="font-semibold text-foreground border-b border-border pb-1">
                     {group.name}
                   </Text>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
+                  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-4">
                     {group.movies.map((movie, i) => (
                       <MovieCard
                         key={movie.id}
@@ -183,7 +172,7 @@ export default function MyListFeature() {
                   <Text variant="small" className="font-semibold text-foreground border-b border-border pb-1">
                     {t('myList.noSaga')}
                   </Text>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
+                  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-4">
                     {sagaGroups.filter((g) => !g.name).map((group) => (
                       <MovieCard
                         key={group.id}
@@ -198,7 +187,7 @@ export default function MyListFeature() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 pb-6">
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-4 pb-6">
               {movieList.map((movie, i) => (
                 <MovieCard
                   key={movie.id}
@@ -217,7 +206,7 @@ export default function MyListFeature() {
       {/* Series grid */}
       {tab === 'series' && !isEmpty && (
         <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 pb-6">
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-4 pb-6">
             {seriesList.map((series, i) => (
                 <SeriesCard
                   key={series.id}
