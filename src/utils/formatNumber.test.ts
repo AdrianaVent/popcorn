@@ -1,4 +1,4 @@
-import { formatVoteCount, tmdbToStarRating } from './formatNumber'
+import { formatVoteCount, tmdbToStarRating, formatRuntime } from './formatNumber'
 
 describe('formatVoteCount', () => {
   describe('Spanish (dot as thousand separator)', () => {
@@ -75,5 +75,57 @@ describe('tmdbToStarRating', () => {
 
   it('clamps to 0.5 minimum for very low scores', () => {
     expect(tmdbToStarRating(0.1)).toBe(0.5) // Math.round(0.1)=0, max(0.5,0)=0.5
+  })
+})
+
+describe('formatRuntime', () => {
+  describe('Spanish (default) — minutes unit is "min"', () => {
+    it('formats minutes below 60 as "X min"', () => {
+      expect(formatRuntime(45)).toBe('45 min')
+      expect(formatRuntime(59)).toBe('59 min')
+    })
+
+    it('formats exactly 60 min as "1h"', () => {
+      expect(formatRuntime(60)).toBe('1h')
+    })
+
+    it('formats hours with no remainder', () => {
+      expect(formatRuntime(120)).toBe('2h')
+    })
+
+    it('formats hours and minutes', () => {
+      expect(formatRuntime(90)).toBe('1h 30min')
+      expect(formatRuntime(127)).toBe('2h 7min')
+    })
+
+    it('formats exactly 24h as "1d"', () => {
+      expect(formatRuntime(1440)).toBe('1d')
+    })
+
+    it('formats days with remaining hours', () => {
+      expect(formatRuntime(1500)).toBe('1d 1h')
+      expect(formatRuntime(2974)).toBe('2d 1h')
+    })
+
+    it('omits hours when day remainder is less than 60 min', () => {
+      expect(formatRuntime(2880)).toBe('2d')
+      expect(formatRuntime(2914)).toBe('2d') // 62ep × 47min = 2d 34min
+    })
+  })
+
+  describe('English — minutes unit is "m"', () => {
+    it('formats minutes below 60 as "X m"', () => {
+      expect(formatRuntime(45, 'en')).toBe('45 m')
+    })
+
+    it('formats hours and minutes', () => {
+      expect(formatRuntime(90, 'en')).toBe('1h 30m')
+      expect(formatRuntime(127, 'en')).toBe('2h 7m')
+    })
+
+    it('formats days (no minutes unit involved)', () => {
+      expect(formatRuntime(1500, 'en')).toBe('1d 1h')
+      expect(formatRuntime(2880, 'en')).toBe('2d')
+    })
   })
 })

@@ -10,6 +10,9 @@ const seedWatched = (win: Window, userId: string) => {
               title: 'Inception',
               poster_path: '/inception.jpg',
               release_date: '2010-07-16',
+              vote_average: 8.8,
+              vote_count: 35000,
+              original_language: 'en',
               collection_id: null,
               collection_name: null,
             },
@@ -63,6 +66,59 @@ describe('My List', () => {
     })
     cy.contains('Inception').should('be.visible')
     cy.contains('1 movies').should('be.visible')
+  })
+
+  it('groups movies by saga when group by saga is toggled', () => {
+    cy.login('cypress_guest', 'CypressGuest1!').then((resp) => {
+      const { userId, role } = resp.body
+      cy.visit('/my-list', {
+        onBeforeLoad: (win: Window) => {
+          win.localStorage.setItem('popcorn-language', JSON.stringify({ state: { language: 'en', userLanguages: { [userId]: 'en' } }, version: 0 }))
+          win.localStorage.setItem('popcorn-user', JSON.stringify({ state: { userId, role }, version: 0 }))
+          win.localStorage.setItem(
+            'popcorn-watched-v3',
+            JSON.stringify({
+              state: {
+                movies: {
+                  [userId]: {
+                    19995: {
+                      id: 19995,
+                      title: 'Avatar',
+                      poster_path: null,
+                      release_date: '2009-12-17',
+                      vote_average: 7.5,
+                      vote_count: 30000,
+                      original_language: 'en',
+                      collection_id: 131296,
+                      collection_name: 'Avatar Collection',
+                    },
+                    76600: {
+                      id: 76600,
+                      title: 'Avatar: The Way of Water',
+                      poster_path: null,
+                      release_date: '2022-12-14',
+                      vote_average: 7.6,
+                      vote_count: 15000,
+                      original_language: 'en',
+                      collection_id: 131296,
+                      collection_name: 'Avatar Collection',
+                    },
+                  },
+                },
+                episodes: {},
+                seriesData: {},
+              },
+              version: 0,
+            })
+          )
+        },
+      })
+    })
+    cy.contains('Avatar').should('be.visible')
+    cy.contains('Avatar: The Way of Water').should('be.visible')
+    cy.contains('Group by saga').click()
+    cy.contains('Avatar Collection').should('be.visible')
+    cy.contains('Standalone films').should('not.exist')
   })
 
   it('shows group by saga button when movies are present', () => {

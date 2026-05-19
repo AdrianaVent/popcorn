@@ -79,4 +79,12 @@ describe('tmdbFetch', () => {
     const url: string = mockFetch.mock.calls[0][0]
     expect(url).toContain('page=3')
   })
+
+  it('keeps | unencoded so TMDB parses OR filters correctly', async () => {
+    mockFetch.mockResolvedValueOnce(ok({}))
+    await tmdbFetch('/test', { with_original_language: 'en|es' })
+    const url: string = mockFetch.mock.calls[0][0]
+    expect(url).toContain('with_original_language=en|es')
+    expect(url).not.toContain('%7C')
+  })
 })

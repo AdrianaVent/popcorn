@@ -124,6 +124,7 @@ export type TMDBSeriesDetail = TMDBSeries & {
   created_by: TMDBCreator[]
   seasons: TMDBSeason[]
   next_episode_to_air: { air_date: string } | null
+  last_episode_to_air: { runtime: number | null } | null
 }
 
 export type WatchProvider = {

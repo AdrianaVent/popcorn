@@ -22,6 +22,12 @@ export const staticSeriesFiltersSchema: FiltersSchema<SeriesFilters> = [
     type: 'star',
   },
   {
+    key: 'runtime_gte',
+    label: 'series.filters.runtimeGte',
+    type: 'number',
+    min: 1,
+  },
+  {
     key: 'status',
     label: 'series.filters.status',
     type: 'select',

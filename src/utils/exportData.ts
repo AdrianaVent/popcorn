@@ -41,5 +41,6 @@ export function exportAsCSV<T extends Record<string, unknown>>(
   filename: string,
   headers?: string[],
 ): void {
-  downloadBlob(toCSV(rows, fields, headers), filename, 'text/csv;charset=utf-8;')
+  // BOM ensures Excel and other apps detect UTF-8 and render accents correctly
+  downloadBlob('\uFEFF' + toCSV(rows, fields, headers), filename, 'text/csv;charset=utf-8;')
 }
