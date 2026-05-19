@@ -1,15 +1,21 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import clsx from 'clsx'
 import Modal from '@/components/ui/Modal'
 import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 import { useSeriesDetail } from '@/features/series/hooks/useSeriesDetail'
 import { useWatchProviders } from '@/hooks/useWatchProviders'
-import { fetchSeriesWatchProviders } from '@/features/series/series.service'
+import { fetchSeriesWatchProviders, fetchSeasonDetail } from '@/features/series/series.service'
 import { getSeriesUI } from '@/features/series/getSeriesUI'
 import WatchProviders from '@/components/common/WatchProviders'
+import { useWatchedStore } from '@/store/watchedStore'
+import { useUserStore } from '@/store/userStore'
 import type { StoredSeries } from '@/store/watchedStore'
+import { EyeIcon } from '@/components/icons'
+import { useLanguageStore } from '@/store/languageStore'
 
 import SeriesMetaGrid from './SeriesMetaGrid'
 import MediaDetailSkeleton from '@/components/common/MediaDetailSkeleton'
@@ -18,14 +24,61 @@ import SeasonsAccordion from './SeasonsAccordion'
 type Props = {
   seriesId: number
   onClose: () => void
+  totalRuntime?: number | null
 }
 
-export default function SeriesDetailModal({ seriesId, onClose }: Props) {
+export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: totalRuntimeProp }: Props) {
   const { t } = useTranslation()
-  const { detail, loading, error } = useSeriesDetail(seriesId)
+  const { language } = useLanguageStore()
+  const { detail, loading, error, totalRuntime: totalRuntimeHook } = useSeriesDetail(seriesId)
+  const totalRuntime = totalRuntimeProp ?? totalRuntimeHook
   const { flatrate, rent, loading: providersLoading } = useWatchProviders(seriesId, fetchSeriesWatchProviders, 'series')
 
+  const userId = useUserStore((s) => s.userId)
+  const role   = useUserStore((s) => s.role)
+  const userKey = String(userId ?? 'guest')
+  const markSeason = useWatchedStore((s) => s.markSeason)
+  const watchedCount = useWatchedStore((s) => Object.keys(s.episodes[userKey]?.[seriesId] ?? {}).length)
+
+  const [markLoading, setMarkLoading] = useState(false)
+
   const ui = getSeriesUI(detail)
+
+  const validSeasons = (detail?.seasons ?? []).filter((s) => s.air_date && s.season_number > 0)
+  const totalEpisodes = validSeasons.reduce((sum, s) => sum + s.episode_count, 0)
+  const allWatched = totalEpisodes > 0 && watchedCount >= totalEpisodes
+
+  const handleMarkAll = async () => {
+    if (!detail || markLoading) return
+    setMarkLoading(true)
+    try {
+      const results = await Promise.allSettled(
+        validSeasons.map((s) => fetchSeasonDetail(seriesId, s.season_number, language))
+      )
+      const today = new Date().toISOString().slice(0, 10)
+      const storeEps = useWatchedStore.getState().episodes[userKey]?.[seriesId] ?? {}
+      const fulfilled = results
+        .map((result, i) => {
+          if (result.status !== 'fulfilled') return null
+          const epIds = result.value.episodes
+            .filter((e) => e.air_date && e.air_date <= today)
+            .map((e) => e.id)
+          return epIds.length > 0 ? { season: validSeasons[i], epIds } : null
+        })
+        .filter((x): x is { season: typeof validSeasons[0]; epIds: number[] } => x !== null)
+
+      const seriesFullyWatched = fulfilled.every(({ epIds }) => epIds.every((id) => !!storeEps[id]))
+
+      fulfilled.forEach(({ season, epIds }) => {
+        const seasonFullyWatched = epIds.every((id) => !!storeEps[id])
+        if (seriesFullyWatched || !seasonFullyWatched) {
+          markSeason(userKey, seriesId, season.season_number, epIds, seriesSnapshot)
+        }
+      })
+    } finally {
+      setMarkLoading(false)
+    }
+  }
 
   const seriesSnapshot: StoredSeries | undefined = detail ? {
     id: detail.id,
@@ -55,12 +108,19 @@ export default function SeriesDetailModal({ seriesId, onClose }: Props) {
           {/* HEADER */}
           <div className="flex gap-6 items-start">
 
-            <MediaPoster
-              posterPath={detail.poster_path}
-              title={detail.name}
-              variant="md"
-              className="shadow-md"
-            />
+            <div className="relative overflow-hidden rounded-lg shrink-0">
+              <MediaPoster
+                posterPath={detail.poster_path}
+                title={detail.name}
+                variant="md"
+                className="shadow-md"
+              />
+              {ui.statusConfig && (
+                <div className={`absolute top-3 -left-6 w-24 py-0.5 rotate-[-35deg] text-[7px] font-semibold uppercase tracking-wide text-center shadow-sm ${ui.statusConfig.ribbon}`}>
+                  {t(ui.statusConfig.labelKey)}
+                </div>
+              )}
+            </div>
 
             <div className="flex flex-col gap-3 min-w-0 flex-1">
 
@@ -73,10 +133,21 @@ export default function SeriesDetailModal({ seriesId, onClose }: Props) {
                   {detail.name}
                 </Text>
 
-                {ui.statusConfig && (
-                  <span className={`shrink-0 mt-1 text-[11px] px-2 py-0.5 rounded-md border font-medium whitespace-nowrap ${ui.statusConfig.border} ${ui.statusConfig.bg} ${ui.statusConfig.text}`}>
-                    {t(ui.statusConfig.labelKey)}
-                  </span>
+                {role !== 'admin' && (
+                  <button
+                    onClick={handleMarkAll}
+                    disabled={markLoading}
+                    className={clsx(
+                      'shrink-0 mt-1 flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md transition-colors whitespace-nowrap',
+                      markLoading && 'opacity-50 cursor-wait',
+                      allWatched
+                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                        : 'bg-foreground/10 text-foreground hover:bg-foreground/15'
+                    )}
+                  >
+                    <EyeIcon size={12} />
+                    {allWatched ? t('series.detail.watched') : t('series.detail.markSeriesWatched')}
+                  </button>
                 )}
               </div>
 
@@ -90,7 +161,7 @@ export default function SeriesDetailModal({ seriesId, onClose }: Props) {
               <SeriesMetaGrid
                 detail={detail}
                 firstAirYear={ui.firstAirYear}
-                avgRuntime={ui.avgRuntime}
+                totalRuntime={totalRuntime}
               />
 
             </div>

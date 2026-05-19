@@ -6,20 +6,24 @@ import MetaRow from '@/components/common/MetaRow'
 import StarRating from '@/components/ui/StarRating'
 import { useLanguageStore } from '@/store/languageStore'
 import { resolveSeriesGenreName } from '@/features/series/getSeriesUI'
-import { formatVoteCount, tmdbToStarRating } from '@/utils/formatNumber'
+import { formatVoteCount, tmdbToStarRating, formatRuntime } from '@/utils/formatNumber'
 import type { TMDBSeriesDetail } from '@/types/tmdb'
 
 type Props = {
   detail: TMDBSeriesDetail
   firstAirYear: number | null
-  avgRuntime: number | null
+  totalRuntime: number | null
 }
 
-export default function SeriesMetaGrid({ detail, firstAirYear, avgRuntime }: Props) {
+export default function SeriesMetaGrid({ detail, firstAirYear, totalRuntime }: Props) {
   const { t } = useTranslation()
   const { language } = useLanguageStore()
 
   const rows = useMemo(() => [
+    totalRuntime && { label: t('series.detail.runtime'), value: formatRuntime(totalRuntime, language) },
+    firstAirYear && { label: t('series.detail.year'), value: firstAirYear.toString() },
+    { label: t('series.detail.seasons'),  value: detail.number_of_seasons.toString() },
+    { label: t('series.detail.episodes'), value: detail.number_of_episodes.toString() },
     {
       label: t('series.detail.rating'),
       value: (
@@ -29,12 +33,8 @@ export default function SeriesMetaGrid({ detail, firstAirYear, avgRuntime }: Pro
         </div>
       ),
     },
-    { label: t('series.detail.votes'),    value: formatVoteCount(detail.vote_count, language) },
-    { label: t('series.detail.seasons'),  value: detail.number_of_seasons.toString() },
-    { label: t('series.detail.episodes'), value: detail.number_of_episodes.toString() },
-    avgRuntime && { label: t('series.detail.runtime'), value: `${avgRuntime} min` },
-    firstAirYear && { label: t('series.detail.year'), value: firstAirYear.toString() },
-  ].filter(Boolean) as Array<{ label: string; value: React.ReactNode }>, [detail, firstAirYear, avgRuntime, language, t])
+    { label: t('series.detail.votes'), value: formatVoteCount(detail.vote_count, language) },
+  ].filter(Boolean) as Array<{ label: string; value: React.ReactNode }>, [detail, firstAirYear, totalRuntime, language, t])
 
   return (
     <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-2">

@@ -6,7 +6,7 @@ import TableFooter from './TableFooter'
 import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/Text'
-import type { Column } from '@/types/table'
+import type { Column, SortState } from '@/types/table'
 
 type TableProps<T extends Record<string, unknown>> = {
   data: T[]
@@ -21,6 +21,8 @@ type TableProps<T extends Record<string, unknown>> = {
   onRetry?: () => void
   emptyMessage?: string
   scrollKey?: string | number
+  sort?: SortState<T> | null
+  onSort?: (key: keyof T) => void
 }
 
 export const widthMap = {
@@ -44,6 +46,8 @@ export default function Table<T extends Record<string, unknown>>({
   onRetry,
   emptyMessage,
   scrollKey,
+  sort,
+  onSort,
 }: TableProps<T>) {
   const { t } = useTranslation()
   const showOverlay = !loading && (error || (!error && data.length === 0 && emptyMessage))
@@ -51,8 +55,8 @@ export default function Table<T extends Record<string, unknown>>({
   return (
     <div className="relative flex flex-col h-full border border-border rounded-lg overflow-hidden">
       <div key={scrollKey} className="flex-1 min-h-0 overflow-auto pb-14">
-        <table className="w-full table-fixed text-sm">
-          <TableHead columns={columns} />
+        <table className="w-full min-w-200 table-fixed text-sm">
+          <TableHead columns={columns} sort={sort} onSort={onSort} />
           <TableBody
             data={data}
             columns={columns}
@@ -68,12 +72,16 @@ export default function Table<T extends Record<string, unknown>>({
       {showOverlay && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-sm rounded-lg">
           {error ? (
-            <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-4 max-w-xs text-center px-4">
               <Text variant="body" className="text-muted-foreground">{error}</Text>
-              {onRetry && <Button variant="secondary" onClick={onRetry}>{t('common.retry')}</Button>}
+              {onRetry && (
+                <div className="w-fit">
+                  <Button variant="secondary" onClick={onRetry}>{t('common.retry')}</Button>
+                </div>
+              )}
             </div>
           ) : (
-            <Text variant="body" className="text-muted-foreground">{emptyMessage}</Text>
+            <Text variant="body" className="text-muted-foreground text-center">{emptyMessage}</Text>
           )}
         </div>
       )}

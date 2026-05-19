@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Table from '@/components/ui/Table/Table'
@@ -11,9 +11,9 @@ import ExportButton from '@/components/common/ExportButton'
 import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 import { useMovies, applyClientFilters } from './hooks/useMovies'
-import { fetchMovies, fetchMovieWatchProviderOptions } from './movies.service'
+import { fetchMovies, fetchMovieDetail, fetchMovieWatchProviderOptions } from './movies.service'
 import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
-import type { Column } from '@/types/table'
+import type { Column, SortState } from '@/types/table'
 import type { MovieRow, MovieFilters } from '@/types/movie'
 import type { WatchProvider } from '@/types/tmdb'
 import { useLanguageStore } from '@/store/languageStore'
@@ -21,15 +21,17 @@ import { useUserStore } from '@/store/userStore'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useToastStore } from '@/store/toastStore'
 import { useFilters } from '@/hooks/useFilters'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import type { TMDBMovieDetail } from '@/types/tmdb'
 
 import { staticMovieFiltersSchema } from './movieFilters.schema'
-import { formatVoteCount, tmdbToStarRating } from '@/utils/formatNumber'
+import { formatVoteCount, tmdbToStarRating, formatRuntime } from '@/utils/formatNumber'
 import StarRating from '@/components/ui/StarRating'
 import Tooltip from '@/components/ui/Tooltip'
 import { formatShortDate } from '@/utils/formatDate'
 import PageLayout from '@/components/layouts/PageLayout'
-import { FilmIcon } from '@/components/icons'
+import { FilmIcon, EyeIcon, EyeSlashIcon } from '@/components/icons'
+import clsx from 'clsx'
 
 type MovieCSVRow = {
   title: string
@@ -41,6 +43,14 @@ type MovieCSVRow = {
 const MOVIE_CSV_FIELDS: (keyof MovieCSVRow)[] = [
   'title', 'release_date', 'vote_average', 'vote_count', 'original_language',
 ]
+
+// Title is sorted client-side: TMDB places non-Latin titles first in desc order
+// (high Unicode code points), so server-side title sort produces empty pages after filtering.
+const MOVIE_SORT_FIELD: Partial<Record<keyof MovieRow, string>> = {
+  release_date: 'primary_release_date',
+  vote_average: 'vote_average',
+  vote_count:   'vote_count',
+}
 
 const initialFilters: MovieFilters = {}
 
@@ -54,6 +64,13 @@ export default function MoviesFeature() {
 
   const { filters, setFilters } = useFilters<MovieFilters>(initialFilters)
 
+  const [sort, setSort] = useState<SortState<MovieRow> | null>(null)
+  // In search mode TMDB /search/movie ignores sort_by — sort is disabled
+  const inSearchMode = Boolean(filters.title)
+  const sortBy = sort && !inSearchMode
+    ? `${MOVIE_SORT_FIELD[sort.key]}.${sort.dir}`
+    : undefined
+
   const {
     movies,
     loading,
@@ -62,12 +79,19 @@ export default function MoviesFeature() {
     totalPages,
     retry,
     goToPage,
-  } = useMovies(filters)
+  } = useMovies(filters, sortBy)
+
+  const handleSort = useCallback((key: keyof MovieRow) => {
+    setSort((prev) => prev?.key === key ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' })
+    goToPage(1)
+  }, [goToPage])
 
   const userId = useUserStore((s) => s.userId)
   const role = useUserStore((s) => s.role)
   const userKey = String(userId ?? 'guest')
-  const watchedMovies = useWatchedStore((s) => s.movies[userKey])
+  const watchedMovies  = useWatchedStore((s) => s.movies[userKey])
+  const toggleMovie    = useWatchedStore((s) => s.toggleMovie)
+  const queryClient    = useQueryClient()
 
   const PAGE_SIZE = 20
 
@@ -86,19 +110,97 @@ export default function MoviesFeature() {
     return Object.values(watchedMovies ?? {}) as MovieRow[]
   }, [filters.watched, watchedMovies])
 
-  const filteredMovies = useMemo(() => {
+  const [runtimes, setRuntimes] = useState<Map<number, number | null>>(new Map())
+  const abortRef = useRef<AbortController | null>(null)
+
+  const isTitleSort = sort?.key === 'title' && !inSearchMode && filters.watched !== 'watched'
+
+  const TITLE_SORT_PAGE_CAP = 10
+  const { data: titleSortData, isLoading: titleSortLoading } = useQuery<MovieRow[]>({
+    queryKey: ['movies-title-sort', language, filters],
+    queryFn: async () => {
+      const first = await fetchMovies(1, language, filters)
+      const maxPage = Math.min(first.total_pages ?? 1, TITLE_SORT_PAGE_CAP)
+      const rest = await Promise.all(
+        Array.from({ length: maxPage - 1 }, (_, i) =>
+          fetchMovies(i + 2, language, filters)
+        )
+      )
+      const all = [first, ...rest].flatMap((r) => applyClientFilters(r.results ?? [], filters))
+      const seen = new Set<number>()
+      return all.filter((m) => {
+        if (seen.has(m.id)) return false
+        seen.add(m.id)
+        return true
+      })
+    },
+    enabled: isTitleSort,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // visibleMovies = items shown in the table without runtime sort (used for enrichment).
+  // Kept separate so runtimes state changes don't retrigger the enrichment useEffect.
+  const visibleMovies = useMemo(() => {
+    if (isTitleSort) {
+      const all = titleSortData ?? []
+      const sorted = [...all].sort((a, b) => {
+        const cmp = a.title.localeCompare(b.title)
+        return sort!.dir === 'asc' ? cmp : -cmp
+      })
+      const filtered = filters.watched === 'unwatched' ? sorted.filter((m) => !watchedMovies?.[m.id]) : sorted
+      return filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    }
     if (filters.watched === 'watched') {
       return (watchedModeItems ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).filter((m) => m.release_date)
     }
-    if (filters.watched === 'unwatched') {
-      return movies.filter((m) => !watchedMovies?.[m.id])
-    }
+    if (filters.watched === 'unwatched') return movies.filter((m) => !watchedMovies?.[m.id])
     return movies
-  }, [movies, filters.watched, watchedMovies, watchedModeItems, page])
+  }, [movies, filters.watched, watchedMovies, watchedModeItems, page, sort, isTitleSort, titleSortData])
 
-  const displayTotalPages = filters.watched === 'watched'
-    ? Math.max(1, Math.ceil((watchedModeItems?.length ?? 0) / PAGE_SIZE))
-    : totalPages
+  const filteredMovies = useMemo(() => {
+    if (sort?.key !== 'runtime') return visibleMovies
+    const unset = sort.dir === 'asc' ? Infinity : -Infinity
+    return [...visibleMovies].sort((a, b) => {
+      const av = runtimes.get(a.id) ?? unset
+      const bv = runtimes.get(b.id) ?? unset
+      return sort.dir === 'asc' ? av - bv : bv - av
+    })
+  }, [visibleMovies, sort, runtimes])
+
+  const displayTotalPages = useMemo(() => {
+    if (filters.watched === 'watched') return Math.max(1, Math.ceil((watchedModeItems?.length ?? 0) / PAGE_SIZE))
+    if (isTitleSort) {
+      const all = titleSortData ?? []
+      const filtered = filters.watched === 'unwatched' ? all.filter((m) => !watchedMovies?.[m.id]) : all
+      return Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+    }
+    return totalPages
+  }, [filters.watched, watchedModeItems, isTitleSort, titleSortData, watchedMovies, totalPages])
+
+  const combinedLoading = isTitleSort ? titleSortLoading : loading
+
+  useEffect(() => {
+    if (!filteredMovies.length) return
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    Promise.allSettled(
+      filteredMovies.map((m) => fetchMovieDetail(m.id, language))
+    ).then((results) => {
+      if (controller.signal.aborted) return
+      const next = new Map<number, number | null>()
+      results.forEach((result, i) => {
+        next.set(
+          filteredMovies[i].id,
+          result.status === 'fulfilled' ? (result.value?.runtime ?? null) : null,
+        )
+      })
+      setRuntimes(next)
+    })
+
+    return () => { controller.abort() }
+  }, [filteredMovies, language])
 
   const handleExport = useCallback(async (format: 'json' | 'csv') => {
     setIsExporting(true)
@@ -152,21 +254,45 @@ export default function MoviesFeature() {
   }, [filters, totalPages, language, watchedModeItems, watchedMovies, t, addToast])
 
   const columns: Column<MovieRow>[] = [
+    ...(role !== 'admin' ? [{
+      key: 'watched' as keyof MovieRow,
+      header: '',
+      render: (row: MovieRow) => {
+        const isWatched = !!watchedMovies?.[row.id]
+        return (
+          <button
+            data-cy="movie-watched-btn"
+            onClick={(e) => {
+              e.stopPropagation()
+              const cached = queryClient.getQueryData<TMDBMovieDetail>(['movie-detail', row.id, language])
+              toggleMovie(userKey, {
+                id: row.id,
+                title: row.title,
+                release_date: row.release_date,
+                vote_average: row.vote_average,
+                vote_count: row.vote_count,
+                poster_path: row.poster_path,
+                original_language: row.original_language,
+                collection_id: cached?.belongs_to_collection?.id,
+                collection_name: cached?.belongs_to_collection?.name,
+              })
+            }}
+            className={clsx(
+              'flex items-center justify-center w-full transition-colors cursor-pointer',
+              isWatched ? 'text-primary hover:opacity-70' : 'text-gray-400 dark:text-gray-500 hover:text-muted-foreground'
+            )}
+          >
+            {isWatched ? <EyeIcon size={15} strokeWidth={2.5} /> : <EyeSlashIcon size={15} />}
+          </button>
+        )
+      },
+      width: 'xs' as const,
+      align: 'center' as const,
+    }] : []),
     {
       key: 'poster_path',
       header: t('movies.columns.poster'),
-      render: (row) => (
-        <div className="relative inline-block">
-          <MediaPoster posterPath={row.poster_path} title={row.title} />
-          {watchedMovies?.[row.id] && (
-            <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-green-500 border-2 border-card flex items-center justify-center">
-              <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
-                <path d="M2 5L4.2 7.5L8 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </span>
-          )}
-        </div>
-      ),
+      render: (row) => <MediaPoster posterPath={row.poster_path} title={row.title} />,
       width: 'xs',
       align: 'center',
     },
@@ -180,6 +306,7 @@ export default function MoviesFeature() {
       ),
       width: 'flex',
       align: 'left',
+      sortable: !inSearchMode,
     },
     {
       key: 'release_date',
@@ -187,6 +314,20 @@ export default function MoviesFeature() {
       render: (row) => row.release_date ? formatShortDate(row.release_date, language) : null,
       width: 'md',
       align: 'center',
+      sortable: !inSearchMode,
+    },
+    {
+      key: 'runtime',
+      header: t('movies.columns.runtime'),
+      render: (row) => {
+        if (!runtimes.has(row.id)) return <span className="inline-block h-3 w-10 rounded bg-muted animate-pulse" />
+        const rt = runtimes.get(row.id)
+        if (!rt) return <span className="text-muted-foreground">—</span>
+        return formatRuntime(rt, language)
+      },
+      width: 'sm',
+      align: 'center',
+      sortable: true,
     },
     {
       key: 'vote_average',
@@ -198,8 +339,9 @@ export default function MoviesFeature() {
           </div>
         </Tooltip>
       ),
-      width: 'sm',
+      width: 'md',
       align: 'center',
+      sortable: !inSearchMode,
     },
     {
       key: 'vote_count',
@@ -207,11 +349,12 @@ export default function MoviesFeature() {
       render: (row) => formatVoteCount(row.vote_count, language),
       width: 'sm',
       align: 'center',
+      sortable: !inSearchMode,
     },
   ]
 
   return (
-    <PageLayout title={t('movies.title')} start={<FilmIcon size={32} strokeWidth={1.5} />} end={role === 'admin' ? <ExportButton onExport={handleExport} disabled={loading} /> : undefined}>
+    <PageLayout title={t('movies.title')} start={<FilmIcon size={32} strokeWidth={1.5} />} end={role === 'admin' ? <ExportButton onExport={handleExport} disabled={combinedLoading} /> : undefined}>
       <FiltersPanel
         schema={filtersSchema}
         filters={filters}
@@ -224,7 +367,7 @@ export default function MoviesFeature() {
       <div className="flex-1 min-h-0 overflow-hidden">
         <Table<MovieRow>
           scrollKey={`${page}-${JSON.stringify(filters)}`}
-          loading={loading}
+          loading={combinedLoading}
           error={error ?? undefined}
           onRetry={retry}
           emptyMessage={t('movies.empty')}
@@ -232,14 +375,16 @@ export default function MoviesFeature() {
           columns={columns}
           getRowKey={(row) => row.id}
           onRowClick={(row) => setSelectedId(row.id)}
-          rowClassName={(row) => watchedMovies?.[row.id] ? 'opacity-60' : ''}
+          rowClassName={() => ''}
+          sort={sort}
+          onSort={handleSort}
           footer={{
             page,
             totalPages: displayTotalPages,
             onPrev: () => goToPage(page - 1),
             onNext: () => goToPage(page + 1),
             onPageChange: goToPage,
-            disabled: loading,
+            disabled: combinedLoading,
           }}
         />
       </div>

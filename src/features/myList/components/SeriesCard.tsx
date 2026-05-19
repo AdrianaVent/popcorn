@@ -61,7 +61,7 @@ export default function SeriesCard({ series, watchedEpisodes, rating, onRate, on
             <span className={clsx(
               'text-[10px] px-1.5 py-0.5 rounded border whitespace-nowrap',
               completed
-                ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400'
+                ? 'bg-primary/10 border-primary/30 text-primary'
                 : 'bg-muted border-border/50 text-muted-foreground'
             )}>
               {watchedEpisodes}/{total} ep.

@@ -6,6 +6,7 @@ import clsx from 'clsx'
 import { useCollectionDetail } from '@/features/movies/hooks/useCollectionDetail'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useUserStore } from '@/store/userStore'
+import { EyeIcon } from '@/components/icons'
 import type { TMDBCollection } from '@/types/tmdb'
 
 type Props = {
@@ -18,13 +19,37 @@ export default function CollectionAccordion({ collection, movieId, onMovieSelect
   const { t } = useTranslation()
   const { detail, loading } = useCollectionDetail(collection.id, true)
   const userId = useUserStore((s) => s.userId)
+  const role   = useUserStore((s) => s.role)
   const userKey = String(userId ?? 'guest')
   const watchedMovies = useWatchedStore((s) => s.movies[userKey])
+  const toggleMovie   = useWatchedStore((s) => s.toggleMovie)
 
   const parts =
     detail?.parts
-      ?.slice()
+      ?.filter((p) => !!p.release_date)
+      .slice()
       .sort((a, b) => a.release_date.localeCompare(b.release_date)) ?? []
+
+  const today = new Date().toISOString().slice(0, 10)
+  const releasedParts = parts.filter((p) => p.release_date && p.release_date <= today)
+  const allReleasedWatched = releasedParts.length > 0 && releasedParts.every((p) => !!watchedMovies?.[p.id])
+
+  const handleMarkSaga = () => {
+    const toToggle = allReleasedWatched
+      ? releasedParts
+      : releasedParts.filter((p) => !watchedMovies?.[p.id])
+    toToggle.forEach((p) => toggleMovie(userKey, {
+      id: p.id,
+      title: p.title,
+      release_date: p.release_date,
+      vote_average: p.vote_average,
+      vote_count: 0,
+      poster_path: p.poster_path,
+      original_language: '',
+      collection_id: collection.id,
+      collection_name: collection.name,
+    }))
+  }
 
   return (
     <AccordionList
@@ -38,6 +63,20 @@ export default function CollectionAccordion({ collection, movieId, onMovieSelect
           </Text>
         </div>
       }
+      actions={role !== 'admin' && releasedParts.length > 0 ? (
+        <button
+          onClick={handleMarkSaga}
+          className={clsx(
+            'flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md transition-colors whitespace-nowrap',
+            allReleasedWatched
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+              : 'bg-foreground/10 text-foreground hover:bg-foreground/15'
+          )}
+        >
+          <EyeIcon size={12} />
+          {allReleasedWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
+        </button>
+      ) : undefined}
       items={parts}
       loading={loading}
       renderItem={(part, i) => {
@@ -63,10 +102,8 @@ export default function CollectionAccordion({ collection, movieId, onMovieSelect
             <div className="relative shrink-0">
               <MediaPoster posterPath={part.poster_path} title={part.title} variant="sm" />
               {isWatched && (
-                <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-green-500 border-2 border-card flex items-center justify-center">
-                  <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
-                    <path d="M2 5L4.2 7.5L8 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-primary border-2 border-card flex items-center justify-center text-primary-foreground">
+                  <EyeIcon size={8} strokeWidth={2.5} />
                 </span>
               )}
             </div>

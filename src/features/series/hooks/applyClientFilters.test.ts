@@ -63,12 +63,13 @@ describe('applyClientFilters (series)', () => {
     expect(result.map((s) => s.id)).toEqual([1, 3])
   })
 
-  it('does not apply language filter when no title is set', () => {
+  it('always filters out non-en/es languages regardless of title filter', () => {
     const mixed = [
       series(1, 8.5),
       { ...series(2, 6.0), original_language: 'ko' },
     ]
-    expect(applyClientFilters(mixed, {})).toHaveLength(2)
+    expect(applyClientFilters(mixed, {})).toHaveLength(1)
+    expect(applyClientFilters(mixed, { title: 'Series' })).toHaveLength(1)
   })
 
   it('always filters out series without a first air date', () => {
@@ -76,8 +77,38 @@ describe('applyClientFilters (series)', () => {
     expect(applyClientFilters([noDate, series(2, 7.0)], {})).toHaveLength(1)
   })
 
+  it('always filters out series without a name', () => {
+    const noName = { ...series(1, 8.5), name: '' }
+    expect(applyClientFilters([noName, series(2, 7.0)], {})).toHaveLength(1)
+  })
+
   it('filters out undated series even when title and rating filters are active', () => {
     const noDate = { ...series(1, 8.5), first_air_date: '' }
     expect(applyClientFilters([noDate], { title: 'Series', vote_average_gte: 7 })).toHaveLength(0)
+  })
+
+  it('filters out series with Korean original_name even if original_language is en', () => {
+    const korean = { ...series(1, 8.5), original_name: '오징어 게임' }
+    expect(applyClientFilters([korean, series(2, 7.0)], {})).toHaveLength(1)
+  })
+
+  it('filters out series with CJK original_name even if original_language is en', () => {
+    const cjk = { ...series(1, 8.5), original_name: '鬼滅の刃' }
+    expect(applyClientFilters([cjk, series(2, 7.0)], {})).toHaveLength(1)
+  })
+
+  it('filters out series with Hebrew original_name even if original_language is en', () => {
+    const hebrew = { ...series(1, 8.5), original_name: 'הפרוטוקולים' }
+    expect(applyClientFilters([hebrew, series(2, 7.0)], {})).toHaveLength(1)
+  })
+
+  it('filters out series with Cyrillic original_name even if original_language is en', () => {
+    const cyrillic = { ...series(1, 8.5), original_name: 'Один' }
+    expect(applyClientFilters([cyrillic, series(2, 7.0)], {})).toHaveLength(1)
+  })
+
+  it('does not filter series with accented Latin characters in original_name', () => {
+    const spanish = { ...series(1, 8.5), original_name: 'La casa de papel', original_language: 'es' }
+    expect(applyClientFilters([spanish], {})).toHaveLength(1)
   })
 })

@@ -13,6 +13,7 @@ import { useWatchedStore } from '@/store/watchedStore'
 import { useUserStore } from '@/store/userStore'
 import type { StoredSeries } from '@/store/watchedStore'
 import type { TMDBSeason, TMDBEpisode } from '@/types/tmdb'
+import { EyeIcon, EyeSlashIcon } from '@/components/icons'
 
 function WatchedEpisodeButton({
   episodeId,
@@ -35,15 +36,13 @@ function WatchedEpisodeButton({
       data-cy="episode-watched-btn"
       onClick={(e) => { e.stopPropagation(); toggleEpisode(userId, seriesId, episodeId, seasonNumber, seriesSnapshot) }}
       className={clsx(
-        'shrink-0 w-5 h-5 rounded-full border flex items-center justify-center transition-colors',
+        'shrink-0 flex items-center justify-center transition-colors',
         watched
-          ? 'bg-green-500 border-green-500 text-white'
-          : 'border-muted-foreground/50 text-transparent hover:border-green-400 hover:bg-green-400/10'
+          ? 'text-primary hover:opacity-70'
+          : 'text-muted-foreground/40 hover:text-primary'
       )}
     >
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-        <path d="M2 5L4.2 7.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      {watched ? <EyeIcon size={14} /> : <EyeSlashIcon size={14} />}
     </button>
   )
 }
@@ -69,7 +68,7 @@ function EpisodeRow({
   return (
     <div className={clsx(
       'flex items-center gap-2 px-4 py-1.5 transition-colors',
-      canWatch && watched ? 'bg-green-500/5' : 'hover:bg-cream-300 dark:hover:bg-gray-700/60'
+      canWatch && watched ? 'bg-primary/5' : 'hover:bg-cream-300 dark:hover:bg-gray-700/60'
     )}>
       <span className="text-[11px] font-mono text-muted-foreground shrink-0 w-7">E{num}</span>
       <span className={clsx(
@@ -164,7 +163,7 @@ function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot
                 <span className={clsx(
                   'text-[11px] px-1.5 py-0.5 rounded border whitespace-nowrap transition-colors',
                   allWatched
-                    ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400'
+                    ? 'bg-primary/10 border-primary/30 text-primary'
                     : 'bg-muted text-muted-foreground border-border/50'
                 )}>
                   {watchedForSeason} / {totalCount} ep.
@@ -179,11 +178,6 @@ function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot
                 <Text variant="caption" className="text-muted-foreground">{year}</Text>
               )}
 
-              {canWatch && allWatched && (
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-green-600 dark:text-green-400">
-                  {t('series.detail.watched')}
-                </span>
-              )}
             </div>
           </div>
 
@@ -213,28 +207,30 @@ function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot
                   setMarkLoading(false)
                 }
               }
-              if (eps.length > 0) {
-                markSeason(userId, seriesId, season.season_number, eps.map((ep) => ep.id), seriesSnapshot)
+              const today = new Date().toISOString().slice(0, 10)
+              const airedIds = eps.filter((ep) => ep.air_date && ep.air_date <= today).map((ep) => ep.id)
+              if (airedIds.length > 0) {
+                markSeason(userId, seriesId, season.season_number, airedIds, seriesSnapshot)
               }
             }}
             disabled={markLoading}
             className={clsx(
-              'shrink-0 w-5 h-5 mr-4 rounded-full border flex items-center justify-center transition-colors',
+              'shrink-0 mr-4 flex items-center justify-center transition-colors',
               markLoading && 'opacity-50 cursor-wait',
               allWatched
-                ? 'bg-green-500 border-green-500 text-white hover:bg-green-600'
-                : 'border-muted-foreground/50 text-transparent hover:border-green-400 hover:bg-green-400/10'
+                ? 'text-primary hover:opacity-70'
+                : 'text-muted-foreground/40 hover:text-primary'
             )}
           >
             {markLoading ? (
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className="animate-spin">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="animate-spin">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeDashoffset="12" strokeLinecap="round" className="opacity-40" />
                 <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
               </svg>
+            ) : allWatched ? (
+              <EyeIcon size={16} />
             ) : (
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M2 5L4.2 7.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <EyeSlashIcon size={16} />
             )}
           </button>
           </Tooltip>
@@ -291,15 +287,9 @@ export default function SeasonsAccordion({ seasons, seriesName, seriesId, series
   const userKey = String(userId ?? 'guest')
   const canWatch = role !== 'admin'
 
-  const mainSeasons = seasons.filter((s) => s.season_number > 0)
-  const specials    = seasons.filter((s) => s.season_number === 0)
+  const mainSeasons = seasons.filter((s) => s.season_number > 0 && s.air_date)
+  const specials    = seasons.filter((s) => s.season_number === 0 && s.air_date)
   const allItems    = [...mainSeasons, ...specials]
-
-  const totalEpisodes = mainSeasons.reduce((sum, s) => sum + s.episode_count, 0)
-  const watchedEpisodesCount = useWatchedStore(
-    (s) => Object.keys(s.episodes[userKey]?.[seriesId] ?? {}).length
-  )
-  const allSeriesWatched = totalEpisodes > 0 && watchedEpisodesCount >= totalEpisodes
 
   return (
     <AccordionList
@@ -316,14 +306,6 @@ export default function SeasonsAccordion({ seasons, seriesName, seriesId, series
           </span>
         </div>
       }
-      actions={canWatch && allSeriesWatched ? (
-        <span className="flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400 whitespace-nowrap">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 5L4.2 7.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          {t('series.detail.watched')}
-        </span>
-      ) : undefined}
       items={allItems}
       renderItem={(season) => (
         <div key={season.id}>
