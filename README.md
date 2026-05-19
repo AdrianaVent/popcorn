@@ -121,6 +121,8 @@ npm install
 
 This downloads all libraries listed in `package.json`. It may take a minute.
 
+> **Note on deprecation warnings** — you may see `npm warn deprecated` messages for packages like `inflight` or `whatwg-encoding`. These come from transitive dependencies inside Jest and jsdom and are outside our control. They do not affect functionality, the build, or the tests.
+
 ---
 
 ### Step 4 — Configure environment variables
@@ -414,23 +416,30 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-### Unit tests (Jest)
+The project has two test layers: **433 unit/integration tests** (Jest) and **82 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+
+### Unit & integration tests (Jest) — 433 tests · 41 suites
 
 ```bash
 npm test           # run once
 npm run test:watch # watch mode
 ```
 
-Covers pure functions, business logic, stores, hooks and components.
+| Area | What's covered |
+|---|---|
+| Pure functions | `getMovieUI`, `getSeriesUI`, `formatDate`, `formatVoteCount`, `deduplicateProviders`, `buildGenreCounts`, `toCSV` |
+| Business logic | Client-side filters (movies + series), TMDB fetch error mapping, export utilities |
+| Stores | `watchedStore` (toggle movie/episode, season counts), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
+| Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases` |
+| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem` |
+| Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
+| API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date) |
 
-### End-to-end tests (Cypress)
+### End-to-end tests (Cypress) — 82 tests · 7 suites
 
-Cypress tests run against the live dev server. Make sure you have run `npm run seed` at least once first — Cypress needs the database to exist before it can create its own test users.
+In CI, Cypress runs against the production build automatically. Locally, run against the dev server:
 
 ```bash
-# First time only — creates the database
-npm run seed
-
 # Terminal 1
 npm run dev
 
@@ -441,19 +450,17 @@ npm run cypress
 npm run cypress:run
 ```
 
-The test suite covers:
+| Suite | Tests | What's covered |
+|---|---|---|
+| `auth.cy.ts` | 6 | Redirect when unauthenticated, invalid credentials, login, logout, session expiry |
+| `home.cy.ts` | 15 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar |
+| `movies.cy.ts` | 20 | Movie list, detail modal, watch providers, platform filter, star rating filter, access control |
+| `series.cy.ts` | 14 | Series list, detail modal, watch providers, platform filter, star rating filter |
+| `users.cy.ts` | 15 | Create, edit, delete (single + bulk), toasts, import JSON/CSV, partial failures |
+| `my-list.cy.ts` | 9 | Tabs, empty state, watched movies/series, saga grouping, nav access control |
+| `settings.cy.ts` | 3 | Theme switching (light / dark), language switching (EN / ES) |
 
-| Suite | What's tested |
-|---|---|
-| `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, login, logout, session expiry redirect |
-| `home.cy.ts` | Genre charts, Movies/Series tab switch, My profile/Global toggle, empty state, SVG renders, release calendar title and navigation |
-| `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, star rating filter, access control |
-| `series.cy.ts` | Series list, detail modal, watch providers, platform filter, star rating filter |
-| `users.cy.ts` | Create, edit, delete (single + bulk), toast notifications, import (JSON / CSV, errors, partial failures) |
-| `my-list.cy.ts` | Page header + tabs, empty state, watched movies/series, saga toggle, nav access control |
-| `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
-
-Cypress creates and cleans up its own test users in the local database automatically.
+Cypress creates and cleans up its own test users in the local database automatically. TMDB calls are intercepted — no real API key needed to run the E2E suite.
 
 ---
 

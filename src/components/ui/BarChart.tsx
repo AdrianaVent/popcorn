@@ -124,7 +124,7 @@ export default function BarChart({ title, orientation, tooltipLabel, userQuery, 
     : data
 
   return (
-    <div className={`flex flex-col gap-2 rounded-xl border border-border bg-card p-3 select-none [&_svg]:outline-none [&_svg_*]:outline-none${className ? ` ${className}` : ''}`}>
+    <div className={`flex flex-col gap-2 rounded-xl border border-border bg-card p-3 select-none [&_svg]:outline-none [&_svg_*]:outline-none [&_.recharts-bar-rectangle]:cursor-default${className ? ` ${className}` : ''}`}>
       {genreTip && (
         <div
           style={{ position: 'fixed', left: genreTip.x + 12, top: genreTip.y - 8, zIndex: 50, pointerEvents: 'none' }}
@@ -194,7 +194,7 @@ export default function BarChart({ title, orientation, tooltipLabel, userQuery, 
                     itemStyle={{ color: mutedColor }}
                     formatter={(value) => [value, tooltipLabel]}
                   />
-                  <Bar dataKey="count" fill={barColor} radius={[0, 4, 4, 0]} activeBar={{ fill: barColor }} />
+                  <Bar dataKey="count" fill={barColor} radius={[0, 4, 4, 0]} activeBar={false} style={{ cursor: 'default' }} />
                 </RechartsBarChart>
               ) : (
                 <RechartsBarChart data={data} margin={{ top: 0, right: 8, left: 0, bottom: 48 }}>
@@ -213,7 +213,7 @@ export default function BarChart({ title, orientation, tooltipLabel, userQuery, 
                     itemStyle={{ color: mutedColor }}
                     formatter={(value) => [value, tooltipLabel]}
                   />
-                  <Bar dataKey="count" fill={barColor} radius={[4, 4, 0, 0]} maxBarSize={32} activeBar={{ fill: barColor }} />
+                  <Bar dataKey="count" fill={barColor} radius={[4, 4, 0, 0]} maxBarSize={32} activeBar={false} style={{ cursor: 'default' }} />
                 </RechartsBarChart>
               )}
             </ResponsiveContainer>

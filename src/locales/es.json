@@ -42,6 +42,7 @@
     "forgotPassword": "¿Contraseña olvidada?",
     "resetPassword": "Recuperar contraseña",
     "resetDescription": "Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.",
+    "resetMockNotice": "Este es un proyecto de demo — la recuperación de contraseña no es funcional.",
     "backLogin": "Volver al inicio de sesión"
   },
   "settings": {

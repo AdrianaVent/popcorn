@@ -32,9 +32,15 @@ export default function ResetPasswordForm({
         {t('login.resetDescription')}
       </Text>
 
+      <div className="rounded-md bg-yellow-500/10 px-3 py-2">
+        <Text variant="caption" className="text-yellow-600 dark:text-yellow-400 font-medium">
+          {t('login.resetMockNotice')}
+        </Text>
+      </div>
+
       <Input
-        id="user"
-        name="user"
+        id="email"
+        name="email"
         type="text"
         label={t('login.email')}
         value={email}

@@ -42,6 +42,7 @@
     "forgotPassword": "Forgot password?",
     "resetPassword": "Reset password",
     "resetDescription": "Enter your email and we’ll send you a link to reset your password.",
+    "resetMockNotice": "This is a demo project — password recovery is not functional.",
     "backLogin": "Back to sign in"
   },
   "settings": {
