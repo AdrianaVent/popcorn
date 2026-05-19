@@ -165,7 +165,8 @@ data/
 | Session auto-refresh + redirect on expiry | Done |
 | TanStack Query migration (server-state caching) | Done |
 | Error boundaries (movies, series, users) | Done |
-| CI pipeline (GitHub Actions — tsc, lint, jest, build) | Done |
+| CI pipeline (GitHub Actions — tsc, lint, jest, build + Cypress E2E + Docker publish) | Done |
+| Docker support (multi-stage Dockerfile, docker-compose, auto-seed on first run) | Done |
 | Home (genre bar charts — movies + series, user/global toggle) | Done |
 | Persistent dashboard layout + SSR-safe hydration | Done |
 | Home release calendar (monthly EN/ES releases, dots per day, movie/series tabs) | Done |
@@ -241,7 +242,7 @@ All TMDB data fetching and the users list use `useQuery` from `@tanstack/react-q
 `ErrorBoundary` in `src/components/common/` is a React class component wrapping a functional `ErrorFallback` (needed because hooks cannot be used in class components). Wraps `MoviesPage`, `SeriesPage`, and `UsersPage`. On error, renders a translated message with a reset button that clears the error state and remounts the children.
 
 **CI pipeline**
-`.github/workflows/ci.yml` runs on every push and on PRs targeting `dev` or `main`. Runs on Node 24. Steps: install (`npm ci`), type check (`npx tsc --noEmit`), lint (`npm run lint`), tests (`npm test`), build (`npm run build`). The build step uses `NEXT_PUBLIC_TMDB_API_KEY` and `JWT_SECRET` from GitHub repository secrets if configured; both fall back to placeholder values so CI passes even without secrets set. `jest.config.ts` is TypeScript and requires `ts-node` (in devDependencies) to be parsed by Jest. Cypress E2E runs locally only — it requires a live dev server and a seeded DB.
+`.github/workflows/ci.yml` runs on every push and on PRs targeting `dev` or `main`. Three jobs: (1) `check` — Node 24, runs tsc, lint, jest, build; (2) `e2e` — Node 20 (matches Cypress internal Node version to avoid ABI mismatch with better-sqlite3), runs Cypress via `cypress-io/github-action@v6` against a production build, uploads screenshots on failure; (3) `docker` — builds and pushes the image to ghcr.io on `main` push only (needs both `check` and `e2e` to pass). Build steps use `NEXT_PUBLIC_TMDB_API_KEY` and `JWT_SECRET` from GitHub secrets; both fall back to placeholder values so CI passes without secrets configured. `jest.config.ts` is TypeScript and requires `ts-node` (in devDependencies).
 
 **Watched store (v3)**
 Per-user state keyed by `userId`. Movies stored as `StoredMovie` snapshots. Episodes stored as `Record<episodeId, { seasonNumber }>` — `seasonNumber` enables per-season counts without fetching episode lists. Series stored as `StoredSeries` on first episode mark. `filters.watched === 'watched'` bypasses TMDB entirely and serves local data with local pagination.
@@ -254,6 +255,9 @@ Region hardcoded to `ES` (`WATCH_PROVIDERS_REGION` constant). `useWatchProviders
 
 **Import (bulk create)**
 `ImportModal` in `src/components/common/` is fully generic: accepts an `onProcess(rows)` callback and renders the two-phase UI (upload → results) independently of the entity type. Thin wrappers (e.g. `ImportUsersModal`) wire the domain-specific API call and i18n strings. Required fields: `username`, `password`, `role`. Optional fields: `created_by` (admin username — defaults to the importing admin) and `created_at` (ISO date, today or earlier — defaults to current timestamp). CSV parser handles passwords with commas for any number of columns: it assumes `password` is always the second column and excess split parts are re-joined into it, with trailing columns consumed from the end. Password requirements for bulk import are validated server-side at `/api/users/import` using the same `PASSWORD_REGEX` as the single-user form (`^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$`). Failed rows are returned as `{ index, username, code }` and can be downloaded as CSV. Each row is processed independently — valid rows are created even if other rows fail. Intra-file duplicate usernames: first occurrence is created, subsequent ones get `IMPORT_USERNAME_DUPLICATE`.
+
+**Docker**
+Two-stage build (builder → runner) on Node 20 Alpine. `output: 'standalone'` in `next.config.ts` generates a minimal self-contained bundle in `.next/standalone/` — the runner stage copies only that output (~200 MB vs ~900 MB without standalone). Native deps (`better-sqlite3`, `bcryptjs`) are compiled in the builder stage and included in the standalone `node_modules` via nft tracing. The runner process runs as a non-root `nextjs:nodejs` user. A `HEALTHCHECK` pings `/login` every 30s (15s start period). `NEXT_PUBLIC_TMDB_API_KEY` is baked at build time — `docker compose --env-file .env.local up --build` is required. `docker-entrypoint.sh` creates `/app/data`, seeds via `scripts/docker-seed.js` on first run, then starts with `node server.js`. DB stored in named volume `popcorn_data`. `eslint.config.mjs` ignores `scripts/**` (CommonJS `require` incompatible with TS ESLint config).
 
 **Session auto-refresh**
 `apiFetch` in `src/services/apiFetch.ts` wraps all user-management API calls. On 401: attempts `/api/auth/refresh` (POST); if successful, retries original request; if refresh fails, calls `redirectToLogin()` which calls `window.location.replace('/login')` and throws `SESSION_EXPIRED`. `users.service.ts` uses `apiFetch` instead of bare `fetch`.

@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.8.0-6B2737)
+![Version](https://img.shields.io/badge/version-0.9.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -464,6 +464,60 @@ Cypress creates and cleans up its own test users in the local database automatic
 
 ---
 
+## Docker
+
+You can run Popcorn in a container without installing Node.js or configuring a local database.
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/) installed and running
+- `.env.local` configured (same file used for local development — see [Getting started](#getting-started))
+
+### Run with Docker Compose
+
+If you haven't already, copy the example env file and fill in your values:
+
+```bash
+cp .env.local.example .env.local
+```
+
+Then start the container:
+
+```bash
+docker compose --env-file .env.local up --build
+```
+
+The `--env-file` flag is required so Docker can read your API key at build time — `NEXT_PUBLIC_TMDB_API_KEY` is baked into the client bundle during the build step and is not injectable at runtime.
+
+Open [http://localhost:3000](http://localhost:3000). On first run the database is created automatically and a default admin user is seeded:
+
+| Field | Default |
+|---|---|
+| Username | `admin` |
+| Password | `Admin123!` |
+
+You can override the default credentials via environment variables in `.env.local`:
+
+```
+ADMIN_USERNAME=myadmin
+ADMIN_PASSWORD=MyPassword1!
+```
+
+The database is stored in a Docker volume (`popcorn_data`) and persists between container restarts.
+
+> **Note on the TMDB API key** — `NEXT_PUBLIC_TMDB_API_KEY` is baked into the client bundle at build time. If you change it you must rebuild the image (`docker compose up --build`).
+
+### Useful commands
+
+```bash
+docker compose --env-file .env.local up --build   # build and start
+docker compose --env-file .env.local up -d        # start in background
+docker compose down                               # stop and remove container
+docker compose down -v                            # stop and delete data volume (resets the database)
+```
+
+---
+
 ## All commands
 
 | Command | Description |
@@ -518,9 +572,13 @@ cypress/
 ├── fixtures/           # mocked TMDB responses
 └── support/            # commands.ts (cy.login) · e2e.ts (global hooks)
 scripts/
-└── seed.ts             # Creates an admin user
+├── seed.ts             # Creates an admin user (local dev)
+└── docker-seed.js      # Creates admin user on first Docker run (CommonJS, no TS)
 data/
 └── popcorn.db          # SQLite database — gitignored, auto-created on first run
+Dockerfile              # Multi-stage build: deps → builder → runner (Node 20 Alpine)
+docker-compose.yml      # Compose with persistent volume for the database
+docker-entrypoint.sh    # Seeds DB if absent, then starts the app
 ```
 
 ---
@@ -539,7 +597,8 @@ data/
 | Unit tests | Jest 30 + Testing Library |
 | E2E tests | Cypress 15 |
 | Linting | ESLint 9 + Prettier |
-| CI | GitHub Actions — tsc, lint, jest, build on every push |
+| CI | GitHub Actions — tsc, lint, jest, build + Cypress E2E on every push |
+| Docker | Multi-stage image (Node 20 Alpine, ~200 MB via standalone output) — non-root user, healthcheck, auto-seeds DB on first run; published to ghcr.io on `main` |
 
 ---
 
