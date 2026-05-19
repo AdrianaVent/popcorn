@@ -29,6 +29,7 @@ export default function ConfirmModal({
       title={title}
       onClose={onCancel}
       maxWidth="26rem"
+      dismissOnOverlayClick={false}
       footer={
         <ModalFooter>
           <Button

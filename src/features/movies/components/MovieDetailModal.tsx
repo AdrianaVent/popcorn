@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Modal from '@/components/ui/Modal'
@@ -16,7 +16,9 @@ import MovieMetaGrid from './MovieMetaGrid'
 import MediaDetailSkeleton from '@/components/common/MediaDetailSkeleton'
 import WatchProviders from '@/components/common/WatchProviders'
 import { getMovieUI } from '@/features/movies/getMovieUI'
+import { EyeIcon } from '@/components/icons'
 import { useLanguageStore } from '@/store/languageStore'
+import { formatMonthYear } from '@/utils/formatDate'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useUserStore } from '@/store/userStore'
 import clsx from 'clsx'
@@ -38,8 +40,22 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
   const role   = useUserStore((s) => s.role)
   const userKey = String(userId ?? 'guest')
   const watchedMovies = useWatchedStore((s) => s.movies[userKey])
-  const toggleMovie = useWatchedStore((s) => s.toggleMovie)
+  const toggleMovie  = useWatchedStore((s) => s.toggleMovie)
+  const enrichMovie  = useWatchedStore((s) => s.enrichMovie)
   const isWatched = !!watchedMovies?.[currentId]
+
+  // Backfill collection info if the movie was marked watched from the table
+  // (list endpoint doesn't include belongs_to_collection).
+  useEffect(() => {
+    if (!detail?.belongs_to_collection || !watchedMovies?.[currentId]) return
+    const stored = watchedMovies[currentId]
+    if (!stored.collection_id) {
+      enrichMovie(userKey, currentId, {
+        collection_id: detail.belongs_to_collection.id,
+        collection_name: detail.belongs_to_collection.name,
+      })
+    }
+  }, [detail, watchedMovies, currentId, userKey, enrichMovie])
 
   const ui = getMovieUI(detail)
 
@@ -93,15 +109,13 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
                       collection_name: detail.belongs_to_collection?.name,
                     })}
                     className={clsx(
-                      'shrink-0 mt-1 flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md border transition-colors whitespace-nowrap',
+                      'shrink-0 mt-1 flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md transition-colors whitespace-nowrap',
                       isWatched
-                        ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400 hover:bg-green-500/20'
-                        : 'bg-muted border-border/50 text-muted-foreground hover:border-green-400 hover:text-green-600'
+                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                        : 'bg-foreground/10 text-foreground hover:bg-foreground/15'
                     )}
                   >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M2 5L4.2 7.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <EyeIcon size={12} />
                     {isWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
                   </button>
                 )}
@@ -125,15 +139,7 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
                     <span className="h-3 w-px bg-green-300/60 dark:bg-green-700/50" />
 
                     <span className="text-sm font-semibold text-green-700 dark:text-green-300">
-                      {detail.release_date
-                        ? (() => {
-                            const s = new Date(detail.release_date).toLocaleDateString(language, {
-                              month: 'long',
-                              year: 'numeric',
-                            })
-                            return s.charAt(0).toUpperCase() + s.slice(1)
-                          })()
-                        : '—'}
+                      {detail.release_date ? formatMonthYear(detail.release_date, language) : '—'}
                     </span>
 
                   </div>

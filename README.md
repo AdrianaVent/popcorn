@@ -1,6 +1,13 @@
 # Popcorn 🍿
 
+![Version](https://img.shields.io/badge/version-0.8.0-6B2737)
+![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
+
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
+
+> Optimised for desktop and tablet (768px and above). Mobile is not supported.
+
+**Author:** Adriana Ventura Candela &nbsp;·&nbsp; [GitHub](https://github.com/AdrianaVent) &nbsp;·&nbsp; [LinkedIn](https://www.linkedin.com/in/adriana-ventura-candela-9a942510b/)
 
 ---
 
@@ -9,139 +16,430 @@ Personal movie & series dashboard. Track what you watch, explore collections, an
 | | Admin | Guest |
 |---|---|---|
 | Browse movies & series (TMDB) | ✓ | ✓ |
-| Filter by title, rating, year, language, platform | ✓ | ✓ |
+| Filter by title, rating, year, language, platform, status | ✓ | ✓ |
+| Sort and paginate results | ✓ | ✓ |
+| View watch providers by region | ✓ | ✓ |
+| Home dashboard — genre charts (global view only) | ✓ | — |
+| Home dashboard — genre charts (personal + global view) | — | ✓ |
+| Home dashboard — release calendar | ✓ | ✓ |
 | Mark movies and episodes as watched | — | ✓ |
 | View and rate watched titles (My list) | — | ✓ |
 | Switch language (English / Spanish) | ✓ | ✓ |
 | Switch theme (Light / Dark / Auto) | ✓ | ✓ |
-| Export your data (JSON / CSV) | ✓ | — |
+| Change region (Spain / United States) | ✓ | ✓ |
+| Export movies & series (JSON / CSV) | ✓ | — |
+| Export users (JSON / CSV) | ✓ | — |
 | Manage users (create, edit, delete, bulk delete) | ✓ | — |
 | Import users from JSON / CSV | ✓ | — |
 
+![Login screen](docs/screenshots/login.png)
+
 ---
 
-## Setup
+## About this project
 
-### 1. Install dependencies
+Popcorn is a full-stack personal dashboard built to demonstrate modern web development practices with **Next.js 16** and **TypeScript 5**.
+
+### Tech choices
+
+**Next.js App Router + React 19** — the app uses the App Router with a clear separation between Server and Client Components. The persistent dashboard layout is a Server Component that decodes the JWT cookie to read the user role, passing it down to a client layout via React Context. Each page has a role-aware loading skeleton that renders immediately during bundle download so the UI is never blank.
+
+**Self-hosted auth (no third-party provider)** — users are stored in a local SQLite database (better-sqlite3), passwords hashed with bcrypt and sessions managed with short-lived JWTs (jose, Edge Runtime compatible). Access tokens expire after 1 hour; a refresh token (7 days) allows silent renewal via an `apiFetch` wrapper that retries on 401 automatically.
+
+**Role-based access control** — two roles (admin / guest) enforced at every layer: middleware (JWT verification, route protection), API route handlers (`requireAdmin` guard), and UI (conditional rendering, hidden controls).
+
+**TanStack Query for server state** — all TMDB data goes through `useQuery` with structured cache keys (`['movie-detail', id, language]`). Language changes automatically invalidate the cache. Mutations (user management) use `useMutation` with optimistic cache invalidation.
+
+**Client-side persistence with Zustand** — watched movies and episodes, ratings, language and theme preferences are all stored per user in localStorage via Zustand persist stores. An `ssrStorage` adapter prevents hydration mismatches in Next.js SSR.
+
+**Testing strategy** — unit and integration tests with Jest + Testing Library cover pure functions, stores, hooks and components. End-to-end tests with Cypress cover full user flows (auth, movies, series, user management, settings) against a live dev server with a real SQLite database.
+
+**CI pipeline** — GitHub Actions runs TypeScript check, ESLint, Jest and a Next.js production build on every push.
+
+**Local-first by design** — the app runs entirely on your machine. User data is stored in a local SQLite database, watched history and preferences in localStorage. There is no cloud deployment or external backend — this keeps the setup self-contained and the focus on the front-end and full-stack architecture rather than infrastructure.
+
+### AI-assisted development
+
+This project is being built with **[Claude Code](https://claude.ai/code)** (Anthropic) as an AI pair programmer. All product, design and architecture decisions are made by the developer — what to build, how to structure it, which trade-offs to accept and how the UI should behave. Claude assists with implementation, flags potential issues and suggests improvements during development. This workflow reflects how modern development teams are increasingly integrating AI tools into their day-to-day engineering process without transferring ownership of technical judgement.
+
+---
+
+## Getting started
+
+### Step 1 — Prerequisites
+
+You need **Node.js** (which includes npm) installed on your machine.
+
+#### Check if you already have it
+
+Open a terminal and run:
+
+```bash
+node -v
+npm -v
+```
+
+If both commands print a version number (e.g. `v22.0.0` and `10.0.0`) you are ready — skip to [Step 2](#step-2--download-the-project).
+
+#### Install Node.js
+
+Go to [nodejs.org](https://nodejs.org) and download the **LTS** version for your operating system. Run the installer and follow the prompts. Once installed, close and reopen your terminal, then verify with `node -v` and `npm -v`.
+
+> The app requires Node.js 18 or newer.
+
+---
+
+### Step 2 — Download the project
+
+#### Option A — Git clone (recommended)
+
+If you have Git installed:
+
+```bash
+git clone https://github.com/AdrianaVent/popcorn.git
+cd popcorn
+```
+
+To check if Git is installed run `git --version`. If it is not, download it from [git-scm.com](https://git-scm.com).
+
+#### Option B — Download ZIP
+
+1. Go to the repository page on GitHub
+2. Click the green **Code** button → **Download ZIP**
+3. Extract the ZIP file
+4. Open a terminal and `cd` into the extracted folder
+
+---
+
+### Step 3 — Install dependencies
+
+Inside the project folder run:
 
 ```bash
 npm install
 ```
 
-### 2. Configure environment variables
+This downloads all libraries listed in `package.json`. It may take a minute.
+
+> **Note on deprecation warnings** — you may see `npm warn deprecated` messages for packages like `inflight` or `whatwg-encoding`. These come from transitive dependencies inside Jest and jsdom and are outside our control. They do not affect functionality, the build, or the tests.
+
+---
+
+### Step 4 — Configure environment variables
+
+Copy the example env file:
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-Open `.env.local` and fill in:
+Open `.env.local` in any text editor and fill in the two required values:
 
 ```env
-NEXT_PUBLIC_TMDB_API_KEY=   # your TMDB API key (free at themoviedb.org)
-JWT_SECRET=                 # any long random string, e.g. openssl rand -base64 32
+NEXT_PUBLIC_TMDB_API_KEY=   # your TMDB API key — free at themoviedb.org
+JWT_SECRET=                 # any long random string — run: openssl rand -base64 32
 ```
 
-### 3. Create your admin user
+**Getting a TMDB API key:**
+
+1. Create a free account at [themoviedb.org](https://www.themoviedb.org)
+2. Go to **Settings → API** and request an API key (select "Developer")
+3. Copy the **API Key (v3 auth)** value
+
+**Generating a JWT secret** (macOS / Linux):
+
+```bash
+openssl rand -base64 32
+```
+
+On Windows you can use any long random string, for example one generated at [randomkeygen.com](https://randomkeygen.com).
+
+---
+
+### Step 5 — Create your first admin user
 
 ```bash
 npm run seed
 ```
 
-This creates a default admin: `admin` / `Admin123!`
+This creates a default admin account: `admin` / `Admin123!`
 
-To use custom credentials:
+To choose your own credentials:
 
 ```bash
 npm run seed <username> <password>
 ```
 
-> Passwords must be at least 8 characters and include one uppercase letter, one number and one special character.
+> Passwords must be at least 8 characters and include one uppercase letter, one number and one special character (e.g. `!`, `@`, `#`).
 
-### 4. Start the app
+**Create a guest user to explore the full experience**
+
+The admin role cannot mark movies as watched, rate titles or use My list — those features are guest-only. To try everything the app offers, sign in as admin, go to **Users → Add user**, and create an account with the **Guest** role. Then log out and sign in with the new credentials.
+
+---
+
+### Step 6 — Start the app
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and sign in. After login you land on the Home dashboard.
+Open [http://localhost:3000](http://localhost:3000) in your browser and sign in with the credentials you created in the previous step. After login you land on the Home dashboard.
 
 ---
 
-## Features
+## User Manual
 
-### Home
+---
 
-A personal dashboard at `/home` with two side-by-side cards:
+### Home (`/home`)
 
-- **Genre distribution** — one chart for movies and one for series. Each chart lets you toggle between **My profile** (genres from your watched list) and **Global** (genres from the TMDB popular catalogue). Bar charts are built with Recharts.
-- **Release calendar** — monthly view of upcoming EN/ES movie and series releases from TMDB. Days with releases are marked with a dot. Click a day to select it. Navigate month by month; switch between movies and series with the tabs above.
+The landing page after login. It shows two cards side by side: a genre distribution chart and a release calendar.
 
-### Movies & Series
+**Genre distribution**
 
-Browse titles powered by TMDB. Filter by title, minimum rating, release year, original language and streaming platform. Click any row to open a detail panel with the overview, genres, runtime, vote count and collection info.
+![Home — genre charts and Top 10](docs/screenshots/home-charts.png)
 
-### Watch providers
+Two bar charts — one for movies and one for series — showing which genres appear most in the catalogue or in your personal watched history. A Top 10 ranking is also shown based on your ratings.
 
-The detail panel shows where each title is available in Spain — subscription platforms (flatrate), rentals (€ badge) and purchases (cart badge). Movies released in cinemas in the last 90 days show an "In theaters" chip.
+- Use the **My profile / Global** toggle (top-right of each chart) to switch between your own watched data and the full TMDB catalogue.
+- Hover over any bar to see the genre name and exact count.
+- The toggle is not available for admin accounts — admins always see the global view.
 
-### Watched tracking
+**Release calendar**
 
-Guest users can mark movies as watched and track individual episodes per series. Progress is saved per user in the browser's localStorage. Admins browse content in read-only mode — the watched toggle and episode checkboxes are hidden, and the genre chart always shows global data.
+![Home — release calendar with day selected](docs/screenshots/home-calendar.png)
 
-### My list
+A monthly calendar showing upcoming movie and series releases from TMDB (English and Spanish titles).
 
-Guest users have a dedicated **My list** section (`/my-list`) showing everything they have marked as watched:
+- Days with at least one release are marked with a coloured dot.
+- Click a day to open a panel listing all releases for that date.
+- Click any entry in the panel to open its detail modal.
+- Use the **←** and **→** arrows to navigate between months. The **Today** button returns to the current month.
+- Switch between **Movies** and **Series** with the tabs above the calendar.
 
-- **Movies tab** — card grid (poster, title, year, 5-star rating with half-star precision). Movies can be grouped by saga with a single toggle button.
-- **Series tab** — same card layout. Series in progress (not all episodes watched) show a diagonal **Watching** ribbon and cannot be rated yet; completed series show their episode count badge in green and expose the star rating.
+---
 
-Ratings are stored locally per user in `ratingsStore` (persisted in localStorage) — no TMDB connection.
+### Movies (`/movies`)
 
-### Export
+A paginated table of movies from TMDB, sorted by popularity by default.
 
-Admins can export the full movie or series list as **JSON** (raw TMDB data) or **CSV** (formatted for spreadsheets). The export fetches all pages before downloading.
+**Browsing and filtering**
 
-### User management
+![Movies list with active filters](docs/screenshots/movies-list.png)
 
-Admins can create, edit and delete users, assign roles (admin / guest), and filter the list by username, role, creation date or creator. Bulk delete is supported. Admins cannot delete or demote their own account. The list is paginated server-side (20 per page) — filtering and pagination happen entirely in SQL, keeping the response size constant regardless of total user count.
+Open the **Filters** panel (top of the page) to narrow the list:
 
-### Import users
+| Filter | How it works |
+|---|---|
+| Title | Searches TMDB in real time. Sorting is disabled while a search is active. |
+| Rating ≥ | Drag or click a star value. Only titles rated at or above the threshold are shown. |
+| Year | Shows titles released in that calendar year. |
+| Language | Filters by original language (English or Spanish). |
+| Platform | Shows titles available on a specific streaming service in Spain. |
+| Watched | Switch between **All**, **Watched** and **Unwatched** (guest only). |
 
-Admins can bulk-create users by uploading a **JSON** or **CSV** file. Each row is validated independently — valid rows are created even if others fail. Errors are reported per row and can be downloaded as a file for correction and re-upload. Password requirements, role validity, duplicate detection (within the file and against the DB), creator attribution and date are all validated server-side.
+Click **Clear filters** in the panel header to reset all active filters at once.
 
-### Session auto-refresh
+**Sorting**
 
-When the access token (1h) expires, the app automatically attempts to refresh it in the background. If the refresh succeeds the current request is retried transparently. If the refresh also fails the user is redirected to `/login`.
+Click a column header to sort by that field. Click again to reverse the order. Sorting by title loads all matching pages from TMDB and sorts them client-side (TMDB does not support server-side title sort reliably).
 
-### Smart caching
+**Marking a movie as watched** *(guest only)*
 
-All TMDB data is cached with **TanStack Query**. Switching between pages is instant for recently visited content, and changing the language automatically invalidates the cache to refetch translated data.
+The first column shows an eye icon for each row. Click it to toggle the movie between watched and unwatched. The icon fills in to indicate watched status. You can also mark movies from the detail modal (see below).
 
-### Theme & Language
+**Opening the detail modal**
 
-The **auto** theme switches between light (7am–7pm) and dark automatically. Language is stored **per user** — it defaults to Spanish and can be changed at any time from the Settings modal. Both preferences are persisted across sessions.
+Click anywhere on a row to open a panel with full information about the movie.
+
+![Movie detail — overview and watch providers](docs/screenshots/movie-detail-overview.png)
+
+The modal shows the **synopsis**, **genres**, **runtime**, **release year**, **vote count** and **watch providers** — where the title is available in Spain (subscription, rental, purchase).
+
+- Mark the movie as **watched / unwatched** with the button next to the title *(guest only)*.
+- The TMDB rating is displayed as stars (0.5–5 scale).
+
+**Sagas**
+
+![Movie detail — saga accordion expanded](docs/screenshots/movie-detail-saga.png)
+
+If the movie belongs to a collection, a **Saga** accordion lists all films in the series. Click any title to navigate to that film without closing the modal. The accordion also shows which films you have already marked as watched.
+
+**Movies currently in cinemas**
+
+![Movie detail — in theaters chip](docs/screenshots/movie-detail-theaters.png)
+
+Movies released in Spanish cinemas within the last 90 days show an **In theaters** chip next to the streaming platform badges.
+
+---
+
+### Series (`/series`)
+
+Works the same way as the Movies section — same filters, sorting, eye icon column and export button — with one addition: episode-level tracking.
+
+The **Watched** filter and the eye icon column are available to guest accounts only. The **Export** button is available to admin accounts only.
+
+**Browsing and filtering**
+
+![Series list with active filters](docs/screenshots/series-list.png)
+
+The series list includes a **Status** filter (airing, ended, cancelled...) not available in Movies. All other filters work identically.
+
+**Opening the detail modal**
+
+Click anywhere on a row to open a panel with full information about the series.
+
+![Series detail — overview and watch providers](docs/screenshots/series-detail-overview.png)
+
+The modal shows the **synopsis**, **genres**, **episode runtime**, **status**, total number of **seasons and episodes**, and **watch providers**. Mark the series as watched with the button next to the title *(guest only)*.
+
+**Episode tracking** *(guest only)*
+
+![Series detail — seasons accordion expanded](docs/screenshots/series-detail-seasons.png)
+
+Expand the **Seasons** accordion to see the full episode list broken down by season.
+
+- Click the eye icon next to an episode to mark it as watched individually.
+- Click the eye icon next to the season header to mark all available episodes in that season at once (future air dates are excluded).
+- Click the season eye icon again to unmark the entire season.
+
+---
+
+### My list (`/my-list`) — guest only
+
+A personal overview of everything you have marked as watched. Admin accounts do not have access to this section.
+
+**Movies tab**
+
+![My list — movies grouped by saga](docs/screenshots/my-list-movies.png)
+
+Displays your watched movies as a card grid (poster, title, year and star rating).
+
+- Click the stars to rate a movie from 0.5 to 5.
+- Enable **Group by saga** to reorganise the grid: movies that belong to the same collection are grouped under a shared header, in release order. Movies without a saga appear under a separate "Standalone" section.
+
+**Series tab**
+
+![My list — series tab](docs/screenshots/my-list-series.png)
+
+Displays your watched series using the same card layout.
+
+- Series where you have not yet finished all episodes show a diagonal **Watching** ribbon and cannot be rated yet.
+- Completed series display a badge with the total episode count and allow you to leave a star rating.
+
+Ratings are stored locally per user — they are not sent to TMDB.
+
+---
+
+### Export *(admin only)*
+
+Available from the **Movies** and **Series** pages via the export button in the top-right corner.
+
+- **JSON** — raw TMDB data for all titles matching the current filters.
+- **CSV** — human-readable format (formatted dates, rating as `X / 10`, vote count with thousands separator). Optimised for Excel and LibreOffice (UTF-8 BOM included).
+
+The export always fetches all pages before downloading — the file contains the full result set, not just the current page.
+
+---
+
+### User management (`/users`) — admin only
+
+A paginated list of all user accounts.
+
+**Browsing and filtering**
+
+![Users list](docs/screenshots/users-list.png)
+
+Use the filter panel to search by username, role, creation date or creator (the admin who created the account).
+
+**Creating a user**
+
+![Add user modal](docs/screenshots/users-add.png)
+
+Click **Add user**, fill in the username, password and role (admin or guest), and confirm. The new user appears immediately in the list.
+
+> Password requirements: at least 8 characters, one uppercase letter, one number and one special character.
+
+**Editing a user**
+
+Click the edit icon on any row to open a form with the current values pre-filled. Leave the password field blank to keep the existing password.
+
+**Deleting users**
+
+![Delete confirmation dialog](docs/screenshots/users-delete.png)
+
+- Click the delete icon on a row to delete a single user. A confirmation dialog will appear before the action is executed.
+- Select multiple rows using the checkboxes and click **Delete selected** for a bulk deletion.
+
+Admins cannot delete or change the role of their own account.
+
+**Importing users in bulk**
+
+![Import users modal](docs/screenshots/users-import.png)
+
+Click **Import** to upload a JSON or CSV file and create multiple accounts at once. Expected formats:
+
+```json
+[{ "username": "...", "password": "...", "role": "admin|guest" }]
+```
+
+```
+username,password,role
+alice,Pass123!,guest
+bob,Pass456!,admin
+```
+
+![Import results](docs/screenshots/users-import-results.png)
+
+After processing, a results screen shows how many accounts were created and lists any rows that failed with the reason for each error. Failed rows can be downloaded as a CSV for correction and re-upload.
+
+---
+
+### Settings
+
+Click the gear icon in the sidebar to open the settings panel.
+
+![Settings modal](docs/screenshots/settings.png)
+
+- **Language** — switch between English and Spanish. Defaults to Spanish on first login. The preference is stored per user in localStorage and applied immediately across the entire interface with no page reload — i18next resolves the stored language before the first render to avoid any visible flash.
+- **Region** — switch between Spain and United States. Determines which streaming platforms are shown in the watch providers section of every movie and series detail modal.
+- **Theme** — choose Light, Dark or Auto. The Auto mode resolves the theme based on time of day (light from 7am to 7pm, dark otherwise) without requiring any user interaction. All three preferences are persisted in localStorage and restored across sessions.
+
+---
+
+### Session management
+
+The access token expires after 1 hour. When that happens the app automatically requests a new token in the background — the current action is retried transparently and you will not be interrupted. If the refresh also fails (e.g. the refresh token has expired after 7 days), you are redirected to the login page.
 
 ---
 
 ## Running tests
 
-### Unit tests (Jest)
+The project has two test layers: **433 unit/integration tests** (Jest) and **82 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+
+### Unit & integration tests (Jest) — 433 tests · 41 suites
 
 ```bash
 npm test           # run once
 npm run test:watch # watch mode
 ```
 
-Covers pure functions, business logic, stores, hooks and components.
+| Area | What's covered |
+|---|---|
+| Pure functions | `getMovieUI`, `getSeriesUI`, `formatDate`, `formatVoteCount`, `deduplicateProviders`, `buildGenreCounts`, `toCSV` |
+| Business logic | Client-side filters (movies + series), TMDB fetch error mapping, export utilities |
+| Stores | `watchedStore` (toggle movie/episode, season counts), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
+| Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases` |
+| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem` |
+| Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
+| API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date) |
 
-### End-to-end tests (Cypress)
+### End-to-end tests (Cypress) — 82 tests · 7 suites
 
-Cypress tests run against the live dev server. Make sure you have run `npm run seed` at least once first — Cypress needs the database to exist before it can create its own test users.
+In CI, Cypress runs against the production build automatically. Locally, run against the dev server:
 
 ```bash
-# First time only — creates the database
-npm run seed
-
 # Terminal 1
 npm run dev
 
@@ -152,19 +450,17 @@ npm run cypress
 npm run cypress:run
 ```
 
-The test suite covers:
+| Suite | Tests | What's covered |
+|---|---|---|
+| `auth.cy.ts` | 6 | Redirect when unauthenticated, invalid credentials, login, logout, session expiry |
+| `home.cy.ts` | 15 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar |
+| `movies.cy.ts` | 20 | Movie list, detail modal, watch providers, platform filter, star rating filter, access control |
+| `series.cy.ts` | 14 | Series list, detail modal, watch providers, platform filter, star rating filter |
+| `users.cy.ts` | 15 | Create, edit, delete (single + bulk), toasts, import JSON/CSV, partial failures |
+| `my-list.cy.ts` | 9 | Tabs, empty state, watched movies/series, saga grouping, nav access control |
+| `settings.cy.ts` | 3 | Theme switching (light / dark), language switching (EN / ES) |
 
-| Suite | What's tested |
-|---|---|
-| `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, login, logout, session expiry redirect |
-| `home.cy.ts` | Genre charts, Movies/Series tab switch, My profile/Global toggle, empty state, SVG renders, release calendar title and navigation |
-| `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, access control |
-| `series.cy.ts` | Series list, detail modal, watch providers, platform filter |
-| `users.cy.ts` | Create, edit, delete (single + bulk), toast notifications, import (JSON / CSV, errors, partial failures) |
-| `my-list.cy.ts` | Page header + tabs, empty state, watched movies/series, saga toggle, nav access control |
-| `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
-
-Cypress creates and cleans up its own test users in the local database automatically.
+Cypress creates and cleans up its own test users in the local database automatically. TMDB calls are intercepted — no real API key needed to run the E2E suite.
 
 ---
 

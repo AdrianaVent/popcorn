@@ -19,7 +19,8 @@
     "retry": "Reintentar",
     "availableOn": "Disponible en",
     "inTheaters": "En cartelera",
-    "errorBoundary": "Algo ha ido mal. Puedes volver a intentarlo o recargar la página."
+    "errorBoundary": "Algo ha ido mal. Puedes volver a intentarlo o recargar la página.",
+    "clearFilters": "Limpiar filtros"
   },
   "languageSwitcher": {
     "label": "Idioma actual: {{language}}"
@@ -41,6 +42,7 @@
     "forgotPassword": "¿Contraseña olvidada?",
     "resetPassword": "Recuperar contraseña",
     "resetDescription": "Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.",
+    "resetMockNotice": "Este es un proyecto de demo — la recuperación de contraseña no es funcional.",
     "backLogin": "Volver al inicio de sesión"
   },
   "settings": {
@@ -75,6 +77,7 @@
       "panel": "Filtros",
       "title": "Título",
       "ratingGte": "Valoración ≥",
+      "runtimeGte": "Duración (min) ≥",
       "year": "Año",
       "watched": "Visto",
       "platform": "Plataforma"
@@ -83,6 +86,7 @@
       "poster": "Póster",
       "title": "Título",
       "releaseDate": "Estreno",
+      "runtime": "Duración",
       "rating": "Valoración",
       "votes": "Votos",
       "language": "Idioma"
@@ -111,6 +115,7 @@
       "panel": "Filtros",
       "title": "Título",
       "ratingGte": "Valoración ≥",
+      "runtimeGte": "Duración (min) ≥",
       "year": "Año",
       "status": "Estado",
       "watched": "Visto",
@@ -118,8 +123,9 @@
     },
     "columns": {
       "poster": "Póster",
-      "name": "Nombre",
+      "title": "Título",
       "firstAirDate": "Estreno",
+      "runtime": "Duración",
       "rating": "Valoración",
       "votes": "Votos",
       "language": "Idioma",
@@ -132,7 +138,7 @@
       "votes": "Votos",
       "seasons": "Temporadas",
       "episodes": "Episodios",
-      "runtime": "Dur. episodio",
+      "runtime": "Duración",
       "year": "Año",
       "genres": "Géneros",
       "seasonsAccordion": "Temporadas",
@@ -270,6 +276,10 @@
       "series": "series",
       "error": "No se han podido cargar los datos",
       "noWatched": "Marca títulos como vistos para ver tus géneros"
+    },
+    "top10": {
+      "title": "Top 10",
+      "empty": "Marca algunos títulos como vistos para ver tu top 10"
     }
   },
   "calendar": {

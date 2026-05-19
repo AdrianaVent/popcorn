@@ -4,6 +4,8 @@ const TEST_ADMIN = { username: 'cypress_admin', password: 'CypressAdmin1!', role
 const TEST_GUEST = { username: 'cypress_guest', password: 'CypressGuest1!', role: 'guest' as const }
 
 before(() => {
+  cy.task('deleteUser', TEST_ADMIN.username)
+  cy.task('deleteUser', TEST_GUEST.username)
   cy.task('seedUser', TEST_ADMIN)
   cy.task('seedUser', TEST_GUEST)
 })

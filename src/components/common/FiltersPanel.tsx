@@ -5,9 +5,11 @@ import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import Text from '@/components/ui/Text'
 import DatePicker from '@/components/ui/DatePicker'
-import { ChevronDownIcon } from '@/components/icons'
+import StarRating from '@/components/ui/StarRating'
+import { ChevronDownIcon, XIcon } from '@/components/icons'
 import type { FiltersSchema } from '@/types/table'
 import { updateFilterValue } from '@/utils/updateFilterValue'
+import { tmdbToStarRating } from '@/utils/formatNumber'
 
 type Props<T extends Record<string, unknown>> = {
   schema: FiltersSchema<T>
@@ -34,15 +36,25 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
     return true
   }).length
 
+  const handleClear = () => {
+    const cleared = schema.reduce((acc, field) => ({
+      ...acc,
+      [field.key]: field.type === 'boolean' ? false
+        : field.type === 'number' || field.type === 'star' ? 0
+        : '',
+    }), { ...filters })
+    onChange(cleared as T)
+  }
+
   return (
     <div className={clsx('rounded-lg border border-border bg-card/60 backdrop-blur-sm overflow-hidden', disabled && 'opacity-50 pointer-events-none')}>
 
       {/* Header */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 cursor-pointer"
-      >
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-4 py-3">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-2 flex-1 cursor-pointer text-left"
+        >
           <Text variant="small" className="font-semibold text-foreground">
             {t(titleKey)}
           </Text>
@@ -52,17 +64,27 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
               {activeCount}
             </span>
           )}
-        </div>
+        </button>
 
-        <span
-          className={clsx(
-            'text-muted-foreground transition-transform duration-200',
-            open && 'rotate-180'
+        <div className="flex items-center gap-2">
+          {activeCount > 0 && (
+            <button
+              onClick={handleClear}
+              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground border border-border rounded-md px-1.5 py-0.5 hover:bg-muted transition-colors cursor-pointer"
+            >
+              <XIcon size={11} />
+              {t('common.clearFilters')}
+            </button>
           )}
-        >
-          <ChevronDownIcon size={15} />
-        </span>
-      </button>
+
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className={clsx('text-muted-foreground transition-transform duration-200', open && 'rotate-180')}
+          >
+            <ChevronDownIcon size={15} />
+          </button>
+        </div>
+      </div>
 
       {/* Body */}
       {open && (
@@ -107,6 +129,27 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
                     }
                     className="w-16 px-2 py-1 text-sm border border-border rounded-md bg-background text-foreground outline-none focus:border-primary/50 transition-colors"
                   />
+                )}
+
+                {field.type === 'star' && (
+                  <div data-cy={`filter-${String(field.key)}`} className="flex items-center gap-1.5">
+                    <StarRating
+                      value={typeof value === 'number' && value > 0 ? tmdbToStarRating(value) : null}
+                      onChange={(rating) =>
+                        onChange(updateFilterValue(filters, field.key, (rating * 2) as T[keyof T]))
+                      }
+                      size={16}
+                    />
+                    {typeof value === 'number' && value > 0 && (
+                      <button
+                        onClick={() => onChange(updateFilterValue(filters, field.key, 0 as T[keyof T]))}
+                        className="text-[13px] leading-none text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="Clear"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {field.type === 'boolean' && (

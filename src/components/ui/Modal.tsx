@@ -8,6 +8,7 @@ type ModalProps = {
   children: ReactNode
   footer?: ReactNode
   maxWidth?: string
+  dismissOnOverlayClick?: boolean
 }
 
 export default function Modal({
@@ -16,21 +17,22 @@ export default function Modal({
   children,
   footer,
   maxWidth = '48rem',
+  dismissOnOverlayClick = true,
 }: ModalProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape' && dismissOnOverlayClick) onClose()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [onClose, dismissOnOverlayClick])
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      onClick={onClose}
+      onClick={dismissOnOverlayClick ? onClose : undefined}
       className="
         fixed inset-0 z-50
         flex items-center justify-center

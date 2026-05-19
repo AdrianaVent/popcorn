@@ -80,6 +80,7 @@ export default function UserFormModal({ user, isSelf, onClose, onSubmit }: Props
       title={title}
       onClose={onClose}
       maxWidth="28rem"
+      dismissOnOverlayClick={false}
       footer={
         <ModalFooter>
           <Button

@@ -19,9 +19,13 @@ export const staticSeriesFiltersSchema: FiltersSchema<SeriesFilters> = [
   {
     key: 'vote_average_gte',
     label: 'series.filters.ratingGte',
+    type: 'star',
+  },
+  {
+    key: 'runtime_gte',
+    label: 'series.filters.runtimeGte',
     type: 'number',
-    min: 0,
-    max: 10,
+    min: 1,
   },
   {
     key: 'status',

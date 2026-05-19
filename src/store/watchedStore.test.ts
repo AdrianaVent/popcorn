@@ -161,6 +161,36 @@ describe('markSeason', () => {
   })
 })
 
+describe('enrichMovie', () => {
+  it('merges patch fields into an existing stored movie', () => {
+    useWatchedStore.getState().toggleMovie('user1', mockMovie)
+    useWatchedStore.getState().enrichMovie('user1', 1, { collection_id: 99, collection_name: 'Test Saga' })
+    const stored = useWatchedStore.getState().movies['user1'][1]
+    expect(stored.collection_id).toBe(99)
+    expect(stored.collection_name).toBe('Test Saga')
+  })
+
+  it('preserves existing fields when patching', () => {
+    useWatchedStore.getState().toggleMovie('user1', mockMovie)
+    useWatchedStore.getState().enrichMovie('user1', 1, { collection_id: 99, collection_name: 'Test Saga' })
+    const stored = useWatchedStore.getState().movies['user1'][1]
+    expect(stored.title).toBe('Test Movie')
+    expect(stored.vote_average).toBe(8.0)
+  })
+
+  it('does nothing if the movie is not in the watched list', () => {
+    useWatchedStore.getState().enrichMovie('user1', 999, { collection_id: 99, collection_name: 'Test Saga' })
+    expect(useWatchedStore.getState().movies['user1']).toBeUndefined()
+  })
+
+  it('isolates enrichment between users', () => {
+    useWatchedStore.getState().toggleMovie('user1', mockMovie)
+    useWatchedStore.getState().enrichMovie('user2', 1, { collection_id: 99, collection_name: 'Test Saga' })
+    const stored = useWatchedStore.getState().movies['user1'][1]
+    expect(stored.collection_id).toBeUndefined()
+  })
+})
+
 describe('per-season watched count derivation', () => {
   it('correctly counts watched episodes per season', () => {
     useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1)

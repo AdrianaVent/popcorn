@@ -4,6 +4,7 @@ import { type ReactNode } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import DashboardLayout from '@/components/layouts/DashboardLayout'
 import { useUserStore } from '@/store/userStore'
+import { DashboardRoleContext } from './DashboardRoleContext'
 import type { UserRole } from '@/db/users'
 
 type Props = {
@@ -31,8 +32,10 @@ export default function DashboardGroupLayoutClient({ children, serverRole }: Pro
   }
 
   return (
-    <DashboardLayout activeNav={activeNav} onLogout={handleLogout} serverRole={serverRole}>
-      {children}
-    </DashboardLayout>
+    <DashboardRoleContext.Provider value={serverRole}>
+      <DashboardLayout activeNav={activeNav} onLogout={handleLogout} serverRole={serverRole}>
+        {children}
+      </DashboardLayout>
+    </DashboardRoleContext.Provider>
   )
 }

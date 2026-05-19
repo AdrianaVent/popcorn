@@ -2,6 +2,7 @@
 
 import { ButtonHTMLAttributes, ReactNode } from 'react'
 import clsx from 'clsx'
+import Tooltip from './Tooltip'
 
 type Breakpoint = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -19,10 +20,6 @@ const labelShow: Record<Breakpoint, string> = {
   sm: 'sm:inline', md: 'md:inline', lg: 'lg:inline', xl: 'xl:inline',
 }
 
-const tooltipHide: Record<Breakpoint, string> = {
-  sm: 'sm:hidden', md: 'md:hidden', lg: 'lg:hidden', xl: 'xl:hidden',
-}
-
 export default function IconButton({
   icon,
   label,
@@ -35,12 +32,8 @@ export default function IconButton({
 }: IconButtonProps) {
   const isGhost = variant === 'ghost'
 
-  const tooltipPos = tooltipSide === 'top'
-    ? 'bottom-full mb-1.5'
-    : 'top-full mt-1.5'
-
   return (
-    <div className="relative group inline-flex">
+    <Tooltip content={label} placement={tooltipSide} disabled={!isGhost}>
       <button
         disabled={disabled}
         className={clsx(
@@ -58,17 +51,6 @@ export default function IconButton({
           <span className={clsx('hidden', labelShow[showLabelAt])}>{label}</span>
         )}
       </button>
-
-      <div className={clsx(
-        'absolute right-0 z-50 pointer-events-none',
-        tooltipPos,
-        'opacity-0 group-hover:opacity-100 transition-opacity',
-        !isGhost && tooltipHide[showLabelAt],
-      )}>
-        <span className="bg-foreground text-background text-xs font-medium px-2 py-1 rounded whitespace-nowrap shadow-md">
-          {label}
-        </span>
-      </div>
-    </div>
+    </Tooltip>
   )
 }

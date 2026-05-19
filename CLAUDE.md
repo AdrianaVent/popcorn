@@ -33,9 +33,11 @@ src/
 │   │   ├── [id]/               # PATCH · DELETE — update, delete single user
 │   │   └── import/             # POST — bulk create from parsed JSON/CSV rows; returns { created, failed[] }
 │   ├── (dashboard)/            # persistent layout group (Sidebar never unmounts)
-│   │   ├── layout.tsx          # client layout — derives activeNav from pathname, handles logout
-│   │   ├── movies/             # page.tsx + loading.tsx
-│   │   ├── series/             # page.tsx + loading.tsx
+│   │   ├── layout.tsx          # server layout — decodes JWT cookie, passes role to client layout
+│   │   ├── DashboardGroupLayoutClient.tsx  # 'use client' — pathname → activeNav, logout, provides DashboardRoleContext
+│   │   ├── DashboardRoleContext.tsx        # React context exposing serverRole to client subtree (loading skeletons)
+│   │   ├── movies/             # page.tsx + loading.tsx (role-aware skeleton cols)
+│   │   ├── series/             # page.tsx + loading.tsx (role-aware skeleton cols)
 │   │   ├── my-list/            # page.tsx + loading.tsx (guest only)
 │   │   ├── users/              # page.tsx + loading.tsx (admin only)
 │   │   └── home/               # page.tsx + loading.tsx — genre dashboard
@@ -168,13 +170,21 @@ data/
 | Persistent dashboard layout + SSR-safe hydration | Done |
 | Home release calendar (monthly EN/ES releases, dots per day, movie/series tabs) | Done |
 | My list (guest-only: watched movies/series, saga grouping, 5-star ratings) | Done |
+| Eye icon watched column in movies/series tables (toggle from list, guest only) | Done |
+| Clear-all-filters button in FiltersPanel header | Done |
+| Horizontal table scroll on narrow viewports | Done |
+| Primary color for all watched indicators (replaces green throughout) | Done |
+| Bulk-mark saga/series: date-gated (only past/today releases) + unmark when all done | Done |
+| CSV export — UTF-8 BOM for correct accent rendering in Excel/LibreOffice | Done |
+| Collection backfill on modal open (enrichMovie) — fixes saga grouping for table-marked movies | Done |
+| Role-aware loading skeleton (movies/series cols via DashboardRoleContext) | Done |
 
 ---
 
 ## Architecture Decisions
 
 **Persistent dashboard layout**
-All dashboard pages live inside the `(dashboard)` route group. The group layout (`src/app/(dashboard)/layout.tsx`) renders `DashboardLayout` (Sidebar only — Topbar removed) once and keeps it mounted across client-side navigations — no blank screen between pages. `activeNav` is derived from `usePathname()`. Each page has a `loading.tsx` that shows a skeleton while the page chunk loads during client navigation. The Sidebar contains: bucket icon (collapsed) / Popcorn logo (expanded) at the top; a separator with a half-hanging circular toggle button (`ChevronLeft/Right`, `bg-primary`); nav items; Logout button pinned at the bottom.
+All dashboard pages live inside the `(dashboard)` route group. `layout.tsx` is a Server Component that decodes the JWT cookie to read the role, then passes it to `DashboardGroupLayoutClient` (`'use client'`) which renders `DashboardLayout` (Sidebar only — Topbar removed) and provides `DashboardRoleContext`. The layout is mounted once and never unmounts across client-side navigations. `activeNav` is derived from `usePathname()`. Each page has a `loading.tsx` (client component) that reads the role from `DashboardRoleContext` to show the correct number of skeleton columns. The Sidebar contains: bucket icon (collapsed) / Popcorn logo (expanded) at the top; a separator with a half-hanging circular toggle button (`ChevronLeft/Right`, `bg-primary`); nav items; Logout button pinned at the bottom.
 
 **SSR-safe hydration**
 Features that depend on Zustand `persist` stores (localStorage) are loaded with `dynamic(..., { ssr: false })` — they only render on the client, so store values are already rehydrated when the component mounts. No `useMounted` guard needed inside these components. The layout (`Sidebar`) is SSR'd and gates role-dependent nav items behind its own `mounted` state to avoid hydration mismatches. `DatePicker` uses `suppressHydrationWarning` on its placeholder span since the locale-specific placeholder text is non-critical and corrects itself after mount. Sidebar nav labels and the Sidebar logout button also carry `suppressHydrationWarning` — they are SSR'd in the persistent layout and contain translated text that diverges between server (always `'en'`, no localStorage) and client (user's stored language).
@@ -201,7 +211,7 @@ Read-only data provider (movies/series/search). Never used for authentication. A
 Title filter uses `/search/movie` so TMDB pagination reflects real matches. Rating/year use `/discover/movie` params. `vote_average_gte` applied client-side only in search mode (TMDB search doesn't support it). Language fixed to `en|es` via `with_original_language` (and `ALLOWED_ORIGINAL_LANGUAGES` client-side when search is active).
 
 **Export**
-`exportAsJSON` and `exportAsCSV` in `src/utils/exportData.ts`. Export fetches all pages before downloading. CSV uses `formatShortDate` and `formatVoteCount` for display formatting. JSON uses raw TMDB values. Only visible to `admin`.
+`exportAsJSON` and `exportAsCSV` in `src/utils/exportData.ts`. Export fetches all pages before downloading. CSV uses `formatShortDate` and `formatVoteCount` for display formatting. JSON uses raw TMDB values. CSV files are prefixed with a UTF-8 BOM (`﻿`) so accented characters render correctly in Excel and LibreOffice. Only visible to `admin`.
 
 **Vote count formatting**
 `formatVoteCount` uses a regex (`/\B(?=(\d{3})+(?!\d))/g`) instead of `toLocaleString` — Node.js without full ICU data makes `toLocaleString` unreliable across environments.
@@ -277,11 +287,11 @@ npm run test:watch  # watch mode
 
 | Area | What's covered |
 |---|---|
-| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10) |
+| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `tmdbToStarRating` (TMDB 0–10 → Rating 0.5–5), `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10) |
 | Business logic | `applyClientFilters` (movies + series + language filter), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
 | Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation; `toastStore` — addToast, timers, removeToast; `ratingsStore` — setRating, removeRating, per-user isolation |
 | Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window), `useMovieReleases` (service call args), `useSeriesReleases` (disabled when no providers, enabled with providers) — all wrapped in `QueryClientProvider` with `retry: false` |
-| Components | `Button`, `Modal`, `FiltersPanel`, `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, fluid variant, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states), `StarRating` (5 stars, readonly mode, onChange, hover, half-star gradient) |
+| Components | `Button`, `Modal`, `FiltersPanel` (collapse/expand, badge count, text/number/star/boolean/date/select types), `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, fluid variant, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states), `StarRating` (5 stars, readonly mode, onChange, hover, half-star gradient) |
 | Services | `apiFetch` (401 auto-refresh, redirect on session expiry) |
 | API routes | `/api/users/import` (per-row validation: missing fields, invalid role/password, intra-file duplicate, DB duplicate, invalid creator, invalid date) |
 
@@ -300,8 +310,8 @@ Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test user
 | Suite | What's covered |
 |---|---|
 | `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, successful login, logout, guest redirect from /users |
-| `movies.cy.ts` | Movie list, detail modal, watch providers section, platform filter, access control (guest) |
-| `series.cy.ts` | Series list, detail modal, watch providers section, platform filter |
+| `movies.cy.ts` | Movie list, detail modal, watch providers section, platform filter, star rating filter, access control (guest) |
+| `series.cy.ts` | Series list, detail modal, watch providers section, platform filter, star rating filter |
 | `users.cy.ts` | List, create + toast, edit + toast, delete + toast, bulk delete + toast, self-protection, filters, import JSON + CSV, partial import failures, post-import cleanup |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
 | `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation |

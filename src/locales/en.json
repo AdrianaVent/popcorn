@@ -19,7 +19,8 @@
     "retry": "Retry",
     "availableOn": "Available on",
     "inTheaters": "In theaters",
-    "errorBoundary": "Something went wrong. You can try again or reload the page."
+    "errorBoundary": "Something went wrong. You can try again or reload the page.",
+    "clearFilters": "Clear filters"
   },
   "languageSwitcher": {
     "label": "Current language: {{language}}"
@@ -41,6 +42,7 @@
     "forgotPassword": "Forgot password?",
     "resetPassword": "Reset password",
     "resetDescription": "Enter your email and we’ll send you a link to reset your password.",
+    "resetMockNotice": "This is a demo project — password recovery is not functional.",
     "backLogin": "Back to sign in"
   },
   "settings": {
@@ -75,6 +77,7 @@
       "panel": "Filters",
       "title": "Title",
       "ratingGte": "Rating ≥",
+      "runtimeGte": "Runtime (min) ≥",
       "year": "Year",
       "watched": "Seen",
       "platform": "Platform"
@@ -83,6 +86,7 @@
       "poster": "Poster",
       "title": "Title",
       "releaseDate": "Release",
+      "runtime": "Runtime",
       "rating": "Rating",
       "votes": "Votes",
       "language": "Language"
@@ -111,6 +115,7 @@
       "panel": "Filters",
       "title": "Title",
       "ratingGte": "Rating ≥",
+      "runtimeGte": "Runtime (min) ≥",
       "year": "Year",
       "status": "Status",
       "watched": "Seen",
@@ -118,8 +123,9 @@
     },
     "columns": {
       "poster": "Poster",
-      "name": "Name",
+      "title": "Title",
       "firstAirDate": "First aired",
+      "runtime": "Runtime",
       "rating": "Rating",
       "votes": "Votes",
       "language": "Language",
@@ -132,7 +138,7 @@
       "votes": "Votes",
       "seasons": "Seasons",
       "episodes": "Episodes",
-      "runtime": "Ep. runtime",
+      "runtime": "Runtime",
       "year": "Year",
       "genres": "Genres",
       "seasonsAccordion": "Seasons",
@@ -270,6 +276,10 @@
       "series": "series",
       "error": "Could not load data",
       "noWatched": "Mark some titles as watched to see your genres"
+    },
+    "top10": {
+      "title": "Top 10",
+      "empty": "Mark some titles as watched to build your top 10"
     }
   },
   "calendar": {
