@@ -6,7 +6,7 @@ import clsx from 'clsx'
 import Text from '@/components/ui/Text'
 import DatePicker from '@/components/ui/DatePicker'
 import StarRating from '@/components/ui/StarRating'
-import { ChevronDownIcon } from '@/components/icons'
+import { ChevronDownIcon, XIcon } from '@/components/icons'
 import type { FiltersSchema } from '@/types/table'
 import { updateFilterValue } from '@/utils/updateFilterValue'
 import { tmdbToStarRating } from '@/utils/formatNumber'
@@ -36,15 +36,25 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
     return true
   }).length
 
+  const handleClear = () => {
+    const cleared = schema.reduce((acc, field) => ({
+      ...acc,
+      [field.key]: field.type === 'boolean' ? false
+        : field.type === 'number' || field.type === 'star' ? 0
+        : '',
+    }), { ...filters })
+    onChange(cleared as T)
+  }
+
   return (
     <div className={clsx('rounded-lg border border-border bg-card/60 backdrop-blur-sm overflow-hidden', disabled && 'opacity-50 pointer-events-none')}>
 
       {/* Header */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 cursor-pointer"
-      >
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-4 py-3">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-2 flex-1 cursor-pointer text-left"
+        >
           <Text variant="small" className="font-semibold text-foreground">
             {t(titleKey)}
           </Text>
@@ -54,17 +64,27 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
               {activeCount}
             </span>
           )}
-        </div>
+        </button>
 
-        <span
-          className={clsx(
-            'text-muted-foreground transition-transform duration-200',
-            open && 'rotate-180'
+        <div className="flex items-center gap-2">
+          {activeCount > 0 && (
+            <button
+              onClick={handleClear}
+              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground border border-border rounded-md px-1.5 py-0.5 hover:bg-muted transition-colors cursor-pointer"
+            >
+              <XIcon size={11} />
+              {t('common.clearFilters')}
+            </button>
           )}
-        >
-          <ChevronDownIcon size={15} />
-        </span>
-      </button>
+
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className={clsx('text-muted-foreground transition-transform duration-200', open && 'rotate-180')}
+          >
+            <ChevronDownIcon size={15} />
+          </button>
+        </div>
+      </div>
 
       {/* Body */}
       {open && (

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import MetaRow from '@/components/common/MetaRow'
 import StarRating from '@/components/ui/StarRating'
 import { useLanguageStore } from '@/store/languageStore'
-import { formatVoteCount, tmdbToStarRating } from '@/utils/formatNumber'
+import { formatVoteCount, tmdbToStarRating, formatRuntime } from '@/utils/formatNumber'
 import type { TMDBMovieDetail } from '@/types/tmdb'
 
 type Props = {
@@ -21,6 +21,8 @@ export default function MovieMetaGrid({ detail, isUpcoming, releaseYear }: Props
     if (isUpcoming) return []
 
     return [
+      detail.runtime && { label: t('movies.detail.runtime'), value: formatRuntime(detail.runtime, language) },
+      { label: t('movies.detail.year'), value: releaseYear?.toString() ?? '—' },
       {
         label: t('movies.detail.rating'),
         value: (
@@ -31,8 +33,6 @@ export default function MovieMetaGrid({ detail, isUpcoming, releaseYear }: Props
         ),
       },
       { label: t('movies.detail.votes'), value: formatVoteCount(detail.vote_count, language) },
-      detail.runtime && { label: t('movies.detail.runtime'), value: `${detail.runtime} min` },
-      { label: t('movies.detail.year'), value: releaseYear?.toString() ?? '—' },
     ].filter(Boolean) as Array<{ label: string; value: React.ReactNode }>
   }, [detail, isUpcoming, releaseYear, language, t])
 

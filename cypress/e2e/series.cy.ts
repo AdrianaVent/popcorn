@@ -127,6 +127,16 @@ describe('Series', () => {
       cy.get('[data-cy="filter-watched"]').should('not.exist')
     })
 
+    it('does not show the Mark as watched button in the detail modal', () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetailWithSeason).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} }).as('providers')
+
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.get('[role="dialog"]').contains('Mark as watched').should('not.exist')
+    })
+
     it('does not show episode watched buttons or season mark button', () => {
       cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetailWithSeason).as('detail')
       cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} }).as('providers')
@@ -173,8 +183,8 @@ describe('Series', () => {
 
     const mockSeason = {
       episodes: [
-        { id: 62085, name: 'Pilot', episode_number: 1, runtime: 58 },
-        { id: 62086, name: 'Cat\'s in the Bag', episode_number: 2, runtime: 48 },
+        { id: 62085, name: 'Pilot', episode_number: 1, runtime: 58, air_date: '2008-01-20' },
+        { id: 62086, name: 'Cat\'s in the Bag', episode_number: 2, runtime: 48, air_date: '2008-01-27' },
       ],
     }
 
@@ -186,6 +196,35 @@ describe('Series', () => {
     it('shows the Watched filter', () => {
       cy.wait('@tmdb-guest')
       cy.get('[data-cy="filter-watched"]').should('exist')
+    })
+
+    it('clicking Mark as watched marks all aired episodes and toggles button to Watched', () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetailWithSeason).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/tv\/1396\/season\/1/, mockSeason).as('season')
+
+      cy.wait('@tmdb-guest')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.get('[role="dialog"]').contains('Mark as watched').click()
+      cy.wait('@season')
+      cy.get('[role="dialog"]').contains('Watched').should('be.visible')
+      cy.get('[role="dialog"]').contains('Mark as watched').should('not.exist')
+    })
+
+    it('clicking Watched a second time unmarks all episodes', () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetailWithSeason).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/tv\/1396\/season\/1/, mockSeason).as('season')
+
+      cy.wait('@tmdb-guest')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.get('[role="dialog"]').contains('Mark as watched').click()
+      cy.wait('@season')
+      cy.get('[role="dialog"]').contains('Watched').click()
+      cy.wait('@season')
+      cy.get('[role="dialog"]').contains('Mark as watched').should('be.visible')
     })
 
     it('shows episode watched buttons and season mark button', () => {
@@ -206,6 +245,26 @@ describe('Series', () => {
 
       cy.get('[role="dialog"]').contains('Pilot').should('be.visible')
       cy.get('[role="dialog"]').find('[data-cy="episode-watched-btn"]').should('have.length', 2)
+    })
+
+    it('episode watched button toggles watched state on click', () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetailWithSeason).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/tv\/1396\/season\/1/, mockSeason).as('season')
+
+      cy.wait('@tmdb-guest')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.get('[role="dialog"]').contains('button', 'Seasons').click()
+      cy.get('[role="dialog"]').contains('Season 1').click()
+      cy.wait('@season')
+
+      cy.get('[role="dialog"]').find('[data-cy="episode-watched-btn"]').first().as('epBtn')
+      cy.get('@epBtn').should('not.have.class', 'text-primary')
+      cy.get('@epBtn').click()
+      cy.get('@epBtn').should('have.class', 'text-primary')
+      // Second click unmarks
+      cy.get('@epBtn').click()
+      cy.get('@epBtn').should('not.have.class', 'text-primary')
     })
   })
 

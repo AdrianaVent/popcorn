@@ -78,11 +78,13 @@ A personal dashboard at `/home` with two side-by-side cards:
 
 ### Movies & Series
 
-Browse titles powered by TMDB. Filter by title, star rating (click or drag), release year, original language and streaming platform. Click any row to open a detail panel with the overview, genres, runtime, vote count and collection info. Ratings in the table and detail panel are displayed as stars (TMDB score mapped to 0.5–5 scale); hover over the stars in the list to see the exact numeric value.
+Browse titles powered by TMDB. Filter by title, star rating (click or drag), release year, original language and streaming platform. Click any row to open a detail panel with the overview, genres, runtime, vote count and collection info. Ratings in the table and detail panel are displayed as stars (TMDB score mapped to 0.5–5 scale); hover over the stars in the list to see the exact numeric value. An eye icon column (first column, guest only) shows watched status at a glance — click it on a movie row to toggle watched directly from the list. The filter bar has a **clear all** button that resets every active filter at once. Tables scroll horizontally on narrow viewports so no column data is lost.
 
 ### Watch providers
 
 The detail panel shows where each title is available in Spain — subscription platforms (flatrate), rentals (€ badge) and purchases (cart badge). Movies released in cinemas in the last 90 days show an "In theaters" chip.
+
+> **Content catalogue**: the movie and series lists show titles with English or Spanish as their original language, regardless of regional availability. Region (ES) only applies when filtering by streaming platform — titles without provider data in Spain (many classics, for instance) still appear in the general list.
 
 ### Watched tracking
 
@@ -93,7 +95,7 @@ Guest users can mark movies as watched and track individual episodes per series.
 Guest users have a dedicated **My list** section (`/my-list`) showing everything they have marked as watched:
 
 - **Movies tab** — card grid (poster, title, year, 5-star rating with half-star precision). Movies can be grouped by saga with a single toggle button.
-- **Series tab** — same card layout. Series in progress (not all episodes watched) show a diagonal **Watching** ribbon and cannot be rated yet; completed series show their episode count badge in green and expose the star rating.
+- **Series tab** — same card layout. Series in progress (not all episodes watched) show a diagonal **Watching** ribbon and cannot be rated yet; completed series show their episode count badge and expose the star rating.
 
 Ratings are stored locally per user in `ratingsStore` (persisted in localStorage) — no TMDB connection.
 

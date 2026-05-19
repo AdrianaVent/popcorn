@@ -29,7 +29,9 @@ export async function tmdbFetch<T>(endpoint: string, params?: Record<string, str
     Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)))
   }
 
-  const res = await fetch(url.toString())
+  // URLSearchParams encodes | as %7C; TMDB uses | as an OR separator for params like
+  // with_original_language — restore the literal pipe so TMDB parses the filter correctly.
+  const res = await fetch(url.toString().replace(/%7C/gi, '|'))
 
   if (!res.ok) {
     const code =

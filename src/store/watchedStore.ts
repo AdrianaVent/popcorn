@@ -40,6 +40,7 @@ interface WatchedState {
   movies:     MoviesMap
   seriesData: SeriesMap
   toggleMovie:   (userId: string, movie: StoredMovie) => void
+  enrichMovie:   (userId: string, movieId: number, patch: Partial<StoredMovie>) => void
   toggleEpisode: (userId: string, seriesId: number, episodeId: number, seasonNumber: number, series?: StoredSeries) => void
   markSeason:    (userId: string, seriesId: number, seasonNumber: number, episodeIds: number[], series?: StoredSeries) => void
 }
@@ -60,6 +61,18 @@ export const useWatchedStore = create<WatchedState>()(
             userMovies[movie.id] = movie
           }
           return { movies: { ...s.movies, [userId]: userMovies } }
+        }),
+
+      enrichMovie: (userId, movieId, patch) =>
+        set((s) => {
+          const userMovies = s.movies[userId]
+          if (!userMovies?.[movieId]) return s
+          return {
+            movies: {
+              ...s.movies,
+              [userId]: { ...userMovies, [movieId]: { ...userMovies[movieId], ...patch } },
+            },
+          }
         }),
 
       toggleEpisode: (userId, seriesId, episodeId, seasonNumber, series) =>
