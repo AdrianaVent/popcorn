@@ -50,18 +50,18 @@ describe('ConfirmModal', () => {
       expect(onCancel).toHaveBeenCalledTimes(1)
     })
 
-    it('calls onCancel when backdrop is clicked', () => {
+    it('does not call onCancel when backdrop is clicked', () => {
       const onCancel = jest.fn()
       render(<ConfirmModal {...defaultProps} onCancel={onCancel} />)
       fireEvent.click(screen.getByRole('dialog'))
-      expect(onCancel).toHaveBeenCalledTimes(1)
+      expect(onCancel).not.toHaveBeenCalled()
     })
 
-    it('calls onCancel when Escape key is pressed', () => {
+    it('does not call onCancel when Escape key is pressed', () => {
       const onCancel = jest.fn()
       render(<ConfirmModal {...defaultProps} onCancel={onCancel} />)
       fireEvent.keyDown(document, { key: 'Escape' })
-      expect(onCancel).toHaveBeenCalledTimes(1)
+      expect(onCancel).not.toHaveBeenCalled()
     })
   })
 

@@ -175,6 +175,7 @@ export default function ImportModal({
       title={phase === 'upload' ? title : resultsTitle}
       onClose={onClose}
       maxWidth="34rem"
+      dismissOnOverlayClick={false}
       footer={phase === 'upload' ? uploadFooter : resultsFooter}
     >
       {phase === 'upload' && (
