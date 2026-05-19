@@ -19,7 +19,8 @@
     "retry": "Reintentar",
     "availableOn": "Disponible en",
     "inTheaters": "En cartelera",
-    "errorBoundary": "Algo ha ido mal. Puedes volver a intentarlo o recargar la página."
+    "errorBoundary": "Algo ha ido mal. Puedes volver a intentarlo o recargar la página.",
+    "clearFilters": "Limpiar filtros"
   },
   "languageSwitcher": {
     "label": "Idioma actual: {{language}}"
@@ -75,6 +76,7 @@
       "panel": "Filtros",
       "title": "Título",
       "ratingGte": "Valoración ≥",
+      "runtimeGte": "Duración (min) ≥",
       "year": "Año",
       "watched": "Visto",
       "platform": "Plataforma"
@@ -83,6 +85,7 @@
       "poster": "Póster",
       "title": "Título",
       "releaseDate": "Estreno",
+      "runtime": "Duración",
       "rating": "Valoración",
       "votes": "Votos",
       "language": "Idioma"
@@ -111,6 +114,7 @@
       "panel": "Filtros",
       "title": "Título",
       "ratingGte": "Valoración ≥",
+      "runtimeGte": "Duración (min) ≥",
       "year": "Año",
       "status": "Estado",
       "watched": "Visto",
@@ -118,8 +122,9 @@
     },
     "columns": {
       "poster": "Póster",
-      "name": "Nombre",
+      "title": "Título",
       "firstAirDate": "Estreno",
+      "runtime": "Duración",
       "rating": "Valoración",
       "votes": "Votos",
       "language": "Idioma",
@@ -132,7 +137,7 @@
       "votes": "Votos",
       "seasons": "Temporadas",
       "episodes": "Episodios",
-      "runtime": "Dur. episodio",
+      "runtime": "Duración",
       "year": "Año",
       "genres": "Géneros",
       "seasonsAccordion": "Temporadas",

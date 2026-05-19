@@ -61,6 +61,16 @@ describe('Movies', () => {
     cy.contains('Fight Club').should('be.visible')
   })
 
+  // ─── Clear filters ────────────────────────────────────────────
+
+  it('clear filters button resets active filters', () => {
+    cy.wait('@tmdb')
+    cy.get('[data-cy="filter-title"]').type('inception')
+    cy.contains('button', 'Clear filters').should('be.visible').click()
+    cy.get('[data-cy="filter-title"]').should('have.value', '')
+    cy.contains('button', 'Clear filters').should('not.exist')
+  })
+
   // ─── Access control ───────────────────────────────────────────
 
   it('does not show the Export button for guest users', () => {
@@ -68,6 +78,45 @@ describe('Movies', () => {
     cy.visitAsGuest('/movies')
     cy.wait('@tmdb-guest')
     cy.contains('Export').should('not.exist')
+  })
+
+  // ─── Eye icon column ─────────────────────────────────────────
+
+  describe('Eye icon watched column', () => {
+    it('is not visible for admin users', () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').find('[data-cy="movie-watched-btn"]').should('not.exist')
+    })
+
+    it('is visible for guest users', () => {
+      cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'movies.json' }).as('tmdb-guest')
+      cy.visitAsGuest('/movies')
+      cy.wait('@tmdb-guest')
+      cy.contains('tr', 'Fight Club').find('[data-cy="movie-watched-btn"]').should('exist')
+    })
+
+    it('marks a movie as watched on click and updates button style', () => {
+      cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'movies.json' }).as('tmdb-guest')
+      cy.visitAsGuest('/movies')
+      cy.wait('@tmdb-guest')
+
+      cy.contains('tr', 'Fight Club').find('[data-cy="movie-watched-btn"]').as('btn')
+      cy.get('@btn').should('not.have.class', 'text-primary')
+      cy.get('@btn').click()
+      cy.get('@btn').should('have.class', 'text-primary')
+    })
+
+    it('unmarks a movie on second click', () => {
+      cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'movies.json' }).as('tmdb-guest')
+      cy.visitAsGuest('/movies')
+      cy.wait('@tmdb-guest')
+
+      cy.contains('tr', 'Fight Club').find('[data-cy="movie-watched-btn"]').as('btn')
+      cy.get('@btn').click()
+      cy.get('@btn').should('have.class', 'text-primary')
+      cy.get('@btn').click()
+      cy.get('@btn').should('not.have.class', 'text-primary')
+    })
   })
 
   // ─── Watched — admin ──────────────────────────────────────────
@@ -143,6 +192,32 @@ describe('Movies', () => {
       cy.wait('@tmdb-guest')
       cy.contains('tr', 'Fight Club').click()
       cy.wait('@detail')
+      cy.get('[role="dialog"]').contains('Mark as watched').should('be.visible')
+    })
+
+    it('clicking Mark as watched toggles the button to Watched', () => {
+      cy.intercept('GET', /\/movie\/550(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/movie\/550\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/movie\/550\/release_dates/, { results: [] }).as('releaseDates')
+
+      cy.wait('@tmdb-guest')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.get('[role="dialog"]').contains('Mark as watched').click()
+      cy.get('[role="dialog"]').contains('Watched').should('be.visible')
+      cy.get('[role="dialog"]').contains('Mark as watched').should('not.exist')
+    })
+
+    it('clicking Watched a second time unmarks the movie', () => {
+      cy.intercept('GET', /\/movie\/550(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/movie\/550\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/movie\/550\/release_dates/, { results: [] }).as('releaseDates')
+
+      cy.wait('@tmdb-guest')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.get('[role="dialog"]').contains('Mark as watched').click()
+      cy.get('[role="dialog"]').contains('Watched').click()
       cy.get('[role="dialog"]').contains('Mark as watched').should('be.visible')
     })
   })

@@ -20,47 +20,47 @@ const detail: Partial<TMDBSeriesDetail> = {
 
 describe('SeriesMetaGrid', () => {
   it('shows rating', () => {
-    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} avgRuntime={45} />)
+    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} totalRuntime={45} />)
     expect(screen.getByText('series.detail.rating')).toBeInTheDocument()
   })
 
   it('shows votes', () => {
-    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} avgRuntime={45} />)
+    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} totalRuntime={45} />)
     expect(screen.getByText('series.detail.votes')).toBeInTheDocument()
   })
 
   it('shows seasons', () => {
-    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} avgRuntime={45} />)
+    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} totalRuntime={45} />)
     expect(screen.getByText('series.detail.seasons')).toBeInTheDocument()
   })
 
   it('shows episodes', () => {
-    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} avgRuntime={45} />)
+    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} totalRuntime={45} />)
     expect(screen.getByText('series.detail.episodes')).toBeInTheDocument()
   })
 
   it('shows runtime when provided', () => {
-    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} avgRuntime={45} />)
+    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} totalRuntime={45} />)
     expect(screen.getByText('series.detail.runtime')).toBeInTheDocument()
   })
 
   it('hides runtime when null', () => {
-    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} avgRuntime={null} />)
+    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} totalRuntime={null} />)
     expect(screen.queryByText('series.detail.runtime')).not.toBeInTheDocument()
   })
 
   it('shows first air year when provided', () => {
-    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} avgRuntime={null} />)
+    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} totalRuntime={null} />)
     expect(screen.getByText('series.detail.year')).toBeInTheDocument()
   })
 
   it('hides year when null', () => {
-    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={null} avgRuntime={null} />)
+    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={null} totalRuntime={null} />)
     expect(screen.queryByText('series.detail.year')).not.toBeInTheDocument()
   })
 
   it('shows genres', () => {
-    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} avgRuntime={45} />)
+    render(<SeriesMetaGrid detail={detail as TMDBSeriesDetail} firstAirYear={2008} totalRuntime={45} />)
     expect(screen.getByText('Drama')).toBeInTheDocument()
   })
 
@@ -69,7 +69,7 @@ describe('SeriesMetaGrid', () => {
       <SeriesMetaGrid
         detail={{ ...detail, genres: [] } as TMDBSeriesDetail}
         firstAirYear={2008}
-        avgRuntime={45}
+        totalRuntime={45}
       />
     )
     expect(screen.queryByText('series.detail.genres')).not.toBeInTheDocument()

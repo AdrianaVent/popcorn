@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react'
 
+export type SortDir = 'asc' | 'desc'
+export type SortState<T> = { key: keyof T; dir: SortDir }
+
 export type Column<T extends Record<string, unknown>> = {
   key: keyof T
   header: string
@@ -8,6 +11,7 @@ export type Column<T extends Record<string, unknown>> = {
   className?: string
   align?: 'left' | 'center' | 'right'
   width?: 'xs' | 'sm' | 'md' | 'lg' | 'flex'
+  sortable?: boolean
 }
 
 export type FilterFieldType = 'text' | 'number' | 'boolean' | 'select' | 'date' | 'star'

@@ -22,6 +22,12 @@ export const staticMovieFiltersSchema: FiltersSchema<MovieFilters> = [
     type: 'star',
   },
   {
+    key: 'runtime_gte',
+    label: 'movies.filters.runtimeGte',
+    type: 'number',
+    min: 1,
+  },
+  {
     key: 'provider_id',
     label: 'movies.filters.platform',
     type: 'select',

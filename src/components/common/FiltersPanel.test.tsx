@@ -31,14 +31,14 @@ describe('FiltersPanel', () => {
 
     it('hides inputs when collapsed', async () => {
       render(<FiltersPanel schema={schema} filters={defaultFilters} onChange={jest.fn()} />)
-      await userEvent.click(screen.getByRole('button'))
+      await userEvent.click(screen.getAllByRole('button')[0])
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
     })
 
     it('shows inputs again after re-expanding', async () => {
       render(<FiltersPanel schema={schema} filters={defaultFilters} onChange={jest.fn()} />)
-      await userEvent.click(screen.getByRole('button'))
-      await userEvent.click(screen.getByRole('button'))
+      await userEvent.click(screen.getAllByRole('button')[0])
+      await userEvent.click(screen.getAllByRole('button')[0])
       expect(screen.getByRole('textbox')).toBeInTheDocument()
     })
   })
@@ -46,7 +46,7 @@ describe('FiltersPanel', () => {
   describe('active filter count badge', () => {
     it('shows no badge when collapsed with no active filters', async () => {
       render(<FiltersPanel schema={schema} filters={defaultFilters} onChange={jest.fn()} />)
-      await userEvent.click(screen.getByRole('button'))
+      await userEvent.click(screen.getAllByRole('button')[0])
       expect(screen.queryByText('1')).not.toBeInTheDocument()
       expect(screen.queryByText('2')).not.toBeInTheDocument()
     })
@@ -59,7 +59,7 @@ describe('FiltersPanel', () => {
           onChange={jest.fn()}
         />
       )
-      await userEvent.click(screen.getByRole('button'))
+      await userEvent.click(screen.getAllByRole('button')[0])
       expect(screen.getByText('1')).toBeInTheDocument()
     })
 
@@ -71,7 +71,7 @@ describe('FiltersPanel', () => {
           onChange={jest.fn()}
         />
       )
-      await userEvent.click(screen.getByRole('button'))
+      await userEvent.click(screen.getAllByRole('button')[0])
       expect(screen.getByText('2')).toBeInTheDocument()
     })
 

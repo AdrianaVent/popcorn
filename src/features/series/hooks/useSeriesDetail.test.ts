@@ -7,6 +7,7 @@ import type { TMDBSeriesDetail } from '@/types/tmdb'
 
 jest.mock('@/features/series/series.service', () => ({
   fetchSeriesDetail: jest.fn(),
+  fetchSeasonDetail: jest.fn(),
 }))
 
 jest.mock('@/store/languageStore', () => ({
@@ -36,6 +37,7 @@ const detail: Partial<TMDBSeriesDetail> = {
   number_of_seasons: 5,
   number_of_episodes: 62,
   episode_run_time: [45],
+  seasons: [],
 }
 
 describe('useSeriesDetail', () => {
@@ -44,7 +46,7 @@ describe('useSeriesDetail', () => {
   it('returns empty state and does not fetch when id is null', () => {
     const { result } = renderHook(() => useSeriesDetail(null), { wrapper: createWrapper() })
     expect(mockFetch).not.toHaveBeenCalled()
-    expect(result.current).toEqual({ detail: null, loading: false, error: null })
+    expect(result.current).toEqual({ detail: null, loading: false, error: null, totalRuntime: null })
   })
 
   it('starts loading when a valid id is provided', () => {
