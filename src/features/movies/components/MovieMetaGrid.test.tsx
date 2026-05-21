@@ -76,7 +76,7 @@ describe('MovieMetaGrid', () => {
 
     it('still shows genres', () => {
       render(<MovieMetaGrid detail={detail as TMDBMovieDetail} {...upcoming} />)
-      expect(screen.getByText('Action')).toBeInTheDocument()
+      expect(screen.getByText('Action & Adventure')).toBeInTheDocument()
     })
   })
 })

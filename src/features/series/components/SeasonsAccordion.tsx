@@ -80,7 +80,7 @@ function EpisodeRow({
       {episode.runtime != null && (
         <span className="text-[11px] text-muted-foreground shrink-0">{episode.runtime} min</span>
       )}
-      {canWatch && (
+      {canWatch && episode.runtime != null && (
         <WatchedEpisodeButton
           episodeId={episode.id}
           seriesId={seriesId}
@@ -208,7 +208,7 @@ function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot
                 }
               }
               const today = new Date().toISOString().slice(0, 10)
-              const airedIds = eps.filter((ep) => ep.air_date && ep.air_date <= today).map((ep) => ep.id)
+              const airedIds = eps.filter((ep) => ep.air_date && ep.air_date <= today && ep.runtime != null).map((ep) => ep.id)
               if (airedIds.length > 0) {
                 markSeason(userId, seriesId, season.season_number, airedIds, seriesSnapshot)
               }

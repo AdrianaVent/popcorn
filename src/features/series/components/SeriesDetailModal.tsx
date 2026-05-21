@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import clsx from 'clsx'
 import Modal from '@/components/ui/Modal'
 import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
@@ -14,7 +13,7 @@ import WatchProviders from '@/components/common/WatchProviders'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useUserStore } from '@/store/userStore'
 import type { StoredSeries } from '@/store/watchedStore'
-import { EyeIcon } from '@/components/icons'
+import WatchedToggleButton from '@/components/ui/WatchedToggleButton'
 import { useLanguageStore } from '@/store/languageStore'
 
 import SeriesMetaGrid from './SeriesMetaGrid'
@@ -61,7 +60,7 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
         .map((result, i) => {
           if (result.status !== 'fulfilled') return null
           const epIds = result.value.episodes
-            .filter((e) => e.air_date && e.air_date <= today)
+            .filter((e) => e.air_date && e.air_date <= today && e.runtime != null)
             .map((e) => e.id)
           return epIds.length > 0 ? { season: validSeasons[i], epIds } : null
         })
@@ -89,6 +88,7 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
     poster_path: detail.poster_path,
     original_language: detail.original_language,
     number_of_episodes: detail.number_of_episodes,
+    genre_ids: detail.genres?.map((g) => g.id) ?? [],
   } : undefined
 
   return (
@@ -134,20 +134,12 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
                 </Text>
 
                 {role !== 'admin' && (
-                  <button
+                  <WatchedToggleButton
+                    isWatched={allWatched}
+                    label={allWatched ? t('series.detail.watched') : t('series.detail.markSeriesWatched')}
                     onClick={handleMarkAll}
-                    disabled={markLoading}
-                    className={clsx(
-                      'shrink-0 mt-1 flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md transition-colors whitespace-nowrap',
-                      markLoading && 'opacity-50 cursor-wait',
-                      allWatched
-                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                        : 'bg-foreground/10 text-foreground hover:bg-foreground/15'
-                    )}
-                  >
-                    <EyeIcon size={12} />
-                    {allWatched ? t('series.detail.watched') : t('series.detail.markSeriesWatched')}
-                  </button>
+                    loading={markLoading}
+                  />
                 )}
               </div>
 

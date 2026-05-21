@@ -1,20 +1,34 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ChevronDown, LayoutGrid } from 'lucide-react'
+import ContentTabToggle, { type ContentTab } from '@/components/ui/ContentTabToggle'
 import Text from '@/components/ui/Text'
 import ToggleSwitch from '@/components/ui/ToggleSwitch'
 import MediaPoster from '@/components/common/MediaPoster'
-import type { Top10Item } from '@/features/home/hooks/useTop10'
+import { useLanguageStore } from '@/store/languageStore'
+import { TMDB_LANGUAGE } from '@/config/tmdb'
+import { resolveGenreName, MOVIE_GENRE_IDS, SERIES_GENRE_IDS } from '@/config/genres'
+import { getGenreIcon } from '@/config/genreIcons'
+import {
+  useGlobalMovieTop10ByGenre,
+  useGlobalSeriesTop10ByGenre,
+  useUserMovieTop10ByGenre,
+  useUserSeriesTop10ByGenre,
+  type Top10Item,
+} from '@/features/home/hooks/useTop10'
 
-type ContentTab = 'movies' | 'series'
 
 type Props = {
   tab: ContentTab
+  onTabChange: (tab: ContentTab) => void
   globalMovieQuery: { data?: Top10Item[]; isLoading: boolean; isError: boolean }
   globalSeriesQuery: { data?: Top10Item[]; isLoading: boolean; isError: boolean }
   userMovieItems: Top10Item[]
   userSeriesItems: Top10Item[]
+  userMoviePool: Top10Item[]
+  userSeriesPool: Top10Item[]
   defaultMode?: 'user' | 'global'
   showUserToggle?: boolean
   onItemClick: (type: 'movie' | 'series', id: number) => void
@@ -38,13 +52,13 @@ function ItemSkeleton() {
 function ItemScore({ item, mode }: { item: Top10Item; mode: 'user' | 'global' }) {
   if (mode === 'user' && item.personalRating !== null) {
     return (
-      <span className="text-[11px] font-semibold text-yellow-500 dark:text-yellow-300 shrink-0 tabular-nums">
+      <span className="text-xs font-semibold text-yellow-500 dark:text-yellow-300 shrink-0 tabular-nums">
         ★ {(item.personalRating * 2).toFixed(1)}
       </span>
     )
   }
   return (
-    <span className={`text-[11px] font-semibold shrink-0 tabular-nums ${
+    <span className={`text-xs font-semibold shrink-0 tabular-nums ${
       mode === 'user' ? 'text-muted-foreground/40' : 'text-yellow-500 dark:text-yellow-300'
     }`}>
       ★ {item.tmdbScore.toFixed(1)}
@@ -54,48 +68,196 @@ function ItemScore({ item, mode }: { item: Top10Item; mode: 'user' | 'global' })
 
 export default function Top10Card({
   tab,
+  onTabChange,
   globalMovieQuery,
   globalSeriesQuery,
   userMovieItems,
   userSeriesItems,
+  userMoviePool,
+  userSeriesPool,
   defaultMode = 'global',
   showUserToggle = true,
   onItemClick,
   className = '',
 }: Props) {
   const { t } = useTranslation()
+  const { language } = useLanguageStore()
+  const tmdbLang = TMDB_LANGUAGE[language] ?? 'es-ES'
   const [mode, setMode] = useState<'user' | 'global'>(showUserToggle ? defaultMode : 'global')
+  const [selectedGenreId, setSelectedGenreId] = useState<number | null>(null)
+  const [isGenreOpen, setIsGenreOpen] = useState(false)
+  const genreRef = useRef<HTMLDivElement>(null)
 
   const isMovies = tab === 'movies'
-  const globalQuery = isMovies ? globalMovieQuery : globalSeriesQuery
-  const userItems  = isMovies ? userMovieItems : userSeriesItems
+  const globalQuery   = isMovies ? globalMovieQuery : globalSeriesQuery
+  const userBaseItems = isMovies ? userMovieItems   : userSeriesItems
 
-  const items   = mode === 'user' ? userItems : (globalQuery.data ?? [])
-  const loading = mode === 'global' && globalQuery.isLoading
-  const error   = mode === 'global' && globalQuery.isError
-  const empty   = !loading && !error && items.length === 0
+  const handleTabChange = useCallback((newTab: ContentTab) => {
+    onTabChange(newTab)
+    setSelectedGenreId(null)
+    setIsGenreOpen(false)
+  }, [onTabChange])
+
+  const handleModeChange = useCallback((next: 'user' | 'global') => {
+    setMode(next)
+    setSelectedGenreId(null)
+    setIsGenreOpen(false)
+  }, [])
+
+  // Base top 10 (no genre filter)
+  const baseItems   = mode === 'user' ? userBaseItems : (globalQuery.data ?? [])
+  const baseLoading = mode === 'global' && globalQuery.isLoading
+  const baseError   = mode === 'global' && globalQuery.isError
+
+  // Genre-specific queries — enabled only when a genre is selected and the tab matches
+  const genreMovieQuery      = useGlobalMovieTop10ByGenre(
+    tmdbLang,
+    mode === 'global' && isMovies ? selectedGenreId : null
+  )
+  const genreSeriesQuery     = useGlobalSeriesTop10ByGenre(
+    tmdbLang,
+    mode === 'global' && !isMovies ? selectedGenreId : null
+  )
+  const userGenreMovieQuery  = useUserMovieTop10ByGenre(
+    mode === 'user' && isMovies  ? userMoviePool  : [],
+    mode === 'user' && isMovies  ? selectedGenreId : null,
+    tmdbLang
+  )
+  const userGenreSeriesQuery = useUserSeriesTop10ByGenre(
+    mode === 'user' && !isMovies ? userSeriesPool : [],
+    mode === 'user' && !isMovies ? selectedGenreId : null,
+    tmdbLang
+  )
+
+  const activeGenreQuery = mode === 'user'
+    ? (isMovies ? userGenreMovieQuery : userGenreSeriesQuery)
+    : (isMovies ? genreMovieQuery     : genreSeriesQuery)
+
+  // Resolved display values
+  const items = selectedGenreId !== null
+    ? (activeGenreQuery.data ?? [])
+    : baseItems
+
+  const loading = selectedGenreId !== null
+    ? activeGenreQuery.isLoading
+    : baseLoading
+
+  const error = selectedGenreId !== null
+    ? activeGenreQuery.isError
+    : baseError
+
+  // All genre IDs for the current tab
+  const genreIds = (isMovies ? MOVIE_GENRE_IDS : SERIES_GENRE_IDS).filter((id) => id !== 10770)
+
+  // Close popover on outside click
+  useEffect(() => {
+    if (!isGenreOpen) return
+    function handleOutside(e: MouseEvent) {
+      if (genreRef.current && !genreRef.current.contains(e.target as Node)) {
+        setIsGenreOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [isGenreOpen])
+
+  const empty = !loading && !error && items.length === 0
+
+  const activeGenreName = selectedGenreId !== null
+    ? resolveGenreName(selectedGenreId, language)
+    : t('dashboard.top10.allGenres')
 
   return (
     <div className={`flex flex-col gap-2 rounded-xl border border-border bg-card p-3 select-none${className ? ` ${className}` : ''}`}>
-      <div className="flex items-center justify-between gap-3">
-        <Text variant="body" className="font-semibold text-foreground">
-          {t('dashboard.top10.title')}
-        </Text>
-        {showUserToggle && (
-          <ToggleSwitch
-            options={[
-              { value: 'user',   label: t('dashboard.mode.user') },
-              { value: 'global', label: t('dashboard.mode.global') },
-            ]}
-            value={mode}
-            onChange={setMode}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Text variant="body" className="font-semibold text-foreground">
+            {t('dashboard.top10.title')}
+          </Text>
+          <ContentTabToggle tab={tab} onTabChange={handleTabChange} />
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Genre picker */}
+          <div ref={genreRef} className="relative">
+        <button
+          type="button"
+          onClick={() => setIsGenreOpen((v) => !v)}
+          className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md border transition-colors cursor-pointer ${
+            selectedGenreId !== null
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-border bg-muted text-foreground hover:bg-muted/60'
+          }`}
+        >
+          {[selectedGenreId].map((id) => {
+            if (id === null) return <LayoutGrid key="default" size={12} className="shrink-0" />
+            const Icon = getGenreIcon(id)
+            return Icon ? <Icon key={id} size={12} className="shrink-0" /> : <LayoutGrid key="default" size={12} className="shrink-0" />
+          })}
+          <span className="max-w-35 truncate">{activeGenreName}</span>
+          <ChevronDown
+            size={11}
+            className={`shrink-0 transition-transform duration-150 ${isGenreOpen ? 'rotate-180' : ''}`}
           />
+        </button>
+
+        {isGenreOpen && (
+          <div className="absolute left-0 top-full mt-1 z-50 rounded-xl border border-border bg-card shadow-lg p-2 w-64">
+            {/* All genres */}
+            <button
+              type="button"
+              onClick={() => { setSelectedGenreId(null); setIsGenreOpen(false) }}
+              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium mb-1 transition-colors ${
+                selectedGenreId === null
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-foreground hover:bg-muted/60'
+              }`}
+            >
+              <LayoutGrid size={12} className="shrink-0" />
+              {t('dashboard.top10.allGenres')}
+            </button>
+
+            <div className="grid grid-cols-2 gap-0.5">
+              {genreIds.map((id) => {
+                const Icon = getGenreIcon(id)
+                const name = resolveGenreName(id, language)
+                const isSelected = selectedGenreId === id
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => { setSelectedGenreId(id); setIsGenreOpen(false) }}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors text-left ${
+                      isSelected
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-foreground hover:bg-muted/60'
+                    }`}
+                  >
+                    {Icon && <Icon size={12} className="shrink-0" />}
+                    <span className="truncate">{name}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         )}
+          </div>
+
+          {showUserToggle && (
+            <ToggleSwitch
+              options={[
+                { value: 'user',   label: t('dashboard.mode.user') },
+                { value: 'global', label: t('dashboard.mode.global') },
+              ]}
+              value={mode}
+              onChange={handleModeChange}
+            />
+          )}
+        </div>
       </div>
 
       <div className="relative flex-1 min-h-0">
         {loading && (
-          <div key={`${tab}-${mode}`} className="absolute inset-0 overflow-y-auto">
+          <div key={`${tab}-${mode}-${selectedGenreId}`} className="absolute inset-0 overflow-y-auto">
             <div className="flex flex-col gap-0.5">
               {Array.from({ length: 10 }).map((_, i) => <ItemSkeleton key={i} />)}
             </div>
@@ -117,7 +279,7 @@ export default function Top10Card({
         )}
 
         {!loading && !error && items.length > 0 && (
-          <div key={`${tab}-${mode}`} className="absolute inset-0 overflow-y-auto">
+          <div key={`${tab}-${mode}-${selectedGenreId}`} className="absolute inset-0 overflow-y-auto">
             <ol className="flex flex-col gap-0.5">
               {items.map((item, i) => (
                 <li key={item.id}>
@@ -126,7 +288,7 @@ export default function Top10Card({
                     onClick={() => onItemClick(isMovies ? 'movie' : 'series', item.id)}
                     className="w-full flex items-center gap-2.5 py-1 rounded-lg px-1 hover:bg-muted/60 transition-colors group text-left"
                   >
-                    <span className="w-5 text-center text-[11px] font-semibold text-muted-foreground shrink-0 tabular-nums">
+                    <span className="w-5 text-center text-xs font-semibold text-muted-foreground shrink-0 tabular-nums">
                       {i + 1}
                     </span>
                     <MediaPoster
@@ -136,8 +298,29 @@ export default function Top10Card({
                       loading={i < 3 ? 'eager' : 'lazy'}
                     />
                     <span className="flex-1 min-w-0">
-                      <span className="block text-[12px] font-medium text-foreground leading-tight truncate group-hover:text-primary transition-colors">
+                      <span className="block text-xs font-medium text-foreground leading-tight truncate group-hover:text-primary transition-colors">
                         {item.title}
+                      </span>
+                      <span className="flex items-center gap-1 mt-0.5">
+                        {item.year && (
+                          <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                            {item.year}
+                          </span>
+                        )}
+                        {item.year && item.genre_ids.length > 0 && (
+                          <span className="text-muted-foreground/40 text-[10px] shrink-0">·</span>
+                        )}
+                        {Array.from(
+                          new Map(
+                            item.genre_ids
+                              .map((gid) => [getGenreIcon(gid), gid] as const)
+                              .filter(([Icon]) => Icon !== null)
+                          ).entries()
+                        ).slice(0, 3).map(([Icon, gid]) =>
+                          Icon ? (
+                            <Icon key={gid} size={10} className="text-muted-foreground shrink-0" />
+                          ) : null
+                        )}
                       </span>
                     </span>
                     <ItemScore item={item} mode={mode} />

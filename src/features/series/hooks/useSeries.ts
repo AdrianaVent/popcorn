@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchSeries } from '@/features/series/series.service'
 import { useLanguageStore } from '@/store/languageStore'
 import { ALLOWED_ORIGINAL_LANGUAGES } from '@/config/constants'
+import { getEquivalentGenreIds } from '@/config/genres'
 import type { SeriesFilters, SeriesRow } from '@/types/series'
 import type { TMDBSeries } from '@/types/tmdb'
 
@@ -30,6 +31,10 @@ export function applyClientFilters(results: TMDBSeries[], filters: SeriesFilters
   // vote_average_gte not supported by /search/tv
   if (filters.title && filters.vote_average_gte) {
     items = items.filter((s) => s.vote_average >= (filters.vote_average_gte ?? 0))
+  }
+  if (filters.genre_ids?.length) {
+    const allowed = new Set(filters.genre_ids.flatMap(getEquivalentGenreIds))
+    items = items.filter((s) => s.genre_ids?.some((gid) => allowed.has(gid)))
   }
   return items as SeriesRow[]
 }

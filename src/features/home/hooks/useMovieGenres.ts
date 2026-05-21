@@ -3,8 +3,8 @@ import { useWatchedStore } from '@/store/watchedStore'
 import { useUserStore } from '@/store/userStore'
 import { useLanguageStore } from '@/store/languageStore'
 import { moviesService } from '@/services/tmdb/movies'
-import { genresService } from '@/services/tmdb/genres'
 import { TMDB_LANGUAGE } from '@/config/tmdb'
+import { resolveGenreName } from '@/config/genres'
 import { buildGenreCounts } from './buildGenreCounts'
 
 export type GenreEntry = { name: string; count: number }
@@ -25,7 +25,11 @@ export function useUserMovieGenres() {
         watchedIds.map((id) => moviesService.detail(id, tmdbLang))
       )
       return buildGenreCounts(
-        results.flatMap((r) => (r.status === 'fulfilled' ? [r.value.genres ?? []] : []))
+        results.flatMap((r) =>
+          r.status === 'fulfilled'
+            ? [r.value.genres?.map((g) => ({ name: resolveGenreName(g.id, language, g.name) })) ?? []]
+            : []
+        )
       )
     },
     enabled: watchedIds.length > 0,
@@ -40,17 +44,16 @@ export function useGlobalMovieGenres() {
   return useQuery<GenreEntry[]>({
     queryKey: ['global-movie-genres', tmdbLang],
     queryFn: async () => {
-      const [genreList, ...pages] = await Promise.all([
-        genresService.movieList(tmdbLang),
-        ...Array.from({ length: GLOBAL_PAGES }, (_, i) =>
-          moviesService.discover(i + 1, tmdbLang)
-        ),
-      ])
-      const genreMap = Object.fromEntries(genreList.genres.map((g) => [g.id, g.name]))
+      const pages = await Promise.all(
+        Array.from({ length: GLOBAL_PAGES }, (_, i) => moviesService.discover(i + 1, tmdbLang))
+      )
       return buildGenreCounts(
         pages.flatMap((page) =>
           page.results.map((movie) =>
-            movie.genre_ids.flatMap((id) => (genreMap[id] ? [{ name: genreMap[id] }] : []))
+            movie.genre_ids.flatMap((id) => {
+              const name = resolveGenreName(id, language)
+              return name ? [{ name }] : []
+            })
           )
         )
       )

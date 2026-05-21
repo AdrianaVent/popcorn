@@ -54,17 +54,17 @@ describe('Dashboard', () => {
     cy.contains('Home').should('be.visible')
   })
 
-  // ─── Content tabs ─────────────────────────────────────────────
+  // ─── Content tab toggles ──────────────────────────────────────
 
-  it('has Movies tab active by default', () => {
-    cy.contains('button', 'Movies').should('have.class', 'bg-card')
-    cy.contains('button', 'Series').should('not.have.class', 'bg-card')
+  it('Movies icon buttons are active by default', () => {
+    cy.get('[aria-label="Movies"]').first().should('have.class', 'bg-primary/20')
+    cy.get('[aria-label="Series"]').first().should('not.have.class', 'bg-primary/20')
   })
 
-  it('switches to Series tab on click', () => {
-    cy.contains('button', 'Series').click()
-    cy.contains('button', 'Series').should('have.class', 'bg-card')
-    cy.contains('button', 'Movies').should('not.have.class', 'bg-card')
+  it('switches to Series on icon click', () => {
+    cy.get('[aria-label="Series"]').first().click()
+    cy.get('[aria-label="Series"]').first().should('have.class', 'bg-primary/20')
+    cy.get('[aria-label="Movies"]').first().should('not.have.class', 'bg-primary/20')
   })
 
   // ─── Mode toggle (admin) ─────────────────────────────────────
@@ -81,8 +81,8 @@ describe('Dashboard', () => {
     cy.get('svg').should('exist')
   })
 
-  it('shows the series chart after switching to the Series tab', () => {
-    cy.contains('button', 'Series').click()
+  it('shows the series chart after switching to the Series icon', () => {
+    cy.get('[aria-label="Series"]').first().click()
     cy.wait('@discoverTV')
     cy.get('svg').should('exist')
   })
@@ -148,6 +148,48 @@ describe('Mode toggle (guest)', () => {
 
 // ─── Calendar day selection ────────────────────────────────────────────────────
 
+// ─── Top10 ───────────────────────────────────────────────────────────────────
+
+const top10Movies = {
+  page: 1,
+  results: [
+    {
+      id: 19995,
+      title: 'Avatar',
+      release_date: '2009-12-18',
+      vote_average: 7.6,
+      vote_count: 30000,
+      poster_path: null,
+      genre_ids: [28, 12, 14, 878],
+    },
+  ],
+  total_pages: 1,
+  total_results: 1,
+}
+
+describe('Top10 card', () => {
+  beforeEach(() => {
+    cy.intercept('GET', /\/genre\/movie\/list/, movieGenres)
+    cy.intercept('GET', /\/discover\/movie/, discoverMovies)
+    cy.intercept('GET', /\/genre\/tv\/list/, tvGenres)
+    cy.intercept('GET', /\/discover\/tv/, discoverTV)
+    cy.intercept('GET', /\/watch\/providers\/tv/, { results: [] })
+    cy.intercept('GET', /\/movie\/top_rated/, top10Movies).as('top10')
+    cy.intercept('GET', /\/tv\/top_rated/, { page: 1, results: [], total_pages: 1, total_results: 0 })
+    cy.visitAsAdmin('/home')
+  })
+
+  it('shows the movie title in the Top10 list', () => {
+    cy.wait('@top10')
+    cy.contains('Avatar').should('be.visible')
+  })
+
+  it('shows the release year next to the title', () => {
+    cy.wait('@top10')
+    cy.contains('Avatar').closest('li').contains('2009').should('be.visible')
+  })
+})
+
 const calendarMovies = {
   page: 1,
   results: [{ id: 100, title: 'Calendar Test Movie', release_date: releaseDate, poster_path: null, overview: 'A test overview.', genre_ids: [] }],
@@ -182,8 +224,7 @@ describe('Release calendar interaction', () => {
     cy.contains('Release calendar').parents('.rounded-xl').within(() => {
       cy.contains('button', '15').click()
       cy.contains('Calendar Test Movie').should('exist')
-      // X button is the only button in the header when the panel is open
-      cy.contains('Release calendar').parent().find('button').click()
+      cy.get('[data-cy="calendar-close"]').click()
       cy.contains('Calendar Test Movie').should('not.exist')
     })
   })
