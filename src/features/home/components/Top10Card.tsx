@@ -98,11 +98,11 @@ export default function Top10Card({
     setIsGenreOpen(false)
   }, [onTabChange])
 
-  const handleModeChange = (next: 'user' | 'global') => {
+  const handleModeChange = useCallback((next: 'user' | 'global') => {
     setMode(next)
     setSelectedGenreId(null)
     setIsGenreOpen(false)
-  }
+  }, [])
 
   // Base top 10 (no genre filter)
   const baseItems   = mode === 'user' ? userBaseItems : (globalQuery.data ?? [])
