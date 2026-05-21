@@ -16,12 +16,11 @@ import MovieMetaGrid from './MovieMetaGrid'
 import MediaDetailSkeleton from '@/components/common/MediaDetailSkeleton'
 import WatchProviders from '@/components/common/WatchProviders'
 import { getMovieUI } from '@/features/movies/getMovieUI'
-import { EyeIcon } from '@/components/icons'
+import WatchedToggleButton from '@/components/ui/WatchedToggleButton'
 import { useLanguageStore } from '@/store/languageStore'
 import { formatMonthYear } from '@/utils/formatDate'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useUserStore } from '@/store/userStore'
-import clsx from 'clsx'
 
 type Props = {
   movieId: number
@@ -96,7 +95,9 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
                   {detail.title}
                 </Text>
                 {role !== 'admin' && (
-                  <button
+                  <WatchedToggleButton
+                    isWatched={isWatched}
+                    label={isWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
                     onClick={() => toggleMovie(userKey, {
                       id: detail.id,
                       title: detail.title,
@@ -107,17 +108,9 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
                       original_language: detail.original_language,
                       collection_id: detail.belongs_to_collection?.id,
                       collection_name: detail.belongs_to_collection?.name,
+                      genre_ids: detail.genres?.map((g) => g.id) ?? [],
                     })}
-                    className={clsx(
-                      'shrink-0 mt-1 flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md transition-colors whitespace-nowrap',
-                      isWatched
-                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                        : 'bg-foreground/10 text-foreground hover:bg-foreground/15'
-                    )}
-                  >
-                    <EyeIcon size={12} />
-                    {isWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
-                  </button>
+                  />
                 )}
               </div>
 

@@ -32,6 +32,38 @@ describe('Movies', () => {
     cy.get('[role="dialog"]').contains('Fight Club')
   })
 
+  // ─── Genre multi-select filter ───────────────────────────────
+
+  it('opens the genre dropdown and shows genre chips', () => {
+    cy.wait('@tmdb')
+    cy.get('[data-cy="filter-genre_ids"]').click()
+    cy.contains('Drama').should('be.visible')
+    cy.contains('Action & Adventure').should('be.visible')
+  })
+
+  it('selecting a genre sends with_genres to TMDB', () => {
+    cy.intercept('GET', /\/discover\/movie.*with_genres=18/, { fixture: 'movies.json' }).as('genreFiltered')
+
+    cy.wait('@tmdb')
+    cy.get('[data-cy="filter-genre_ids"]').click()
+    cy.contains('Drama').click()
+    cy.wait('@genreFiltered')
+  })
+
+  it('selecting multiple genres sends combined with_genres', () => {
+    cy.intercept('GET', /\/discover\/movie.*with_genres=/, { fixture: 'movies.json' }).as('genreFiltered')
+
+    cy.wait('@tmdb')
+    cy.get('[data-cy="filter-genre_ids"]').click()
+    cy.contains('Drama').click()
+    cy.contains('Comedy').click()
+    cy.wait('@genreFiltered')
+    cy.get('@genreFiltered.all').then((calls) => {
+      const last = calls[calls.length - 1] as { request: { url: string } }
+      expect(last.request.url).to.match(/with_genres=/)
+    })
+  })
+
   // ─── Platform filter ──────────────────────────────────────────
 
   it('filters movies by platform', () => {
@@ -300,6 +332,35 @@ describe('Movies', () => {
       cy.wait('@detail')
       cy.wait('@releaseDatesDigital')
       cy.get('[role="dialog"]').contains('In theaters').should('not.exist')
+    })
+  })
+
+  // ─── Genre deduplication ──────────────────────────────────────
+
+  describe('Genre deduplication in detail modal', () => {
+    it('shows merged genres only once when multiple IDs resolve to the same name', () => {
+      cy.intercept('GET', /\/movie\/550(\?|$)/, {
+        id: 550,
+        title: 'Fight Club',
+        release_date: '1999-10-15',
+        vote_average: 8.4,
+        vote_count: 26000,
+        runtime: 139,
+        overview: 'A depressed man forms an underground fight club.',
+        // Action (28) + Adventure (12) both resolve to 'Action & Adventure'
+        genres: [{ id: 28, name: 'Action' }, { id: 12, name: 'Adventure' }, { id: 18, name: 'Drama' }],
+        original_language: 'en',
+        poster_path: null,
+        belongs_to_collection: null,
+      }).as('detail')
+
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.get('[role="dialog"]').within(() => {
+        cy.contains('Action & Adventure').should('have.length', 1)
+        cy.contains('Drama').should('be.visible')
+      })
     })
   })
 })

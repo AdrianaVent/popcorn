@@ -2,6 +2,7 @@ import { seriesService } from '@/services/tmdb'
 import { TMDB_LANGUAGE } from '@/config/tmdb'
 import { WATCH_PROVIDERS_REGION } from '@/config/constants'
 import { fetchWatchProviderOptions } from '@/utils/watchProviders'
+import { getEquivalentGenreIds } from '@/config/genres'
 import type { SeriesFilters } from '@/types/series'
 import type { TMDBPagedResponse, TMDBSeries, TMDBSeriesDetail, TMDBSeasonDetail, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
@@ -52,6 +53,10 @@ export function fetchSeries(
   if (filters?.provider_id) {
     params['with_watch_providers'] = filters.provider_id
     params['watch_region'] = WATCH_PROVIDERS_REGION
+  }
+  if (filters?.genre_ids?.length) {
+    const ids = [...new Set(filters.genre_ids.flatMap(getEquivalentGenreIds))]
+    params['with_genres'] = ids.join('|')
   }
 
   // TMDB only supports a single value for with_original_language — two parallel requests

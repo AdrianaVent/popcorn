@@ -7,7 +7,10 @@ export function buildGenreCounts(
 ): GenreEntry[] {
   const counts: Record<string, number> = {}
   entries.forEach((genres) => {
+    const seen = new Set<string>()
     genres.forEach(({ name }) => {
+      if (seen.has(name)) return
+      seen.add(name)
       counts[name] = (counts[name] ?? 0) + 1
     })
   })

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode, ComponentType, CSSProperties } from 'react'
 
 export type SortDir = 'asc' | 'desc'
 export type SortState<T> = { key: keyof T; dir: SortDir }
@@ -14,9 +14,13 @@ export type Column<T extends Record<string, unknown>> = {
   sortable?: boolean
 }
 
-export type FilterFieldType = 'text' | 'number' | 'boolean' | 'select' | 'date' | 'star'
+export type FilterFieldType = 'text' | 'number' | 'boolean' | 'select' | 'date' | 'star' | 'genre-multi'
 
-export type FilterOption = { value: string | number; label: string }
+export type FilterOption = {
+  value: string | number
+  label: string
+  icon?: ComponentType<{ size?: number; strokeWidth?: number; color?: string; style?: CSSProperties }>
+}
 
 export type FilterField<T> = {
   key: keyof T
@@ -25,6 +29,7 @@ export type FilterField<T> = {
   options?: FilterOption[]
   min?: number
   max?: number
+  unit?: string
 }
 
 export type FiltersSchema<T> = FilterField<T>[]

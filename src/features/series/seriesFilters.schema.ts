@@ -10,11 +10,16 @@ export const staticSeriesFiltersSchema: FiltersSchema<SeriesFilters> = [
     type: 'text',
   },
   {
-    key: 'first_air_year',
-    label: 'series.filters.year',
-    type: 'number',
-    min: 1900,
-    max: CURRENT_YEAR,
+    key: 'genre_ids',
+    label: 'series.filters.genres',
+    type: 'genre-multi',
+    options: [], // populated dynamically in SeriesFeature
+  },
+  {
+    key: 'provider_id',
+    label: 'series.filters.platform',
+    type: 'select',
+    options: [], // populated dynamically in SeriesFeature
   },
   {
     key: 'vote_average_gte',
@@ -22,10 +27,20 @@ export const staticSeriesFiltersSchema: FiltersSchema<SeriesFilters> = [
     type: 'star',
   },
   {
-    key: 'runtime_gte',
-    label: 'series.filters.runtimeGte',
+    key: 'first_air_year',
+    label: 'series.filters.year',
     type: 'number',
-    min: 1,
+    min: 1900,
+    max: CURRENT_YEAR,
+  },
+  {
+    key: 'watched',
+    label: 'series.filters.watched',
+    type: 'select',
+    options: [
+      { value: 'watched', label: 'common.watchedOnly' },
+      { value: 'unwatched', label: 'common.unwatchedOnly' },
+    ],
   },
   {
     key: 'status',
@@ -40,18 +55,10 @@ export const staticSeriesFiltersSchema: FiltersSchema<SeriesFilters> = [
     ],
   },
   {
-    key: 'provider_id',
-    label: 'series.filters.platform',
-    type: 'select',
-    options: [], // populated dynamically in SeriesFeature
-  },
-  {
-    key: 'watched',
-    label: 'series.filters.watched',
-    type: 'select',
-    options: [
-      { value: 'watched', label: 'common.watchedOnly' },
-      { value: 'unwatched', label: 'common.unwatchedOnly' },
-    ],
+    key: 'runtime_gte',
+    label: 'series.filters.runtimeGte',
+    type: 'number',
+    min: 1,
+    unit: 'common.minuteUnit',
   },
 ]

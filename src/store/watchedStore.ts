@@ -14,6 +14,7 @@ export type StoredMovie = {
   original_language: string
   collection_id?: number
   collection_name?: string
+  genre_ids?: number[]
 }
 
 export type StoredSeries = {
@@ -25,6 +26,7 @@ export type StoredSeries = {
   poster_path: string | null
   original_language: string
   number_of_episodes: number
+  genre_ids?: number[]
 }
 
 // seasonNumber is stored per episode so per-season watched counts can be derived

@@ -31,14 +31,22 @@ describe('buildGenreCounts', () => {
 
   it('sorts results by count descending', () => {
     const result = buildGenreCounts([
-      [{ name: 'Comedy' }],
-      [{ name: 'Action' }, { name: 'Action' }],
       [{ name: 'Action' }],
-      [{ name: 'Drama' }, { name: 'Drama' }],
+      [{ name: 'Action' }, { name: 'Drama' }],
+      [{ name: 'Action' }, { name: 'Drama' }],
+      [{ name: 'Comedy' }],
     ])
     expect(result[0].name).toBe('Action')
     expect(result[1].name).toBe('Drama')
     expect(result[2].name).toBe('Comedy')
+  })
+
+  it('deduplicates genre names within a single entry', () => {
+    const result = buildGenreCounts([
+      [{ name: 'Action' }, { name: 'Action' }],
+      [{ name: 'Action' }],
+    ])
+    expect(result).toEqual([{ name: 'Action', count: 2 }])
   })
 
   it('slices to at most 10 entries', () => {
