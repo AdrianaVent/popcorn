@@ -7,6 +7,7 @@ import { useCollectionDetail } from '@/features/movies/hooks/useCollectionDetail
 import { useWatchedStore } from '@/store/watchedStore'
 import { useUserStore } from '@/store/userStore'
 import { EyeIcon } from '@/components/icons'
+import WatchedToggleButton from '@/components/ui/WatchedToggleButton'
 import type { TMDBCollection } from '@/types/tmdb'
 
 type Props = {
@@ -64,18 +65,11 @@ export default function CollectionAccordion({ collection, movieId, onMovieSelect
         </div>
       }
       actions={role !== 'admin' && releasedParts.length > 0 ? (
-        <button
+        <WatchedToggleButton
+          isWatched={allReleasedWatched}
+          label={allReleasedWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
           onClick={handleMarkSaga}
-          className={clsx(
-            'flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md transition-colors whitespace-nowrap',
-            allReleasedWatched
-              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-              : 'bg-foreground/10 text-foreground hover:bg-foreground/15'
-          )}
-        >
-          <EyeIcon size={12} />
-          {allReleasedWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
-        </button>
+        />
       ) : undefined}
       items={parts}
       loading={loading}

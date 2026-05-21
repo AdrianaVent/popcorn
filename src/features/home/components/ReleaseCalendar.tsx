@@ -4,14 +4,19 @@ import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLanguageStore } from '@/store/languageStore'
 import { ChevronLeftIcon, ChevronRightIcon, XIcon } from '@/components/icons'
+import ContentTabToggle, { type ContentTab } from '@/components/ui/ContentTabToggle'
 import Text from '@/components/ui/Text'
 import MoviePoster from '@/components/common/MediaPoster'
 import { getStatusConfig } from '@/features/series/getSeriesUI'
+import { getGenreIcon } from '@/config/genreIcons'
 import type { ReleaseEntry } from '@/services/tmdb/releases'
+
 
 type Props = {
   year: number
   month: number // 1-12
+  tab: ContentTab
+  onTabChange: (tab: ContentTab) => void
   onPrevMonth: () => void
   onNextMonth: () => void
   onToday: () => void
@@ -28,7 +33,7 @@ const WEEKDAY_NAMES: Record<string, string[]> = {
 
 const DEFAULT_GENRE_MAP: Record<number, string> = {}
 
-export default function ReleaseCalendar({ year, month, onPrevMonth, onNextMonth, onToday, query, genreMap = DEFAULT_GENRE_MAP, onEntryClick, className = '' }: Props) {
+export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevMonth, onNextMonth, onToday, query, genreMap = DEFAULT_GENRE_MAP, onEntryClick, className = '' }: Props) {
   const { t } = useTranslation()
   const language = useLanguageStore((s) => s.language)
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
@@ -87,23 +92,29 @@ export default function ReleaseCalendar({ year, month, onPrevMonth, onNextMonth,
     <div className={`flex flex-col flex-1 gap-2 rounded-xl border border-border bg-card p-3 select-none${className ? ` ${className}` : ''}`}>
       {/* Header */}
       <div className="flex items-center justify-between gap-3 shrink-0">
-        <Text variant="body" className="font-semibold text-foreground">
-          {t('calendar.title')}
-        </Text>
+        <div className="flex items-center gap-2">
+          <Text variant="body" className="font-semibold text-foreground">
+            {t('calendar.title')}
+          </Text>
+          <ContentTabToggle tab={tab} onTabChange={(t) => { onTabChange(t); setSelectedDay(null) }} />
+        </div>
 
-        {showingReleases ? (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-muted-foreground">{selectedDateLabel}</span>
-            <button
-              onClick={() => setSelectedDay(null)}
-              className="flex items-center justify-center w-6 h-6 rounded-md text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset"
-            >
-              <XIcon size={14} />
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-0.5">
-            {todayDay === null && (
+        <div className="flex items-center gap-2">
+
+          {showingReleases ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-muted-foreground">{selectedDateLabel}</span>
+              <button
+                data-cy="calendar-close"
+                onClick={() => setSelectedDay(null)}
+                className="flex items-center justify-center w-6 h-6 rounded-md text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset"
+              >
+                <XIcon size={14} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-0.5">
+              {todayDay === null && (
               <button
                 onClick={onToday}
                 className="text-[11px] font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 px-1.5 py-0.5 rounded-md transition-colors mr-1 outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset"
@@ -124,10 +135,11 @@ export default function ReleaseCalendar({ year, month, onPrevMonth, onNextMonth,
               onClick={onNextMonth}
               className="flex items-center justify-center w-6 h-6 rounded-md text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset"
             >
-              <ChevronRightIcon size={14} />
+                <ChevronRightIcon size={14} />
             </button>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Content area — relative so the releases panel can overlay the calendar */}
@@ -210,8 +222,8 @@ export default function ReleaseCalendar({ year, month, onPrevMonth, onNextMonth,
                 {selectedReleases.map((release) => {
                   const genres = (release.genre_ids ?? [])
                     .slice(0, 2)
-                    .map((id) => genreMap[id])
-                    .filter(Boolean)
+                    .map((id) => ({ id, name: genreMap[id] }))
+                    .filter((g): g is { id: number; name: string } => Boolean(g.name))
 
                   const statusConfig = release.series_status ? getStatusConfig(release.series_status) : null
 
@@ -244,11 +256,15 @@ export default function ReleaseCalendar({ year, month, onPrevMonth, onNextMonth,
                           </div>
                           {genres.length > 0 && (
                             <div className="flex flex-wrap gap-1 justify-end shrink-0">
-                              {genres.map((g) => (
-                                <span key={g} className="text-[11px] px-2 py-0.5 rounded-md bg-muted text-foreground border border-border/50 whitespace-nowrap">
-                                  {g}
-                                </span>
-                              ))}
+                              {genres.map(({ id, name }) => {
+                                const Icon = getGenreIcon(id)
+                                return (
+                                  <span key={id} className="text-[11px] px-2 py-0.5 rounded-md bg-muted text-foreground border border-border/50 whitespace-nowrap flex items-center gap-1">
+                                    {Icon && <Icon size={11} strokeWidth={1.5} />}
+                                    {name}
+                                  </span>
+                                )
+                              })}
                             </div>
                           )}
                         </div>

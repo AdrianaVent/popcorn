@@ -10,11 +10,16 @@ export const staticMovieFiltersSchema: FiltersSchema<MovieFilters> = [
     type: 'text',
   },
   {
-    key: 'release_year',
-    label: 'movies.filters.year',
-    type: 'number',
-    min: 1900,
-    max: CURRENT_YEAR,
+    key: 'genre_ids',
+    label: 'movies.filters.genres',
+    type: 'genre-multi',
+    options: [], // populated dynamically in MoviesFeature
+  },
+  {
+    key: 'provider_id',
+    label: 'movies.filters.platform',
+    type: 'select',
+    options: [], // populated dynamically in MoviesFeature
   },
   {
     key: 'vote_average_gte',
@@ -22,16 +27,11 @@ export const staticMovieFiltersSchema: FiltersSchema<MovieFilters> = [
     type: 'star',
   },
   {
-    key: 'runtime_gte',
-    label: 'movies.filters.runtimeGte',
+    key: 'release_year',
+    label: 'movies.filters.year',
     type: 'number',
-    min: 1,
-  },
-  {
-    key: 'provider_id',
-    label: 'movies.filters.platform',
-    type: 'select',
-    options: [], // populated dynamically in MoviesFeature
+    min: 1900,
+    max: CURRENT_YEAR,
   },
   {
     key: 'watched',
@@ -41,5 +41,12 @@ export const staticMovieFiltersSchema: FiltersSchema<MovieFilters> = [
       { value: 'watched', label: 'common.watchedOnly' },
       { value: 'unwatched', label: 'common.unwatchedOnly' },
     ],
+  },
+  {
+    key: 'runtime_gte',
+    label: 'movies.filters.runtimeGte',
+    type: 'number',
+    min: 1,
+    unit: 'common.minuteUnit',
   },
 ]

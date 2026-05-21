@@ -4,8 +4,8 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import MetaRow from '@/components/common/MetaRow'
 import StarRating from '@/components/ui/StarRating'
+import GenreGrid from '@/components/ui/GenreGrid'
 import { useLanguageStore } from '@/store/languageStore'
-import { resolveSeriesGenreName } from '@/features/series/getSeriesUI'
 import { formatVoteCount, tmdbToStarRating, formatRuntime } from '@/utils/formatNumber'
 import type { TMDBSeriesDetail } from '@/types/tmdb'
 
@@ -42,23 +42,7 @@ export default function SeriesMetaGrid({ detail, firstAirYear, totalRuntime }: P
         <MetaRow key={row.label} label={row.label} value={row.value} />
       ))}
 
-      {detail.genres.length > 0 && (
-        <div className="col-span-2 flex items-start gap-3 mt-1">
-          <span className="text-muted-foreground shrink-0 w-24 text-small">
-            {t('series.detail.genres')}
-          </span>
-          <div className="flex flex-wrap gap-1.5 flex-1 justify-end">
-            {detail.genres.map((g) => (
-              <span
-                key={g.id}
-                className="text-[11px] px-2 py-0.5 rounded-md bg-muted text-foreground border border-border/50 whitespace-nowrap"
-              >
-                {resolveSeriesGenreName(g.id, g.name, language)}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      <GenreGrid genres={detail.genres} label={t('series.detail.genres')} />
     </div>
   )
 }

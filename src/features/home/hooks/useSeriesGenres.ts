@@ -3,9 +3,8 @@ import { useWatchedStore } from '@/store/watchedStore'
 import { useUserStore } from '@/store/userStore'
 import { useLanguageStore } from '@/store/languageStore'
 import { seriesService } from '@/services/tmdb/series'
-import { genresService } from '@/services/tmdb/genres'
-import { resolveSeriesGenreName } from '@/features/series/getSeriesUI'
 import { TMDB_LANGUAGE } from '@/config/tmdb'
+import { resolveGenreName } from '@/config/genres'
 import { buildGenreCounts } from './buildGenreCounts'
 import type { GenreEntry } from './useMovieGenres'
 
@@ -27,7 +26,7 @@ export function useUserSeriesGenres() {
       return buildGenreCounts(
         results.flatMap((r) =>
           r.status === 'fulfilled'
-            ? [r.value.genres?.map((g) => ({ name: resolveSeriesGenreName(g.id, g.name, language) })) ?? []]
+            ? [r.value.genres?.map((g) => ({ name: resolveGenreName(g.id, language, g.name) })) ?? []]
             : []
         )
       )
@@ -44,19 +43,16 @@ export function useGlobalSeriesGenres() {
   return useQuery<GenreEntry[]>({
     queryKey: ['global-series-genres', tmdbLang],
     queryFn: async () => {
-      const [genreList, ...pages] = await Promise.all([
-        genresService.seriesList(tmdbLang),
-        ...Array.from({ length: GLOBAL_PAGES }, (_, i) =>
-          seriesService.discover(i + 1, tmdbLang)
-        ),
-      ])
-      const genreMap = Object.fromEntries(
-        genreList.genres.map((g) => [g.id, resolveSeriesGenreName(g.id, g.name, language)])
+      const pages = await Promise.all(
+        Array.from({ length: GLOBAL_PAGES }, (_, i) => seriesService.discover(i + 1, tmdbLang))
       )
       return buildGenreCounts(
         pages.flatMap((page) =>
           page.results.map((series) =>
-            series.genre_ids.flatMap((id) => (genreMap[id] ? [{ name: genreMap[id] }] : []))
+            series.genre_ids.flatMap((id) => {
+              const name = resolveGenreName(id, language)
+              return name ? [{ name }] : []
+            })
           )
         )
       )

@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.9.0-6B2737)
+![Version](https://img.shields.io/badge/version-0.10.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -194,16 +194,25 @@ Open [http://localhost:3000](http://localhost:3000) in your browser and sign in 
 
 ### Home (`/home`)
 
-The landing page after login. It shows two cards side by side: a genre distribution chart and a release calendar.
+The landing page after login. It shows three cards in a responsive grid: a Top 10 ranking, a genre distribution chart, and a release calendar. The grid adapts to the available width — cards stack in a single column on narrow viewports, two columns on medium widths, and all three side by side on wide screens.
+
+**Top 10**
+
+A ranked list of the top 10 movies or series by rating. Each entry shows the poster, title, release year, genre icons and score.
+
+- Use the **My profile / Global** toggle to switch between your personal watched history and the full TMDB catalogue.
+- Filter by genre using the genre picker in the card header.
+- The toggle is not available for admin accounts — admins always see the global view.
+- Click any entry to open its detail modal.
 
 **Genre distribution**
 
-![Home — genre charts and Top 10](docs/screenshots/home-charts.png)
+![Home — overview with Top 10 and genre chart](docs/screenshots/home-charts.png)
 
-Two bar charts — one for movies and one for series — showing which genres appear most in the catalogue or in your personal watched history. A Top 10 ranking is also shown based on your ratings.
+A donut chart showing which genres appear most — either in the TMDB catalogue or in your own watched history. The legend lists all genres with their colour; hover a slice or a legend item to highlight it and see the percentage.
 
-- Use the **My profile / Global** toggle (top-right of each chart) to switch between your own watched data and the full TMDB catalogue.
-- Hover over any bar to see the genre name and exact count.
+- Use the **My profile / Global** toggle (top-right) to switch data source.
+- Switch between **Movies** and **Series** with the icon buttons in the card header.
 - The toggle is not available for admin accounts — admins always see the global view.
 
 **Release calendar**
@@ -216,7 +225,7 @@ A monthly calendar showing upcoming movie and series releases from TMDB (English
 - Click a day to open a panel listing all releases for that date.
 - Click any entry in the panel to open its detail modal.
 - Use the **←** and **→** arrows to navigate between months. The **Today** button returns to the current month.
-- Switch between **Movies** and **Series** with the tabs above the calendar.
+- Switch between **Movies** and **Series** with the icon buttons in the card header.
 
 ---
 
@@ -228,7 +237,9 @@ A paginated table of movies from TMDB, sorted by popularity by default.
 
 ![Movies list with active filters](docs/screenshots/movies-list.png)
 
-Open the **Filters** panel (top of the page) to narrow the list:
+The **Filters** panel sits at the top of the page. Click the chevron on the right to collapse it — when collapsed, any active filters are shown as summary pills in the header so you can see what is applied at a glance. Click **Clear filters** to reset everything without having to expand the panel first.
+
+Use the filters to narrow the list:
 
 | Filter | How it works |
 |---|---|
@@ -236,10 +247,9 @@ Open the **Filters** panel (top of the page) to narrow the list:
 | Rating ≥ | Drag or click a star value. Only titles rated at or above the threshold are shown. |
 | Year | Shows titles released in that calendar year. |
 | Language | Filters by original language (English or Spanish). |
+| Genres | Multi-select genre picker. Select one or more genres to filter by. |
 | Platform | Shows titles available on a specific streaming service in Spain. |
 | Watched | Switch between **All**, **Watched** and **Unwatched** (guest only). |
-
-Click **Clear filters** in the panel header to reset all active filters at once.
 
 **Sorting**
 
@@ -416,9 +426,9 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-The project has two test layers: **433 unit/integration tests** (Jest) and **82 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+The project has two test layers: **461 unit/integration tests** (Jest) and **93 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 433 tests · 41 suites
+### Unit & integration tests (Jest) — 461 tests · 44 suites
 
 ```bash
 npm test           # run once
@@ -431,11 +441,11 @@ npm run test:watch # watch mode
 | Business logic | Client-side filters (movies + series), TMDB fetch error mapping, export utilities |
 | Stores | `watchedStore` (toggle movie/episode, season counts), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
 | Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases` |
-| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem` |
+| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication) |
 | Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
 | API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date) |
 
-### End-to-end tests (Cypress) — 82 tests · 7 suites
+### End-to-end tests (Cypress) — 93 tests · 7 suites
 
 In CI, Cypress runs against the production build automatically. Locally, run against the dev server:
 
@@ -453,9 +463,9 @@ npm run cypress:run
 | Suite | Tests | What's covered |
 |---|---|---|
 | `auth.cy.ts` | 6 | Redirect when unauthenticated, invalid credentials, login, logout, session expiry |
-| `home.cy.ts` | 15 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar |
-| `movies.cy.ts` | 20 | Movie list, detail modal, watch providers, platform filter, star rating filter, access control |
-| `series.cy.ts` | 14 | Series list, detail modal, watch providers, platform filter, star rating filter |
+| `home.cy.ts` | 17 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar, Top 10 year display |
+| `movies.cy.ts` | 24 | Movie list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, access control |
+| `series.cy.ts` | 19 | Series list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, episode runtime guard |
 | `users.cy.ts` | 15 | Create, edit, delete (single + bulk), toasts, import JSON/CSV, partial failures |
 | `my-list.cy.ts` | 9 | Tabs, empty state, watched movies/series, saga grouping, nav access control |
 | `settings.cy.ts` | 3 | Theme switching (light / dark), language switching (EN / ES) |

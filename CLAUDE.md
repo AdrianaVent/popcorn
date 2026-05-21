@@ -54,7 +54,11 @@ src/
 │                               # Header, AccordionList, Table/, TableSkeleton, LoadingOverlay,
 │                               # DatePicker, ConfirmModal, IconButton,
 │                               # Toast/ToastItem, Toast/ToastContainer,
-│                               # BarChart (Recharts wrapper), ToggleSwitch, PageSkeleton,
+│                               # BarChart (Recharts wrapper), DonutChart (Recharts pie with compact legend),
+│                               # ContentTabToggle (icon-button tab switcher — film/tv),
+│                               # GenreGrid (genre badge list with icon + name deduplication),
+│                               # MultiSelectChips (portal-based genre multi-select dropdown),
+│                               # ToggleSwitch, PageSkeleton,
 │                               # StarRating (5-star, half-star; value: 0.5–5 | null),
 │                               # Tooltip (portal-based, 150ms delay, placement: top/right/bottom/left)
 ├── config/
@@ -67,11 +71,13 @@ src/
 │   └── users.ts                # DbUser, UserRole types; findByUsername, findById, create
 ├── features/
 │   ├── auth/login/             # LoginFeature, LoginForm, useLogin, login.service.ts
-│   ├── home/                   # HomeFeature — genre bar charts + release calendar (movies + series)
-│   │   ├── components/         # ReleaseCalendar (month grid, dots on release days, navigation)
+│   ├── home/                   # HomeFeature — genre donut charts + Top10 cards + release calendar
+│   │   ├── components/         # ReleaseCalendar (month grid, dots on release days, navigation),
+│   │   │                       # Top10Card (ranked list with poster, year, genre icons, star rating)
 │   │   └── hooks/              # useMovieGenres (user + global), useSeriesGenres (user + global),
-│   │                           # buildGenreCounts (shared genre aggregation utility),
-│   │                           # useMovieReleases, useSeriesReleases (monthly TMDB releases)
+│   │                           # buildGenreCounts (shared genre aggregation utility — deduplicates same-named genres per entry),
+│   │                           # useMovieReleases, useSeriesReleases (monthly TMDB releases),
+│   │                           # useUserMovieTop10, useUserSeriesTop10 (TanStack Query enrichment — backfills genre_ids)
 │   ├── movies/
 │   │   ├── components/         # MovieDetailModal, MovieMetaGrid,
 │   │   │                       # CollectionAccordion
@@ -179,6 +185,11 @@ data/
 | CSV export — UTF-8 BOM for correct accent rendering in Excel/LibreOffice | Done |
 | Collection backfill on modal open (enrichMovie) — fixes saga grouping for table-marked movies | Done |
 | Role-aware loading skeleton (movies/series cols via DashboardRoleContext) | Done |
+| Genre multi-select filter (chips dropdown, portal-based) for movies and series | Done |
+| Genre deduplication in detail modals (GenreGrid — deduplicates by resolved name + icon) | Done |
+| Home Top10 cards (ranked list with year, genre icons, star rating; movies + series tabs) | Done |
+| Top10 genre enrichment for user mode (backfills missing genre_ids via TanStack Query) | Done |
+| buildGenreCounts per-entry deduplication (one count per genre name per movie/series) | Done |
 
 ---
 
@@ -291,11 +302,11 @@ npm run test:watch  # watch mode
 
 | Area | What's covered |
 |---|---|
-| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `tmdbToStarRating` (TMDB 0–10 → Rating 0.5–5), `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10) |
+| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `tmdbToStarRating` (TMDB 0–10 → Rating 0.5–5), `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10; per-entry name dedup) |
 | Business logic | `applyClientFilters` (movies + series + language filter), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
 | Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation; `toastStore` — addToast, timers, removeToast; `ratingsStore` — setRating, removeRating, per-user isolation |
-| Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window), `useMovieReleases` (service call args), `useSeriesReleases` (disabled when no providers, enabled with providers) — all wrapped in `QueryClientProvider` with `retry: false` |
-| Components | `Button`, `Modal`, `FiltersPanel` (collapse/expand, badge count, text/number/star/boolean/date/select types), `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, fluid variant, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states), `StarRating` (5 stars, readonly mode, onChange, hover, half-star gradient) |
+| Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window), `useMovieReleases` (service call args), `useSeriesReleases` (disabled when no providers, enabled with providers), `useUserMovieTop10` / `useUserSeriesTop10` (genre_ids backfill via detail fetch, staleTime 5min) — all wrapped in `QueryClientProvider` with `retry: false` |
+| Components | `Button`, `Modal`, `FiltersPanel` (collapse/expand, badge count, text/number/star/boolean/date/select types), `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, fluid variant, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states), `StarRating` (5 stars, readonly mode, onChange, hover, half-star gradient), `GenreGrid` (renders badges; deduplicates by resolved name + icon — Avatar case: Action+Adventure share icon → one badge) |
 | Services | `apiFetch` (401 auto-refresh, redirect on session expiry) |
 | API routes | `/api/users/import` (per-row validation: missing fields, invalid role/password, intra-file duplicate, DB duplicate, invalid creator, invalid date) |
 
@@ -314,11 +325,11 @@ Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test user
 | Suite | What's covered |
 |---|---|
 | `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, successful login, logout, guest redirect from /users |
-| `movies.cy.ts` | Movie list, detail modal, watch providers section, platform filter, star rating filter, access control (guest) |
-| `series.cy.ts` | Series list, detail modal, watch providers section, platform filter, star rating filter |
+| `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, access control (guest), watched controls (admin/guest) |
+| `series.cy.ts` | Series list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, watched controls (admin/guest) |
 | `users.cy.ts` | List, create + toast, edit + toast, delete + toast, bulk delete + toast, self-protection, filters, import JSON + CSV, partial import failures, post-import cleanup |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
-| `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation |
+| `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation, Top10 card title + year visible |
 | `my-list.cy.ts` | Page header + tabs, empty state (movies/series), watched movie with count badge, saga grouping button, series tab with watched series, nav item hidden for admin / visible for guest |
 
 ---

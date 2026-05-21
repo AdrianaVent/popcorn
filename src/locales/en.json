@@ -20,7 +20,8 @@
     "availableOn": "Available on",
     "inTheaters": "In theaters",
     "errorBoundary": "Something went wrong. You can try again or reload the page.",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "minuteUnit": "m"
   },
   "languageSwitcher": {
     "label": "Current language: {{language}}"
@@ -80,7 +81,8 @@
       "runtimeGte": "Runtime (min) ≥",
       "year": "Year",
       "watched": "Seen",
-      "platform": "Platform"
+      "platform": "Platform",
+      "genres": "Genres"
     },
     "columns": {
       "poster": "Poster",
@@ -119,7 +121,8 @@
       "year": "Year",
       "status": "Status",
       "watched": "Seen",
-      "platform": "Platform"
+      "platform": "Platform",
+      "genres": "Genres"
     },
     "columns": {
       "poster": "Poster",
@@ -279,7 +282,8 @@
     },
     "top10": {
       "title": "Top 10",
-      "empty": "Mark some titles as watched to build your top 10"
+      "empty": "Mark some titles as watched to build your top 10",
+      "allGenres": "All genres"
     }
   },
   "calendar": {

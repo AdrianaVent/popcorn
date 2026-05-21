@@ -29,6 +29,8 @@ jest.mock('@/components/ui/Text', () => ({
 jest.mock('@/components/icons', () => ({
   ChevronLeftIcon: () => <span>prev</span>,
   ChevronRightIcon: () => <span>next</span>,
+  FilmIcon: () => <span>film</span>,
+  TvIcon: () => <span>tv</span>,
   XIcon: () => <span>close</span>,
 }))
 
@@ -48,6 +50,8 @@ const RELEASE: ReleaseEntry = {
 const BASE_PROPS = {
   year: 2025,
   month: 5,
+  tab: 'movies' as const,
+  onTabChange: jest.fn(),
   onPrevMonth: jest.fn(),
   onNextMonth: jest.fn(),
   onToday: jest.fn(),

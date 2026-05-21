@@ -272,7 +272,7 @@ export default function UsersFeature() {
       key: 'role',
       header: t('users.columns.role'),
       width: 'sm',
-      align: 'left',
+      align: 'center',
       render: (row) => (
         <span className={clsx(
           'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold',
@@ -286,7 +286,7 @@ export default function UsersFeature() {
       key: 'created_at',
       header: t('users.columns.createdAt'),
       width: 'md',
-      align: 'left',
+      align: 'center',
       render: (row) => (
         <span className="text-muted-foreground">
           {row.created_at ? formatShortDate(new Date(row.created_at).toISOString(), language) : '—'}
@@ -297,7 +297,7 @@ export default function UsersFeature() {
       key: 'created_by',
       header: t('users.columns.createdBy'),
       width: 'md',
-      align: 'left',
+      align: 'center',
       render: (row) => (
         <span className="text-muted-foreground">
           {row.created_by ? (creatorsById.get(row.created_by) ?? '—') : '—'}
@@ -308,7 +308,7 @@ export default function UsersFeature() {
       key: '_actions',
       header: t('users.columns.actions'),
       width: 'sm',
-      align: 'right',
+      align: 'center',
       render: (row) => (
         <div className="flex items-center justify-end gap-1">
           <IconButton
