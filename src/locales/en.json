@@ -21,7 +21,8 @@
     "inTheaters": "In theaters",
     "errorBoundary": "Something went wrong. You can try again or reload the page.",
     "clearFilters": "Clear filters",
-    "minuteUnit": "m"
+    "minuteUnit": "m",
+    "trailer": "Trailer"
   },
   "languageSwitcher": {
     "label": "Current language: {{language}}"
@@ -105,7 +106,8 @@
       "current": "Watching",
       "release": "Release",
       "watched": "Watched",
-      "markWatched": "Mark as watched"
+      "markWatched": "Mark as watched",
+      "markSagaWatched": "Mark saga as watched"
     }
   },
   "series": {

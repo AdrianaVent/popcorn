@@ -363,4 +363,81 @@ describe('Movies', () => {
       })
     })
   })
+
+  // ─── Trailer ──────────────────────────────────────────────────
+
+  describe('Trailer', () => {
+    const mockDetail = {
+      id: 550,
+      title: 'Fight Club',
+      release_date: '1999-10-15',
+      vote_average: 8.4,
+      vote_count: 26000,
+      runtime: 139,
+      overview: 'A depressed man forms an underground fight club.',
+      genres: [{ id: 18, name: 'Drama' }],
+      original_language: 'en',
+      poster_path: null,
+      belongs_to_collection: null,
+    }
+
+    const mockVideos = {
+      results: [{ id: 'v1', key: 'testTrailerKey', name: 'Official Trailer', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en' }],
+    }
+
+    beforeEach(() => {
+      cy.intercept('GET', /\/movie\/550(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/movie\/550\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/movie\/550\/release_dates/, { results: [] }).as('releaseDates')
+      cy.intercept('GET', /\/movie\/550\/videos/, mockVideos).as('videos')
+    })
+
+    it('shows the trailer button when a YouTube trailer is available', () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.wait('@videos')
+      cy.get('[data-cy="trailer-button"]').should('be.visible')
+    })
+
+    it('shows the trailer iframe when the trailer button is clicked', () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.wait('@videos')
+      cy.get('[data-cy="trailer-button"]').click()
+      cy.get('[role="dialog"] iframe').should('have.attr', 'src').and('include', 'testTrailerKey')
+    })
+
+    it('hides the trailer iframe when the trailer button is clicked again', () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.wait('@videos')
+      cy.get('[data-cy="trailer-button"]').click()
+      cy.get('[role="dialog"] iframe').should('exist')
+      cy.get('[data-cy="trailer-button"]').click()
+      cy.get('[role="dialog"] iframe').should('not.exist')
+    })
+
+    it('hides the trailer iframe when the X button inside the player is clicked', () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.wait('@videos')
+      cy.get('[data-cy="trailer-button"]').click()
+      cy.get('[role="dialog"] iframe').should('exist')
+      cy.get('[role="dialog"] iframe').siblings('button').click()
+      cy.get('[role="dialog"] iframe').should('not.exist')
+    })
+
+    it('does not show the trailer button when no trailer is available', () => {
+      cy.intercept('GET', /\/movie\/550\/videos/, { results: [] }).as('noVideos')
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.wait('@noVideos')
+      cy.get('[data-cy="trailer-button"]').should('not.exist')
+    })
+  })
 })

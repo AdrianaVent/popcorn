@@ -4,7 +4,7 @@ import { WATCH_PROVIDERS_REGION } from '@/config/constants'
 import { fetchWatchProviderOptions } from '@/utils/watchProviders'
 import { getEquivalentGenreIds } from '@/config/genres'
 import type { MovieFilters } from '@/types/movie'
-import type { TMDBCollectionDetail, TMDBPagedResponse, TMDBMovie, TMDBMovieDetail, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
+import type { TMDBCollectionDetail, TMDBPagedResponse, TMDBMovie, TMDBMovieDetail, TMDBVideosResult, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
 // TMDB sort_by field name → actual field in TMDBMovie response
 const SORT_FIELD: Partial<Record<string, keyof TMDBMovie>> = {
@@ -88,4 +88,8 @@ export function fetchMovieWatchProviders(id: number): Promise<WatchProvidersResu
 
 export function fetchMovieWatchProviderOptions(): Promise<WatchProvider[]> {
   return fetchWatchProviderOptions(moviesService, WATCH_PROVIDERS_REGION)
+}
+
+export function fetchMovieVideos(id: number): Promise<TMDBVideosResult> {
+  return moviesService.videos(id)
 }

@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.10.0-6B2737)
+![Version](https://img.shields.io/badge/version-0.11.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -19,6 +19,7 @@ Personal movie & series dashboard. Track what you watch, explore collections, an
 | Filter by title, rating, year, language, platform, status | ✓ | ✓ |
 | Sort and paginate results | ✓ | ✓ |
 | View watch providers by region | ✓ | ✓ |
+| Watch trailers (movie / series / season / saga / calendar) | ✓ | ✓ |
 | Home dashboard — genre charts (global view only) | ✓ | — |
 | Home dashboard — genre charts (personal + global view) | — | ✓ |
 | Home dashboard — release calendar | ✓ | ✓ |
@@ -224,6 +225,7 @@ A monthly calendar showing upcoming movie and series releases from TMDB (English
 - Days with at least one release are marked with a coloured dot.
 - Click a day to open a panel listing all releases for that date.
 - Click any entry in the panel to open its detail modal.
+- Click the play button on an entry to watch its trailer inline (series entries prefer the season-specific trailer, falling back to the series trailer).
 - Use the **←** and **→** arrows to navigate between months. The **Today** button returns to the current month.
 - Switch between **Movies** and **Series** with the icon buttons in the card header.
 
@@ -268,13 +270,14 @@ Click anywhere on a row to open a panel with full information about the movie.
 The modal shows the **synopsis**, **genres**, **runtime**, **release year**, **vote count** and **watch providers** — where the title is available in Spain (subscription, rental, purchase).
 
 - Mark the movie as **watched / unwatched** with the button next to the title *(guest only)*.
+- Click the play button next to the title to watch the official trailer inline. Click it again or use the **×** button on the player to close it.
 - The TMDB rating is displayed as stars (0.5–5 scale).
 
 **Sagas**
 
 ![Movie detail — saga accordion expanded](docs/screenshots/movie-detail-saga.png)
 
-If the movie belongs to a collection, a **Saga** accordion lists all films in the series. Click any title to navigate to that film without closing the modal. The accordion also shows which films you have already marked as watched.
+If the movie belongs to a collection, a **Saga** accordion lists all films in the series. Click any title to navigate to that film without closing the modal. The accordion also shows which films you have already marked as watched. Each film has a play button to watch its trailer inline.
 
 **Movies currently in cinemas**
 
@@ -302,7 +305,7 @@ Click anywhere on a row to open a panel with full information about the series.
 
 ![Series detail — overview and watch providers](docs/screenshots/series-detail-overview.png)
 
-The modal shows the **synopsis**, **genres**, **episode runtime**, **status**, total number of **seasons and episodes**, and **watch providers**. Mark the series as watched with the button next to the title *(guest only)*.
+The modal shows the **synopsis**, **genres**, **episode runtime**, **status**, total number of **seasons and episodes**, and **watch providers**. Mark the series as watched with the button next to the title *(guest only)*. Click the play button next to the title to watch the official trailer inline.
 
 **Episode tracking** *(guest only)*
 
@@ -313,6 +316,7 @@ Expand the **Seasons** accordion to see the full episode list broken down by sea
 - Click the eye icon next to an episode to mark it as watched individually.
 - Click the eye icon next to the season header to mark all available episodes in that season at once (future air dates are excluded).
 - Click the season eye icon again to unmark the entire season.
+- Click the play button in the season header to watch the season trailer inline (falls back to the series trailer if no season-specific trailer exists). Specials (Season 0) are hidden.
 
 ---
 
@@ -426,9 +430,9 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-The project has two test layers: **461 unit/integration tests** (Jest) and **93 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+The project has two test layers: **479 unit/integration tests** (Jest) and **101 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 461 tests · 44 suites
+### Unit & integration tests (Jest) — 479 tests · 46 suites
 
 ```bash
 npm test           # run once
@@ -440,12 +444,12 @@ npm run test:watch # watch mode
 | Pure functions | `getMovieUI`, `getSeriesUI`, `formatDate`, `formatVoteCount`, `deduplicateProviders`, `buildGenreCounts`, `toCSV` |
 | Business logic | Client-side filters (movies + series), TMDB fetch error mapping, export utilities |
 | Stores | `watchedStore` (toggle movie/episode, season counts), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
-| Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases` |
-| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication) |
+| Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases`, `useTrailer` (language preference, YouTube filtering, fallback) |
+| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button) |
 | Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
 | API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date) |
 
-### End-to-end tests (Cypress) — 93 tests · 7 suites
+### End-to-end tests (Cypress) — 101 tests · 7 suites
 
 In CI, Cypress runs against the production build automatically. Locally, run against the dev server:
 
@@ -463,9 +467,9 @@ npm run cypress:run
 | Suite | Tests | What's covered |
 |---|---|---|
 | `auth.cy.ts` | 6 | Redirect when unauthenticated, invalid credentials, login, logout, session expiry |
-| `home.cy.ts` | 17 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar, Top 10 year display |
-| `movies.cy.ts` | 24 | Movie list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, access control |
-| `series.cy.ts` | 19 | Series list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, episode runtime guard |
+| `home.cy.ts` | 20 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar, Top 10 year display, calendar trailer button |
+| `movies.cy.ts` | 29 | Movie list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, access control, trailer (show, open, close, X button) |
+| `series.cy.ts` | 24 | Series list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, episode runtime guard, trailer (show, open, close, X button) |
 | `users.cy.ts` | 15 | Create, edit, delete (single + bulk), toasts, import JSON/CSV, partial failures |
 | `my-list.cy.ts` | 9 | Tabs, empty state, watched movies/series, saga grouping, nav access control |
 | `settings.cy.ts` | 3 | Theme switching (light / dark), language switching (EN / ES) |

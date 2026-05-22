@@ -384,4 +384,83 @@ describe('Series', () => {
       })
     })
   })
+
+  // ─── Trailer ──────────────────────────────────────────────────
+
+  describe('Trailer', () => {
+    const mockDetail = {
+      id: 1396,
+      name: 'Breaking Bad',
+      first_air_date: '2008-01-20',
+      vote_average: 9.5,
+      vote_count: 12000,
+      overview: 'A chemistry teacher turns to manufacturing meth.',
+      genres: [{ id: 18, name: 'Drama' }],
+      original_language: 'en',
+      poster_path: null,
+      number_of_seasons: 5,
+      number_of_episodes: 62,
+      episode_run_time: [47],
+      status: 'Ended',
+      seasons: [],
+    }
+
+    const mockVideos = {
+      results: [{ id: 'v1', key: 'testSeriesKey', name: 'Official Trailer', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en' }],
+    }
+
+    beforeEach(() => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/tv\/1396\/videos/, mockVideos).as('videos')
+    })
+
+    it('shows the trailer button when a YouTube trailer is available', () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@videos')
+      cy.get('[data-cy="trailer-button"]').should('be.visible')
+    })
+
+    it('shows the trailer iframe when the trailer button is clicked', () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@videos')
+      cy.get('[data-cy="trailer-button"]').click()
+      cy.get('[role="dialog"] iframe').should('have.attr', 'src').and('include', 'testSeriesKey')
+    })
+
+    it('hides the trailer iframe when the trailer button is clicked again', () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@videos')
+      cy.get('[data-cy="trailer-button"]').click()
+      cy.get('[role="dialog"] iframe').should('exist')
+      cy.get('[data-cy="trailer-button"]').click()
+      cy.get('[role="dialog"] iframe').should('not.exist')
+    })
+
+    it('hides the trailer iframe when the X button inside the player is clicked', () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@videos')
+      cy.get('[data-cy="trailer-button"]').click()
+      cy.get('[role="dialog"] iframe').should('exist')
+      cy.get('[role="dialog"] iframe').siblings('button').click()
+      cy.get('[role="dialog"] iframe').should('not.exist')
+    })
+
+    it('does not show the trailer button when no trailer is available', () => {
+      cy.intercept('GET', /\/tv\/1396\/videos/, { results: [] }).as('noVideos')
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@noVideos')
+      cy.get('[data-cy="trailer-button"]').should('not.exist')
+    })
+  })
 })

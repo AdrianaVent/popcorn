@@ -197,6 +197,10 @@ const calendarMovies = {
   total_results: 1,
 }
 
+const mockCalendarVideos = {
+  results: [{ id: 'v1', key: 'calendarTrailerKey', name: 'Official Trailer', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en' }],
+}
+
 describe('Release calendar interaction', () => {
   beforeEach(() => {
     cy.intercept('GET', /\/genre\/movie\/list/, movieGenres)
@@ -227,5 +231,35 @@ describe('Release calendar interaction', () => {
       cy.get('[data-cy="calendar-close"]').click()
       cy.contains('Calendar Test Movie').should('not.exist')
     })
+  })
+
+  it('shows a trailer button for a release entry that has a trailer', () => {
+    cy.intercept('GET', /\/movie\/100\/videos/, mockCalendarVideos).as('videos')
+    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
+      cy.contains('button', '15').click()
+      cy.contains('Calendar Test Movie').should('exist')
+    })
+    cy.wait('@videos')
+    cy.get('[data-cy="trailer-button"]').should('be.visible')
+  })
+
+  it('shows the trailer iframe when the trailer button is clicked', () => {
+    cy.intercept('GET', /\/movie\/100\/videos/, mockCalendarVideos).as('videos')
+    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
+      cy.contains('button', '15').click()
+    })
+    cy.wait('@videos')
+    cy.get('[data-cy="trailer-button"]').click()
+    cy.get('iframe').should('have.attr', 'src').and('include', 'calendarTrailerKey')
+  })
+
+  it('does not show the trailer button when no trailer is available', () => {
+    cy.intercept('GET', /\/movie\/100\/videos/, { results: [] }).as('noVideos')
+    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
+      cy.contains('button', '15').click()
+      cy.contains('Calendar Test Movie').should('exist')
+    })
+    cy.wait('@noVideos')
+    cy.get('[data-cy="trailer-button"]').should('not.exist')
   })
 })
