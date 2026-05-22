@@ -21,7 +21,8 @@
     "inTheaters": "En cartelera",
     "errorBoundary": "Algo ha ido mal. Puedes volver a intentarlo o recargar la página.",
     "clearFilters": "Limpiar filtros",
-    "minuteUnit": "min"
+    "minuteUnit": "min",
+    "trailer": "Tráiler"
   },
   "languageSwitcher": {
     "label": "Idioma actual: {{language}}"
@@ -105,7 +106,8 @@
       "current": "Viendo",
       "release": "Estreno",
       "watched": "Visto",
-      "markWatched": "Marcar como visto"
+      "markWatched": "Marcar como visto",
+      "markSagaWatched": "Marcar saga como vista"
     }
   },
   "series": {

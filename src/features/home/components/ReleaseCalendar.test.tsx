@@ -38,6 +38,28 @@ jest.mock('@/features/series/getSeriesUI', () => ({
   getStatusConfig: () => null,
 }))
 
+jest.mock('@/hooks/useTrailer', () => ({
+  useTrailer: () => ({ trailer: null, isLoading: false }),
+}))
+
+jest.mock('@/components/ui/Tooltip', () => ({
+  __esModule: true,
+  default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
+jest.mock('@/config/genreIcons', () => ({
+  getGenreIcon: () => null,
+}))
+
+jest.mock('@/features/movies/movies.service', () => ({
+  fetchMovieVideos: jest.fn(),
+}))
+
+jest.mock('@/features/series/series.service', () => ({
+  fetchSeriesVideos: jest.fn(),
+  fetchSeasonVideos: jest.fn(),
+}))
+
 const RELEASE: ReleaseEntry = {
   id: 1,
   title: 'Test Movie',

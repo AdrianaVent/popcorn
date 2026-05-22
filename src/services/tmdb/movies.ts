@@ -1,6 +1,6 @@
 import { tmdbFetch } from './client'
 import { DEFAULT_LANGUAGE } from '@/config/constants'
-import type { ReleaseDatesResult, TMDBCollectionDetail, TMDBMovie, TMDBMovieDetail, TMDBPagedResponse, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
+import type { ReleaseDatesResult, TMDBCollectionDetail, TMDBMovie, TMDBMovieDetail, TMDBPagedResponse, TMDBVideosResult, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
 export const moviesService = {
   detail: (id: number, language = DEFAULT_LANGUAGE) =>
@@ -36,4 +36,7 @@ export const moviesService = {
 
   releaseDates: (id: number) =>
     tmdbFetch<ReleaseDatesResult>(`/movie/${id}/release_dates`),
+
+  videos: (id: number) =>
+    tmdbFetch<TMDBVideosResult>(`/movie/${id}/videos`, { include_video_language: 'es,en,null' }),
 }

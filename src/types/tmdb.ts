@@ -152,3 +152,17 @@ export type ReleaseDate = {
 export type ReleaseDatesResult = {
   results: Array<{ iso_3166_1: string; release_dates: ReleaseDate[] }>
 }
+
+export type TMDBVideo = {
+  id: string
+  key: string
+  name: string
+  site: string
+  type: string
+  official: boolean
+  iso_639_1: string
+}
+
+export type TMDBVideosResult = {
+  results: TMDBVideo[]
+}
