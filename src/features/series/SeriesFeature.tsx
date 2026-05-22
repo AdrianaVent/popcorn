@@ -12,15 +12,19 @@ import SeriesDetailModal from './components/SeriesDetailModal'
 
 import { useSeries, applyClientFilters } from './hooks/useSeries'
 import { fetchSeries, fetchSeriesDetail, fetchSeasonDetail, fetchSeriesWatchProviderOptions } from './series.service'
-import { getStatusConfig } from './getSeriesUI'
 import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
+import { getStatusConfig } from './getSeriesUI'
+import StatusBadge from './components/StatusBadge'
 import { useLanguageStore } from '@/store/languageStore'
 import { useUserStore } from '@/store/userStore'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useToastStore } from '@/store/toastStore'
 import { useFilters } from '@/hooks/useFilters'
+import { useFilterSchema } from '@/hooks/useFilterSchema'
 import { useQuery } from '@tanstack/react-query'
 import { staticSeriesFiltersSchema } from './seriesFilters.schema'
+import { resolveGenreName, SERIES_GENRE_IDS } from '@/config/genres'
+import { getGenreIcon } from '@/config/genreIcons'
 import { formatVoteCount, tmdbToStarRating, formatRuntime } from '@/utils/formatNumber'
 import StarRating from '@/components/ui/StarRating'
 import Tooltip from '@/components/ui/Tooltip'
@@ -178,13 +182,16 @@ export default function SeriesFeature() {
 
   const { data: providerOptions } = useQuery<WatchProvider[]>({ queryKey: ['series-provider-options'], queryFn: fetchSeriesWatchProviderOptions, staleTime: Infinity })
 
-  const filtersSchema = useMemo(() => staticSeriesFiltersSchema.flatMap((field) => {
-    if (field.key === 'watched' && role === 'admin') return []
-    if (field.key === 'provider_id' && providerOptions?.length) {
-      return [{ ...field, options: providerOptions.map((p) => ({ value: String(p.provider_id), label: p.provider_name })) }]
-    }
-    return [field]
-  }), [providerOptions, role])
+  const genreOptions = useMemo(
+    () => SERIES_GENRE_IDS.map((id) => ({
+      value: id,
+      label: resolveGenreName(id, language),
+      icon: getGenreIcon(id) ?? undefined,
+    })),
+    [language],
+  )
+
+  const filtersSchema = useFilterSchema(staticSeriesFiltersSchema, { role, providerOptions, genreOptions })
 
   const watchedSeriesData = useWatchedStore((s) => s.seriesData[userKey])
 
@@ -415,21 +422,7 @@ export default function SeriesFeature() {
     {
       key: 'status',
       header: t('series.columns.status'),
-      render: (row) => {
-        const status = statuses.get(row.id)
-        if (status === undefined) {
-          return (
-            <span className="inline-block h-5 w-16 rounded bg-muted animate-pulse" />
-          )
-        }
-        const cfg = getStatusConfig(status)
-        if (!cfg) return <span className="text-muted-foreground">—</span>
-        return (
-          <span className={`text-[11px] px-2 py-0.5 rounded-md border font-medium whitespace-nowrap ${cfg.border} ${cfg.bg} ${cfg.text}`}>
-            {t(cfg.labelKey)}
-          </span>
-        )
-      },
+      render: (row) => <StatusBadge status={statuses.get(row.id)} />,
       width: 'md',
       align: 'center',
     },

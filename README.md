@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.8.0-6B2737)
+![Version](https://img.shields.io/badge/version-0.11.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -19,6 +19,7 @@ Personal movie & series dashboard. Track what you watch, explore collections, an
 | Filter by title, rating, year, language, platform, status | ✓ | ✓ |
 | Sort and paginate results | ✓ | ✓ |
 | View watch providers by region | ✓ | ✓ |
+| Watch trailers (movie / series / season / saga / calendar) | ✓ | ✓ |
 | Home dashboard — genre charts (global view only) | ✓ | — |
 | Home dashboard — genre charts (personal + global view) | — | ✓ |
 | Home dashboard — release calendar | ✓ | ✓ |
@@ -194,16 +195,25 @@ Open [http://localhost:3000](http://localhost:3000) in your browser and sign in 
 
 ### Home (`/home`)
 
-The landing page after login. It shows two cards side by side: a genre distribution chart and a release calendar.
+The landing page after login. It shows three cards in a responsive grid: a Top 10 ranking, a genre distribution chart, and a release calendar. The grid adapts to the available width — cards stack in a single column on narrow viewports, two columns on medium widths, and all three side by side on wide screens.
+
+**Top 10**
+
+A ranked list of the top 10 movies or series by rating. Each entry shows the poster, title, release year, genre icons and score.
+
+- Use the **My profile / Global** toggle to switch between your personal watched history and the full TMDB catalogue.
+- Filter by genre using the genre picker in the card header.
+- The toggle is not available for admin accounts — admins always see the global view.
+- Click any entry to open its detail modal.
 
 **Genre distribution**
 
-![Home — genre charts and Top 10](docs/screenshots/home-charts.png)
+![Home — overview with Top 10 and genre chart](docs/screenshots/home-charts.png)
 
-Two bar charts — one for movies and one for series — showing which genres appear most in the catalogue or in your personal watched history. A Top 10 ranking is also shown based on your ratings.
+A donut chart showing which genres appear most — either in the TMDB catalogue or in your own watched history. The legend lists all genres with their colour; hover a slice or a legend item to highlight it and see the percentage.
 
-- Use the **My profile / Global** toggle (top-right of each chart) to switch between your own watched data and the full TMDB catalogue.
-- Hover over any bar to see the genre name and exact count.
+- Use the **My profile / Global** toggle (top-right) to switch data source.
+- Switch between **Movies** and **Series** with the icon buttons in the card header.
 - The toggle is not available for admin accounts — admins always see the global view.
 
 **Release calendar**
@@ -215,8 +225,9 @@ A monthly calendar showing upcoming movie and series releases from TMDB (English
 - Days with at least one release are marked with a coloured dot.
 - Click a day to open a panel listing all releases for that date.
 - Click any entry in the panel to open its detail modal.
+- Click the play button on an entry to watch its trailer inline (series entries prefer the season-specific trailer, falling back to the series trailer).
 - Use the **←** and **→** arrows to navigate between months. The **Today** button returns to the current month.
-- Switch between **Movies** and **Series** with the tabs above the calendar.
+- Switch between **Movies** and **Series** with the icon buttons in the card header.
 
 ---
 
@@ -228,7 +239,9 @@ A paginated table of movies from TMDB, sorted by popularity by default.
 
 ![Movies list with active filters](docs/screenshots/movies-list.png)
 
-Open the **Filters** panel (top of the page) to narrow the list:
+The **Filters** panel sits at the top of the page. Click the chevron on the right to collapse it — when collapsed, any active filters are shown as summary pills in the header so you can see what is applied at a glance. Click **Clear filters** to reset everything without having to expand the panel first.
+
+Use the filters to narrow the list:
 
 | Filter | How it works |
 |---|---|
@@ -236,10 +249,9 @@ Open the **Filters** panel (top of the page) to narrow the list:
 | Rating ≥ | Drag or click a star value. Only titles rated at or above the threshold are shown. |
 | Year | Shows titles released in that calendar year. |
 | Language | Filters by original language (English or Spanish). |
+| Genres | Multi-select genre picker. Select one or more genres to filter by. |
 | Platform | Shows titles available on a specific streaming service in Spain. |
 | Watched | Switch between **All**, **Watched** and **Unwatched** (guest only). |
-
-Click **Clear filters** in the panel header to reset all active filters at once.
 
 **Sorting**
 
@@ -258,13 +270,14 @@ Click anywhere on a row to open a panel with full information about the movie.
 The modal shows the **synopsis**, **genres**, **runtime**, **release year**, **vote count** and **watch providers** — where the title is available in Spain (subscription, rental, purchase).
 
 - Mark the movie as **watched / unwatched** with the button next to the title *(guest only)*.
+- Click the play button next to the title to watch the official trailer inline. Click it again or use the **×** button on the player to close it.
 - The TMDB rating is displayed as stars (0.5–5 scale).
 
 **Sagas**
 
 ![Movie detail — saga accordion expanded](docs/screenshots/movie-detail-saga.png)
 
-If the movie belongs to a collection, a **Saga** accordion lists all films in the series. Click any title to navigate to that film without closing the modal. The accordion also shows which films you have already marked as watched.
+If the movie belongs to a collection, a **Saga** accordion lists all films in the series. Click any title to navigate to that film without closing the modal. The accordion also shows which films you have already marked as watched. Each film has a play button to watch its trailer inline.
 
 **Movies currently in cinemas**
 
@@ -292,7 +305,7 @@ Click anywhere on a row to open a panel with full information about the series.
 
 ![Series detail — overview and watch providers](docs/screenshots/series-detail-overview.png)
 
-The modal shows the **synopsis**, **genres**, **episode runtime**, **status**, total number of **seasons and episodes**, and **watch providers**. Mark the series as watched with the button next to the title *(guest only)*.
+The modal shows the **synopsis**, **genres**, **episode runtime**, **status**, total number of **seasons and episodes**, and **watch providers**. Mark the series as watched with the button next to the title *(guest only)*. Click the play button next to the title to watch the official trailer inline.
 
 **Episode tracking** *(guest only)*
 
@@ -303,6 +316,7 @@ Expand the **Seasons** accordion to see the full episode list broken down by sea
 - Click the eye icon next to an episode to mark it as watched individually.
 - Click the eye icon next to the season header to mark all available episodes in that season at once (future air dates are excluded).
 - Click the season eye icon again to unmark the entire season.
+- Click the play button in the season header to watch the season trailer inline (falls back to the series trailer if no season-specific trailer exists). Specials (Season 0) are hidden.
 
 ---
 
@@ -416,9 +430,9 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-The project has two test layers: **433 unit/integration tests** (Jest) and **82 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+The project has two test layers: **479 unit/integration tests** (Jest) and **101 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 433 tests · 41 suites
+### Unit & integration tests (Jest) — 479 tests · 46 suites
 
 ```bash
 npm test           # run once
@@ -430,12 +444,12 @@ npm run test:watch # watch mode
 | Pure functions | `getMovieUI`, `getSeriesUI`, `formatDate`, `formatVoteCount`, `deduplicateProviders`, `buildGenreCounts`, `toCSV` |
 | Business logic | Client-side filters (movies + series), TMDB fetch error mapping, export utilities |
 | Stores | `watchedStore` (toggle movie/episode, season counts), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
-| Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases` |
-| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem` |
+| Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases`, `useTrailer` (language preference, YouTube filtering, fallback) |
+| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button) |
 | Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
 | API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date) |
 
-### End-to-end tests (Cypress) — 82 tests · 7 suites
+### End-to-end tests (Cypress) — 101 tests · 7 suites
 
 In CI, Cypress runs against the production build automatically. Locally, run against the dev server:
 
@@ -453,14 +467,68 @@ npm run cypress:run
 | Suite | Tests | What's covered |
 |---|---|---|
 | `auth.cy.ts` | 6 | Redirect when unauthenticated, invalid credentials, login, logout, session expiry |
-| `home.cy.ts` | 15 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar |
-| `movies.cy.ts` | 20 | Movie list, detail modal, watch providers, platform filter, star rating filter, access control |
-| `series.cy.ts` | 14 | Series list, detail modal, watch providers, platform filter, star rating filter |
+| `home.cy.ts` | 20 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar, Top 10 year display, calendar trailer button |
+| `movies.cy.ts` | 29 | Movie list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, access control, trailer (show, open, close, X button) |
+| `series.cy.ts` | 24 | Series list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, episode runtime guard, trailer (show, open, close, X button) |
 | `users.cy.ts` | 15 | Create, edit, delete (single + bulk), toasts, import JSON/CSV, partial failures |
 | `my-list.cy.ts` | 9 | Tabs, empty state, watched movies/series, saga grouping, nav access control |
 | `settings.cy.ts` | 3 | Theme switching (light / dark), language switching (EN / ES) |
 
 Cypress creates and cleans up its own test users in the local database automatically. TMDB calls are intercepted — no real API key needed to run the E2E suite.
+
+---
+
+## Docker
+
+You can run Popcorn in a container without installing Node.js or configuring a local database.
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/) installed and running
+- `.env.local` configured (same file used for local development — see [Getting started](#getting-started))
+
+### Run with Docker Compose
+
+If you haven't already, copy the example env file and fill in your values:
+
+```bash
+cp .env.local.example .env.local
+```
+
+Then start the container:
+
+```bash
+docker compose --env-file .env.local up --build
+```
+
+The `--env-file` flag is required so Docker can read your API key at build time — `NEXT_PUBLIC_TMDB_API_KEY` is baked into the client bundle during the build step and is not injectable at runtime.
+
+Open [http://localhost:3000](http://localhost:3000). On first run the database is created automatically and a default admin user is seeded:
+
+| Field | Default |
+|---|---|
+| Username | `admin` |
+| Password | `Admin123!` |
+
+You can override the default credentials via environment variables in `.env.local`:
+
+```
+ADMIN_USERNAME=myadmin
+ADMIN_PASSWORD=MyPassword1!
+```
+
+The database is stored in a Docker volume (`popcorn_data`) and persists between container restarts.
+
+> **Note on the TMDB API key** — `NEXT_PUBLIC_TMDB_API_KEY` is baked into the client bundle at build time. If you change it you must rebuild the image (`docker compose up --build`).
+
+### Useful commands
+
+```bash
+docker compose --env-file .env.local up --build   # build and start
+docker compose --env-file .env.local up -d        # start in background
+docker compose down                               # stop and remove container
+docker compose down -v                            # stop and delete data volume (resets the database)
+```
 
 ---
 
@@ -518,9 +586,13 @@ cypress/
 ├── fixtures/           # mocked TMDB responses
 └── support/            # commands.ts (cy.login) · e2e.ts (global hooks)
 scripts/
-└── seed.ts             # Creates an admin user
+├── seed.ts             # Creates an admin user (local dev)
+└── docker-seed.js      # Creates admin user on first Docker run (CommonJS, no TS)
 data/
 └── popcorn.db          # SQLite database — gitignored, auto-created on first run
+Dockerfile              # Multi-stage build: deps → builder → runner (Node 20 Alpine)
+docker-compose.yml      # Compose with persistent volume for the database
+docker-entrypoint.sh    # Seeds DB if absent, then starts the app
 ```
 
 ---
@@ -539,7 +611,8 @@ data/
 | Unit tests | Jest 30 + Testing Library |
 | E2E tests | Cypress 15 |
 | Linting | ESLint 9 + Prettier |
-| CI | GitHub Actions — tsc, lint, jest, build on every push |
+| CI | GitHub Actions — tsc, lint, jest, build + Cypress E2E on every push |
+| Docker | Multi-stage image (Node 20 Alpine, ~200 MB via standalone output) — non-root user, healthcheck, auto-seeds DB on first run; published to ghcr.io on `main` |
 
 ---
 

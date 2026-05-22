@@ -247,6 +247,30 @@ describe('Series', () => {
       cy.get('[role="dialog"]').find('[data-cy="episode-watched-btn"]').should('have.length', 2)
     })
 
+    it('does not show the watched button for an episode with no runtime', () => {
+      const mockSeasonMissingRuntime = {
+        episodes: [
+          { id: 62085, name: 'Pilot', episode_number: 1, runtime: 58, air_date: '2008-01-20' },
+          { id: 62086, name: 'Cat\'s in the Bag', episode_number: 2, runtime: null, air_date: '2008-01-27' },
+        ],
+      }
+
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetailWithSeason).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/tv\/1396\/season\/1/, mockSeasonMissingRuntime).as('season')
+
+      cy.wait('@tmdb-guest')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.get('[role="dialog"]').contains('button', 'Seasons').click()
+      cy.get('[role="dialog"]').contains('Season 1').click()
+      cy.wait('@season')
+
+      cy.get('[role="dialog"]').contains('Pilot').should('be.visible')
+      cy.get('[role="dialog"]').contains('Cat\'s in the Bag').should('be.visible')
+      // Only the episode with a runtime gets a watched button
+      cy.get('[role="dialog"]').find('[data-cy="episode-watched-btn"]').should('have.length', 1)
+    })
+
     it('episode watched button toggles watched state on click', () => {
       cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetailWithSeason).as('detail')
       cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} }).as('providers')
@@ -265,6 +289,38 @@ describe('Series', () => {
       // Second click unmarks
       cy.get('@epBtn').click()
       cy.get('@epBtn').should('not.have.class', 'text-primary')
+    })
+  })
+
+  // ─── Genre multi-select filter ───────────────────────────────
+
+  it('opens the genre dropdown and shows genre chips', () => {
+    cy.wait('@tmdb')
+    cy.get('[data-cy="filter-genre_ids"]').click()
+    cy.contains('Drama').should('be.visible')
+    cy.contains('Action & Adventure').should('be.visible')
+  })
+
+  it('selecting a genre sends with_genres to TMDB', () => {
+    cy.intercept('GET', /\/discover\/tv.*with_genres=18/, { fixture: 'series.json' }).as('genreFiltered')
+
+    cy.wait('@tmdb')
+    cy.get('[data-cy="filter-genre_ids"]').click()
+    cy.contains('Drama').click()
+    cy.wait('@genreFiltered')
+  })
+
+  it('selecting multiple genres sends combined with_genres', () => {
+    cy.intercept('GET', /\/discover\/tv.*with_genres=/, { fixture: 'series.json' }).as('genreFiltered')
+
+    cy.wait('@tmdb')
+    cy.get('[data-cy="filter-genre_ids"]').click()
+    cy.contains('Drama').click()
+    cy.contains('Comedy').click()
+    cy.wait('@genreFiltered')
+    cy.get('@genreFiltered.all').then((calls) => {
+      const last = calls[calls.length - 1] as { request: { url: string } }
+      expect(last.request.url).to.match(/with_genres=/)
     })
   })
 
@@ -295,5 +351,116 @@ describe('Series', () => {
     cy.get('[data-cy="filter-provider_id"]').select('8')
     cy.wait('@filtered')
     cy.contains('Breaking Bad').should('be.visible')
+  })
+
+  // ─── Genre deduplication ──────────────────────────────────────
+
+  describe('Genre deduplication in detail modal', () => {
+    it('shows merged genres only once when multiple IDs resolve to the same name', () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, {
+        id: 1396,
+        name: 'Breaking Bad',
+        first_air_date: '2008-01-20',
+        vote_average: 9.5,
+        vote_count: 12000,
+        overview: 'A chemistry teacher turns to manufacturing meth.',
+        // Action & Adventure (10759) + its movie equivalent (28) both resolve to the same name
+        genres: [{ id: 10759, name: 'Action & Adventure' }, { id: 28, name: 'Action' }, { id: 18, name: 'Drama' }],
+        original_language: 'en',
+        poster_path: null,
+        number_of_seasons: 5,
+        number_of_episodes: 62,
+        episode_run_time: [47],
+        status: 'Ended',
+        seasons: [],
+      }).as('detail')
+
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.get('[role="dialog"]').within(() => {
+        cy.contains('Action & Adventure').should('have.length', 1)
+        cy.contains('Drama').should('be.visible')
+      })
+    })
+  })
+
+  // ─── Trailer ──────────────────────────────────────────────────
+
+  describe('Trailer', () => {
+    const mockDetail = {
+      id: 1396,
+      name: 'Breaking Bad',
+      first_air_date: '2008-01-20',
+      vote_average: 9.5,
+      vote_count: 12000,
+      overview: 'A chemistry teacher turns to manufacturing meth.',
+      genres: [{ id: 18, name: 'Drama' }],
+      original_language: 'en',
+      poster_path: null,
+      number_of_seasons: 5,
+      number_of_episodes: 62,
+      episode_run_time: [47],
+      status: 'Ended',
+      seasons: [],
+    }
+
+    const mockVideos = {
+      results: [{ id: 'v1', key: 'testSeriesKey', name: 'Official Trailer', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en' }],
+    }
+
+    beforeEach(() => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/tv\/1396\/videos/, mockVideos).as('videos')
+    })
+
+    it('shows the trailer button when a YouTube trailer is available', () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@videos')
+      cy.get('[data-cy="trailer-button"]').should('be.visible')
+    })
+
+    it('shows the trailer iframe when the trailer button is clicked', () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@videos')
+      cy.get('[data-cy="trailer-button"]').click()
+      cy.get('[role="dialog"] iframe').should('have.attr', 'src').and('include', 'testSeriesKey')
+    })
+
+    it('hides the trailer iframe when the trailer button is clicked again', () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@videos')
+      cy.get('[data-cy="trailer-button"]').click()
+      cy.get('[role="dialog"] iframe').should('exist')
+      cy.get('[data-cy="trailer-button"]').click()
+      cy.get('[role="dialog"] iframe').should('not.exist')
+    })
+
+    it('hides the trailer iframe when the X button inside the player is clicked', () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@videos')
+      cy.get('[data-cy="trailer-button"]').click()
+      cy.get('[role="dialog"] iframe').should('exist')
+      cy.get('[role="dialog"] iframe').siblings('button').click()
+      cy.get('[role="dialog"] iframe').should('not.exist')
+    })
+
+    it('does not show the trailer button when no trailer is available', () => {
+      cy.intercept('GET', /\/tv\/1396\/videos/, { results: [] }).as('noVideos')
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@noVideos')
+      cy.get('[data-cy="trailer-button"]').should('not.exist')
+    })
   })
 })

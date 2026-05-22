@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchMovies } from '@/features/movies/movies.service'
 import { useLanguageStore } from '@/store/languageStore'
 import { ALLOWED_ORIGINAL_LANGUAGES } from '@/config/constants'
+import { getEquivalentGenreIds } from '@/config/genres'
 import type { MovieFilters, MovieRow } from '@/types/movie'
 import type { TMDBMovie } from '@/types/tmdb'
 
@@ -30,6 +31,10 @@ export function applyClientFilters(results: TMDBMovie[], filters: MovieFilters):
   // vote_average_gte not supported by /search/movie
   if (filters.title && filters.vote_average_gte) {
     items = items.filter((m) => m.vote_average >= (filters.vote_average_gte ?? 0))
+  }
+  if (filters.genre_ids?.length) {
+    const allowed = new Set(filters.genre_ids.flatMap(getEquivalentGenreIds))
+    items = items.filter((m) => m.genre_ids?.some((gid) => allowed.has(gid)))
   }
   return items as MovieRow[]
 }

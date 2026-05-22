@@ -12,7 +12,7 @@
   "common": {
     "prev": "Anterior",
     "next": "Siguiente",
-    "all": "Todas",
+    "all": "Todos",
     "watchedOnly": "Vistos",
     "unwatchedOnly": "No vistos",
     "confirm": "Confirmar",
@@ -20,7 +20,9 @@
     "availableOn": "Disponible en",
     "inTheaters": "En cartelera",
     "errorBoundary": "Algo ha ido mal. Puedes volver a intentarlo o recargar la página.",
-    "clearFilters": "Limpiar filtros"
+    "clearFilters": "Limpiar filtros",
+    "minuteUnit": "min",
+    "trailer": "Tráiler"
   },
   "languageSwitcher": {
     "label": "Idioma actual: {{language}}"
@@ -80,7 +82,8 @@
       "runtimeGte": "Duración (min) ≥",
       "year": "Año",
       "watched": "Visto",
-      "platform": "Plataforma"
+      "platform": "Plataforma",
+      "genres": "Géneros"
     },
     "columns": {
       "poster": "Póster",
@@ -103,7 +106,8 @@
       "current": "Viendo",
       "release": "Estreno",
       "watched": "Visto",
-      "markWatched": "Marcar como visto"
+      "markWatched": "Marcar como visto",
+      "markSagaWatched": "Marcar saga como vista"
     }
   },
   "series": {
@@ -119,7 +123,8 @@
       "year": "Año",
       "status": "Estado",
       "watched": "Visto",
-      "platform": "Plataforma"
+      "platform": "Plataforma",
+      "genres": "Géneros"
     },
     "columns": {
       "poster": "Póster",
@@ -279,7 +284,8 @@
     },
     "top10": {
       "title": "Top 10",
-      "empty": "Marca algunos títulos como vistos para ver tu top 10"
+      "empty": "Marca algunos títulos como vistos para ver tu top 10",
+      "allGenres": "Todos los géneros"
     }
   },
   "calendar": {

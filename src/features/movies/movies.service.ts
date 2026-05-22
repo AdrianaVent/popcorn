@@ -2,8 +2,9 @@ import { moviesService } from '@/services/tmdb'
 import { TMDB_LANGUAGE } from '@/config/tmdb'
 import { WATCH_PROVIDERS_REGION } from '@/config/constants'
 import { fetchWatchProviderOptions } from '@/utils/watchProviders'
+import { getEquivalentGenreIds } from '@/config/genres'
 import type { MovieFilters } from '@/types/movie'
-import type { TMDBCollectionDetail, TMDBPagedResponse, TMDBMovie, TMDBMovieDetail, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
+import type { TMDBCollectionDetail, TMDBPagedResponse, TMDBMovie, TMDBMovieDetail, TMDBVideosResult, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
 // TMDB sort_by field name → actual field in TMDBMovie response
 const SORT_FIELD: Partial<Record<string, keyof TMDBMovie>> = {
@@ -60,6 +61,10 @@ export function fetchMovies(
     params['with_watch_providers'] = filters.provider_id
     params['watch_region'] = WATCH_PROVIDERS_REGION
   }
+  if (filters?.genre_ids?.length) {
+    const ids = [...new Set(filters.genre_ids.flatMap(getEquivalentGenreIds))]
+    params['with_genres'] = ids.join('|')
+  }
 
   // TMDB only supports a single value for with_original_language — two parallel requests
   // for 'en' and 'es', then merge, so non-EN/ES titles never reach the client.
@@ -83,4 +88,8 @@ export function fetchMovieWatchProviders(id: number): Promise<WatchProvidersResu
 
 export function fetchMovieWatchProviderOptions(): Promise<WatchProvider[]> {
   return fetchWatchProviderOptions(moviesService, WATCH_PROVIDERS_REGION)
+}
+
+export function fetchMovieVideos(id: number): Promise<TMDBVideosResult> {
+  return moviesService.videos(id)
 }

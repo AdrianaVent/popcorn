@@ -1,13 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 import AccordionList from '@/components/ui/AccordionList'
 import Tooltip from '@/components/ui/Tooltip'
-import { fetchSeasonDetail } from '@/features/series/series.service'
+import TrailerPlayer from '@/components/ui/TrailerPlayer'
+import { fetchSeasonDetail, fetchSeasonVideos } from '@/features/series/series.service'
+import { useTrailer } from '@/hooks/useTrailer'
 import { useLanguageStore } from '@/store/languageStore'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useUserStore } from '@/store/userStore'
@@ -36,7 +38,7 @@ function WatchedEpisodeButton({
       data-cy="episode-watched-btn"
       onClick={(e) => { e.stopPropagation(); toggleEpisode(userId, seriesId, episodeId, seasonNumber, seriesSnapshot) }}
       className={clsx(
-        'shrink-0 flex items-center justify-center transition-colors',
+        'shrink-0 flex items-center justify-center transition-colors cursor-pointer',
         watched
           ? 'text-primary hover:opacity-70'
           : 'text-muted-foreground/40 hover:text-primary'
@@ -80,7 +82,7 @@ function EpisodeRow({
       {episode.runtime != null && (
         <span className="text-[11px] text-muted-foreground shrink-0">{episode.runtime} min</span>
       )}
-      {canWatch && (
+      {canWatch && episode.runtime != null && (
         <WatchedEpisodeButton
           episodeId={episode.id}
           seriesId={seriesId}
@@ -109,6 +111,21 @@ function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot
   const [episodes, setEpisodes] = useState<TMDBEpisode[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [markLoading, setMarkLoading] = useState(false)
+  const [showTrailer, setShowTrailer] = useState(false)
+  const trailerRef = useRef<HTMLDivElement>(null)
+
+  const { trailer } = useTrailer(
+    ['season-trailer', seriesId, season.season_number],
+    () => fetchSeasonVideos(seriesId, season.season_number),
+    true,
+    language,
+  )
+
+  useEffect(() => {
+    if (showTrailer && trailerRef.current) {
+      trailerRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [showTrailer])
 
   const markSeason = useWatchedStore((s) => s.markSeason)
 
@@ -181,13 +198,25 @@ function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot
             </div>
           </div>
 
-          <svg
-            width="14" height="14" viewBox="0 0 14 14" fill="none"
-            className={clsx('text-muted-foreground transition-transform duration-200 shrink-0', isOpen && 'rotate-180')}
-          >
-            <path d="M2.5 5L7 9.5L11.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
         </button>
+
+        {trailer && (
+          <Tooltip content={t('common.trailer')} placement="top">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowTrailer((v) => !v) }}
+              className={clsx(
+                'shrink-0 mr-3 w-7 h-7 flex items-center justify-center rounded border transition-colors cursor-pointer',
+                showTrailer
+                  ? 'border-primary text-primary bg-primary/10'
+                  : 'border-transparent text-muted-foreground/40 hover:border-primary/40 hover:text-primary',
+              )}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M3 2l7 4-7 4V2z" />
+              </svg>
+            </button>
+          </Tooltip>
+        )}
 
         {canWatch && (
           <Tooltip content={allWatched ? t('series.detail.unmarkSeason') : t('series.detail.markSeasonWatched')} placement="top">
@@ -208,14 +237,14 @@ function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot
                 }
               }
               const today = new Date().toISOString().slice(0, 10)
-              const airedIds = eps.filter((ep) => ep.air_date && ep.air_date <= today).map((ep) => ep.id)
+              const airedIds = eps.filter((ep) => ep.air_date && ep.air_date <= today && ep.runtime != null).map((ep) => ep.id)
               if (airedIds.length > 0) {
                 markSeason(userId, seriesId, season.season_number, airedIds, seriesSnapshot)
               }
             }}
             disabled={markLoading}
             className={clsx(
-              'shrink-0 mr-4 flex items-center justify-center transition-colors',
+              'shrink-0 mr-4 flex items-center justify-center transition-colors cursor-pointer',
               markLoading && 'opacity-50 cursor-wait',
               allWatched
                 ? 'text-primary hover:opacity-70'
@@ -235,7 +264,25 @@ function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot
           </button>
           </Tooltip>
         )}
+
+        <button
+          onClick={handleToggle}
+          className="shrink-0 mr-4 flex items-center justify-center cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <svg
+            width="14" height="14" viewBox="0 0 14 14" fill="none"
+            className={clsx('transition-transform duration-200', isOpen && 'rotate-180')}
+          >
+            <path d="M2.5 5L7 9.5L11.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
       </div>
+
+      {trailer && showTrailer && (
+        <div ref={trailerRef} className="px-4 py-3 border-t border-border/30 bg-cream-300 dark:bg-gray-700 flex justify-center">
+          <TrailerPlayer trailerKey={trailer.key} className="w-full max-w-xs aspect-video border border-border rounded-lg overflow-hidden" onClose={() => setShowTrailer(false)} />
+        </div>
+      )}
 
       {isOpen && (
         <div className="border-t border-border/30">
@@ -287,9 +334,7 @@ export default function SeasonsAccordion({ seasons, seriesName, seriesId, series
   const userKey = String(userId ?? 'guest')
   const canWatch = role !== 'admin'
 
-  const mainSeasons = seasons.filter((s) => s.season_number > 0 && s.air_date)
-  const specials    = seasons.filter((s) => s.season_number === 0 && s.air_date)
-  const allItems    = [...mainSeasons, ...specials]
+  const allItems = seasons.filter((s) => s.season_number > 0 && s.air_date)
 
   return (
     <AccordionList
@@ -302,20 +347,13 @@ export default function SeasonsAccordion({ seasons, seriesName, seriesId, series
             {seriesName}
           </Text>
           <span className="text-[11px] px-1.5 py-0.5 rounded bg-background text-muted-foreground border border-border/50">
-            {mainSeasons.length}
+            {allItems.length}
           </span>
         </div>
       }
       items={allItems}
       renderItem={(season) => (
         <div key={season.id}>
-          {season.season_number === 0 && mainSeasons.length > 0 && (
-            <div className="px-3 py-1 bg-muted/30 border-t border-border/50">
-              <Text variant="caption" className="text-muted-foreground uppercase tracking-wide">
-                Specials
-              </Text>
-            </div>
-          )}
           <SeasonItem
             season={season}
             seriesId={seriesId}

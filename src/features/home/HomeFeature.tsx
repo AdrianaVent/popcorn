@@ -2,35 +2,28 @@
 
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
-import BarChart from '@/components/ui/BarChart'
+import DonutChart from '@/components/ui/DonutChart'
 import ReleaseCalendar from '@/features/home/components/ReleaseCalendar'
 import MovieDetailModal from '@/features/movies/components/MovieDetailModal'
 import SeriesDetailModal from '@/features/series/components/SeriesDetailModal'
 import { useUserMovieGenres, useGlobalMovieGenres } from '@/features/home/hooks/useMovieGenres'
 import { useUserSeriesGenres, useGlobalSeriesGenres } from '@/features/home/hooks/useSeriesGenres'
 import { useMovieReleases, useSeriesReleases } from '@/features/home/hooks/useReleases'
-import { useGlobalMovieTop10, useGlobalSeriesTop10, buildUserMovieTop10, buildUserSeriesTop10 } from '@/features/home/hooks/useTop10'
+import { useGlobalMovieTop10, useGlobalSeriesTop10, useUserMovieTop10, useUserSeriesTop10, buildUserMoviePool, buildUserSeriesPool } from '@/features/home/hooks/useTop10'
 import Top10Card from '@/features/home/components/Top10Card'
-import HomeCard from '@/features/home/components/HomeCard'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useRatingsStore } from '@/store/ratingsStore'
 import { useUserStore } from '@/store/userStore'
 import { useLanguageStore } from '@/store/languageStore'
-import { genresService } from '@/services/tmdb/genres'
 import { TMDB_LANGUAGE } from '@/config/tmdb'
-import { resolveSeriesGenreName } from '@/features/series/getSeriesUI'
+import { buildGenreMapForLanguage } from '@/config/genres'
+import { getGenreIconByName } from '@/config/genreIcons'
 import PageLayout from '@/components/layouts/PageLayout'
 import { HomeIcon } from '@/components/icons'
 
-type ContentTab = 'movies' | 'series'
+import { type ContentTab } from '@/components/ui/ContentTabToggle'
 
-const EMPTY_GENRE_MAP: Record<number, string> = {}
 
-const TABS = [
-  { value: 'movies' as ContentTab, labelKey: 'nav.movies' },
-  { value: 'series' as ContentTab, labelKey: 'nav.series' },
-]
 
 export default function HomeFeature() {
   const { t } = useTranslation()
@@ -66,37 +59,27 @@ export default function HomeFeature() {
 
   const globalMovieTop10  = useGlobalMovieTop10(tmdbLang)
   const globalSeriesTop10 = useGlobalSeriesTop10(tmdbLang)
-  const userMovieTop10  = useMemo(
-    () => buildUserMovieTop10(watchedMovies, userRatings?.movies),
+  const userMoviePool   = useMemo(
+    () => buildUserMoviePool(watchedMovies, userRatings?.movies),
     [watchedMovies, userRatings]
   )
-  const userSeriesTop10 = useMemo(
-    () => buildUserSeriesTop10(watchedSeries, watchedEpisodes, userRatings?.series),
+  const userSeriesPool  = useMemo(
+    () => buildUserSeriesPool(watchedSeries, watchedEpisodes, userRatings?.series),
     [watchedSeries, watchedEpisodes, userRatings]
   )
+  const userMovieTop10Query  = useUserMovieTop10(userMoviePool, tmdbLang)
+  const userSeriesTop10Query = useUserSeriesTop10(userSeriesPool, tmdbLang)
+  const userMovieTop10  = userMovieTop10Query.data  ?? userMoviePool.slice(0, 10)
+  const userSeriesTop10 = userSeriesTop10Query.data ?? userSeriesPool.slice(0, 10)
   const top10DefaultMode = useMemo(() => (
     Object.keys(userRatings?.movies ?? {}).length > 0 ||
     Object.keys(userRatings?.series ?? {}).length > 0
   ) ? 'user' : 'global', [userRatings])
 
-  const { data: movieGenreMap } = useQuery({
-    queryKey: ['genre-map-movie', tmdbLang],
-    queryFn: () => genresService.movieList(tmdbLang).then((r) =>
-      Object.fromEntries(r.genres.map((g) => [g.id, g.name]))
-    ),
-    staleTime: Infinity,
-  })
-  const { data: seriesGenreMap } = useQuery({
-    queryKey: ['genre-map-series', tmdbLang, language],
-    queryFn: () => genresService.seriesList(tmdbLang).then((r) =>
-      Object.fromEntries(r.genres.map((g) => [g.id, resolveSeriesGenreName(g.id, g.name, language)]))
-    ),
-    staleTime: Infinity,
-  })
+  const genreMap = useMemo(() => buildGenreMapForLanguage(language), [language])
 
-  const isGenreMovies  = genreTab === 'movies'
-  const calendarQuery  = calendarTab === 'movies' ? movieReleases : seriesReleases
-  const calendarGenres = calendarTab === 'movies' ? (movieGenreMap ?? EMPTY_GENRE_MAP) : (seriesGenreMap ?? EMPTY_GENRE_MAP)
+  const isGenreMovies = genreTab === 'movies'
+  const calendarQuery = calendarTab === 'movies' ? movieReleases : seriesReleases
 
   const handlePrevMonth = () =>
     setCalendar((c) => c.month === 1 ? { year: c.year - 1, month: 12 } : { ...c, month: c.month - 1 })
@@ -120,50 +103,51 @@ export default function HomeFeature() {
 
   return (
     <PageLayout title={t('nav.home')} start={<HomeIcon size={32} strokeWidth={1.5} />}>
-      <div className="flex-1 min-h-0 overflow-y-auto 2xl:overflow-hidden">
-      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 auto-rows-[60vh] 2xl:h-full 2xl:auto-rows-[1fr]">
+      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 auto-rows-[50vh] lg:auto-rows-[calc(50vh-3.5rem)]">
         {/* Top 10 card */}
-        <HomeCard tabs={TABS} activeTab={top10Tab} onTabChange={setTop10Tab}>
-          <Top10Card
-            tab={top10Tab}
-            globalMovieQuery={globalMovieTop10}
-            globalSeriesQuery={globalSeriesTop10}
-            userMovieItems={userMovieTop10}
-            userSeriesItems={userSeriesTop10}
-            defaultMode={top10DefaultMode}
-            showUserToggle={role !== 'admin'}
-            onItemClick={handleTop10Click}
-          />
-        </HomeCard>
+        <Top10Card
+          tab={top10Tab}
+          onTabChange={setTop10Tab}
+          globalMovieQuery={globalMovieTop10}
+          globalSeriesQuery={globalSeriesTop10}
+          userMovieItems={userMovieTop10}
+          userSeriesItems={userSeriesTop10}
+          userMoviePool={userMoviePool}
+          userSeriesPool={userSeriesPool}
+          defaultMode={top10DefaultMode}
+          showUserToggle={role !== 'admin'}
+          onItemClick={handleTop10Click}
+        />
 
         {/* Calendar card */}
-        <HomeCard tabs={TABS} activeTab={calendarTab} onTabChange={setCalendarTab}>
-          <ReleaseCalendar
-            key={`${calendar.year}-${calendar.month}-${calendarTab}`}
-            year={calendar.year}
-            month={calendar.month}
-            onPrevMonth={handlePrevMonth}
-            onNextMonth={handleNextMonth}
-            onToday={handleToday}
-            query={calendarQuery}
-            genreMap={calendarGenres}
-            onEntryClick={handleEntryClick}
-          />
-        </HomeCard>
+        <ReleaseCalendar
+          key={`${calendar.year}-${calendar.month}-${calendarTab}`}
+          year={calendar.year}
+          month={calendar.month}
+          tab={calendarTab}
+          onTabChange={setCalendarTab}
+          onPrevMonth={handlePrevMonth}
+          onNextMonth={handleNextMonth}
+          onToday={handleToday}
+          query={calendarQuery}
+          genreMap={genreMap}
+          onEntryClick={handleEntryClick}
+        />
 
         {/* Genres card */}
-        <HomeCard tabs={TABS} activeTab={genreTab} onTabChange={setGenreTab}>
-          <BarChart
-            key={genreTab}
-            title={t('dashboard.genres')}
-            orientation="horizontal"
-            tooltipLabel={isGenreMovies ? t('dashboard.chart.movies') : t('dashboard.chart.series')}
-            userQuery={isGenreMovies ? userMovieGenres : userSeriesGenres}
-            globalQuery={isGenreMovies ? globalMovieGenres : globalSeriesGenres}
-            defaultMode={isGenreMovies ? movieDefaultMode : seriesDefaultMode}
-            showUserToggle={role !== 'admin'}
-          />
-        </HomeCard>
+        <DonutChart
+          key={genreTab}
+          title={t('dashboard.genres')}
+          tooltipLabel={isGenreMovies ? t('dashboard.chart.movies') : t('dashboard.chart.series')}
+          tab={genreTab}
+          onTabChange={setGenreTab}
+          userQuery={isGenreMovies ? userMovieGenres : userSeriesGenres}
+          globalQuery={isGenreMovies ? globalMovieGenres : globalSeriesGenres}
+          defaultMode={isGenreMovies ? movieDefaultMode : seriesDefaultMode}
+          showUserToggle={role !== 'admin'}
+          getRowIcon={getGenreIconByName}
+        />
       </div>
       </div>
 

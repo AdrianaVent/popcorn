@@ -21,10 +21,13 @@ import { useUserStore } from '@/store/userStore'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useToastStore } from '@/store/toastStore'
 import { useFilters } from '@/hooks/useFilters'
+import { useFilterSchema } from '@/hooks/useFilterSchema'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TMDBMovieDetail } from '@/types/tmdb'
 
 import { staticMovieFiltersSchema } from './movieFilters.schema'
+import { resolveGenreName, MOVIE_GENRE_IDS } from '@/config/genres'
+import { getGenreIcon } from '@/config/genreIcons'
 import { formatVoteCount, tmdbToStarRating, formatRuntime } from '@/utils/formatNumber'
 import StarRating from '@/components/ui/StarRating'
 import Tooltip from '@/components/ui/Tooltip'
@@ -97,13 +100,16 @@ export default function MoviesFeature() {
 
   const { data: providerOptions } = useQuery<WatchProvider[]>({ queryKey: ['movie-provider-options'], queryFn: fetchMovieWatchProviderOptions, staleTime: Infinity })
 
-  const filtersSchema = useMemo(() => staticMovieFiltersSchema.flatMap((field) => {
-    if (field.key === 'watched' && role === 'admin') return []
-    if (field.key === 'provider_id' && providerOptions?.length) {
-      return [{ ...field, options: providerOptions.map((p) => ({ value: String(p.provider_id), label: p.provider_name })) }]
-    }
-    return [field]
-  }), [providerOptions, role])
+  const genreOptions = useMemo(
+    () => MOVIE_GENRE_IDS.map((id) => ({
+      value: id,
+      label: resolveGenreName(id, language),
+      icon: getGenreIcon(id) ?? undefined,
+    })),
+    [language],
+  )
+
+  const filtersSchema = useFilterSchema(staticMovieFiltersSchema, { role, providerOptions, genreOptions })
 
   const watchedModeItems = useMemo(() => {
     if (filters.watched !== 'watched') return null
@@ -275,6 +281,7 @@ export default function MoviesFeature() {
                 original_language: row.original_language,
                 collection_id: cached?.belongs_to_collection?.id,
                 collection_name: cached?.belongs_to_collection?.name,
+                genre_ids: cached?.genre_ids ?? row.genre_ids,
               })
             }}
             className={clsx(

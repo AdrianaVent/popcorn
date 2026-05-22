@@ -54,9 +54,14 @@ src/
 │                               # Header, AccordionList, Table/, TableSkeleton, LoadingOverlay,
 │                               # DatePicker, ConfirmModal, IconButton,
 │                               # Toast/ToastItem, Toast/ToastContainer,
-│                               # BarChart (Recharts wrapper), ToggleSwitch, PageSkeleton,
+│                               # BarChart (Recharts wrapper), DonutChart (Recharts pie with compact legend),
+│                               # ContentTabToggle (icon-button tab switcher — film/tv),
+│                               # GenreGrid (genre badge list with icon + name deduplication),
+│                               # MultiSelectChips (portal-based genre multi-select dropdown),
+│                               # ToggleSwitch, PageSkeleton,
 │                               # StarRating (5-star, half-star; value: 0.5–5 | null),
-│                               # Tooltip (portal-based, 150ms delay, placement: top/right/bottom/left)
+│                               # Tooltip (portal-based, 150ms delay, placement: top/right/bottom/left),
+│                               # TrailerPlayer (YouTube iframe embed; optional onClose × button)
 ├── config/
 │   ├── auth.ts                 # TOKEN_MAX_TIME, REFRESH_TOKEN_MAX_TIME, JWT_SECRET
 │   ├── constants.ts            # DEFAULT_LANGUAGE, ALLOWED_ORIGINAL_LANGUAGES
@@ -67,29 +72,33 @@ src/
 │   └── users.ts                # DbUser, UserRole types; findByUsername, findById, create
 ├── features/
 │   ├── auth/login/             # LoginFeature, LoginForm, useLogin, login.service.ts
-│   ├── home/                   # HomeFeature — genre bar charts + release calendar (movies + series)
-│   │   ├── components/         # ReleaseCalendar (month grid, dots on release days, navigation)
+│   ├── home/                   # HomeFeature — genre donut charts + Top10 cards + release calendar
+│   │   ├── components/         # ReleaseCalendar (month grid, dots on release days, navigation),
+│   │   │                       # Top10Card (ranked list with poster, year, genre icons, star rating)
 │   │   └── hooks/              # useMovieGenres (user + global), useSeriesGenres (user + global),
-│   │                           # buildGenreCounts (shared genre aggregation utility),
-│   │                           # useMovieReleases, useSeriesReleases (monthly TMDB releases)
+│   │                           # buildGenreCounts (shared genre aggregation utility — deduplicates same-named genres per entry),
+│   │                           # useMovieReleases, useSeriesReleases (monthly TMDB releases),
+│   │                           # useUserMovieTop10, useUserSeriesTop10 (TanStack Query enrichment — backfills genre_ids)
 │   ├── movies/
 │   │   ├── components/         # MovieDetailModal, MovieMetaGrid,
-│   │   │                       # CollectionAccordion
+│   │   │                       # CollectionAccordion (each saga item has inline trailer)
 │   │   ├── hooks/              # useMovies, useMovieDetail, useCollectionDetail,
 │   │   │                       # useMovieInTheaters
 │   │   ├── MoviesFeature.tsx
 │   │   ├── movies.service.ts   # fetchMovies, fetchMovieDetail, fetchCollectionDetail,
-│   │   │                       # fetchMovieWatchProviders, fetchMovieWatchProviderOptions
+│   │   │                       # fetchMovieWatchProviders, fetchMovieWatchProviderOptions,
+│   │   │                       # fetchMovieVideos
 │   │   ├── movieFilters.schema.ts
 │   │   ├── getMovieUI.ts       # isUpcoming + releaseYear helpers
 │   │   └── index.ts
 │   ├── series/
 │   │   ├── components/         # SeriesDetailModal, SeriesMetaGrid,
-│   │   │                       # SeasonsAccordion
+│   │   │                       # SeasonsAccordion (each season has inline trailer; specials hidden)
 │   │   ├── hooks/              # useSeries, useSeriesDetail
 │   │   ├── SeriesFeature.tsx
 │   │   ├── series.service.ts   # fetchSeries, fetchSeriesDetail, fetchSeasonDetail,
-│   │   │                       # fetchSeriesWatchProviders, fetchSeriesWatchProviderOptions
+│   │   │                       # fetchSeriesWatchProviders, fetchSeriesWatchProviderOptions,
+│   │   │                       # fetchSeriesVideos, fetchSeasonVideos
 │   │   ├── seriesFilters.schema.ts
 │   │   ├── getSeriesUI.ts      # status badge config; resolveSeriesGenreName — static ES translation map (TV genre IDs)
 │   │   └── index.ts
@@ -102,6 +111,7 @@ src/
 │   ├── useFilters.ts
 │   ├── useMounted.ts           # returns false on server / during hydration, true after mount
 │   ├── useTruncated.ts         # ResizeObserver-based truncation detection; returns { ref, isTruncated }
+│   ├── useTrailer.ts           # picks best YouTube trailer (language preference → fallback); staleTime 24h; exports pickYouTubeTrailer
 │   └── useWatchProviders.ts    # generic hook — fetches + deduplicates flatrate/rent/buy per region (TanStack Query)
 ├── locales/                    # en.json, es.json
 ├── middleware.ts               # JWT verification + route protection (Edge Runtime)
@@ -165,7 +175,8 @@ data/
 | Session auto-refresh + redirect on expiry | Done |
 | TanStack Query migration (server-state caching) | Done |
 | Error boundaries (movies, series, users) | Done |
-| CI pipeline (GitHub Actions — tsc, lint, jest, build) | Done |
+| CI pipeline (GitHub Actions — tsc, lint, jest, build + Cypress E2E + Docker publish) | Done |
+| Docker support (multi-stage Dockerfile, docker-compose, auto-seed on first run) | Done |
 | Home (genre bar charts — movies + series, user/global toggle) | Done |
 | Persistent dashboard layout + SSR-safe hydration | Done |
 | Home release calendar (monthly EN/ES releases, dots per day, movie/series tabs) | Done |
@@ -178,6 +189,12 @@ data/
 | CSV export — UTF-8 BOM for correct accent rendering in Excel/LibreOffice | Done |
 | Collection backfill on modal open (enrichMovie) — fixes saga grouping for table-marked movies | Done |
 | Role-aware loading skeleton (movies/series cols via DashboardRoleContext) | Done |
+| Genre multi-select filter (chips dropdown, portal-based) for movies and series | Done |
+| Genre deduplication in detail modals (GenreGrid — deduplicates by resolved name + icon) | Done |
+| Home Top10 cards (ranked list with year, genre icons, star rating; movies + series tabs) | Done |
+| Top10 genre enrichment for user mode (backfills missing genre_ids via TanStack Query) | Done |
+| buildGenreCounts per-entry deduplication (one count per genre name per movie/series) | Done |
+| YouTube trailers (movie modal, series modal, seasons accordion, saga accordion, release calendar) | Done |
 
 ---
 
@@ -241,7 +258,7 @@ All TMDB data fetching and the users list use `useQuery` from `@tanstack/react-q
 `ErrorBoundary` in `src/components/common/` is a React class component wrapping a functional `ErrorFallback` (needed because hooks cannot be used in class components). Wraps `MoviesPage`, `SeriesPage`, and `UsersPage`. On error, renders a translated message with a reset button that clears the error state and remounts the children.
 
 **CI pipeline**
-`.github/workflows/ci.yml` runs on every push and on PRs targeting `dev` or `main`. Runs on Node 24. Steps: install (`npm ci`), type check (`npx tsc --noEmit`), lint (`npm run lint`), tests (`npm test`), build (`npm run build`). The build step uses `NEXT_PUBLIC_TMDB_API_KEY` and `JWT_SECRET` from GitHub repository secrets if configured; both fall back to placeholder values so CI passes even without secrets set. `jest.config.ts` is TypeScript and requires `ts-node` (in devDependencies) to be parsed by Jest. Cypress E2E runs locally only — it requires a live dev server and a seeded DB.
+`.github/workflows/ci.yml` runs on every push and on PRs targeting `dev` or `main`. Three jobs: (1) `check` — Node 24, runs tsc, lint, jest, build; (2) `e2e` — Node 20 (matches Cypress internal Node version to avoid ABI mismatch with better-sqlite3), runs Cypress via `cypress-io/github-action@v6` against a production build, uploads screenshots on failure; (3) `docker` — builds and pushes the image to ghcr.io on `main` push only (needs both `check` and `e2e` to pass). Build steps use `NEXT_PUBLIC_TMDB_API_KEY` and `JWT_SECRET` from GitHub secrets; both fall back to placeholder values so CI passes without secrets configured. `jest.config.ts` is TypeScript and requires `ts-node` (in devDependencies).
 
 **Watched store (v3)**
 Per-user state keyed by `userId`. Movies stored as `StoredMovie` snapshots. Episodes stored as `Record<episodeId, { seasonNumber }>` — `seasonNumber` enables per-season counts without fetching episode lists. Series stored as `StoredSeries` on first episode mark. `filters.watched === 'watched'` bypasses TMDB entirely and serves local data with local pagination.
@@ -254,6 +271,9 @@ Region hardcoded to `ES` (`WATCH_PROVIDERS_REGION` constant). `useWatchProviders
 
 **Import (bulk create)**
 `ImportModal` in `src/components/common/` is fully generic: accepts an `onProcess(rows)` callback and renders the two-phase UI (upload → results) independently of the entity type. Thin wrappers (e.g. `ImportUsersModal`) wire the domain-specific API call and i18n strings. Required fields: `username`, `password`, `role`. Optional fields: `created_by` (admin username — defaults to the importing admin) and `created_at` (ISO date, today or earlier — defaults to current timestamp). CSV parser handles passwords with commas for any number of columns: it assumes `password` is always the second column and excess split parts are re-joined into it, with trailing columns consumed from the end. Password requirements for bulk import are validated server-side at `/api/users/import` using the same `PASSWORD_REGEX` as the single-user form (`^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$`). Failed rows are returned as `{ index, username, code }` and can be downloaded as CSV. Each row is processed independently — valid rows are created even if other rows fail. Intra-file duplicate usernames: first occurrence is created, subsequent ones get `IMPORT_USERNAME_DUPLICATE`.
+
+**Docker**
+Two-stage build (builder → runner) on Node 20 Alpine. `output: 'standalone'` in `next.config.ts` generates a minimal self-contained bundle in `.next/standalone/` — the runner stage copies only that output (~200 MB vs ~900 MB without standalone). Native deps (`better-sqlite3`, `bcryptjs`) are compiled in the builder stage and included in the standalone `node_modules` via nft tracing. The runner process runs as a non-root `nextjs:nodejs` user. A `HEALTHCHECK` pings `/login` every 30s (15s start period). `NEXT_PUBLIC_TMDB_API_KEY` is baked at build time — `docker compose --env-file .env.local up --build` is required. `docker-entrypoint.sh` creates `/app/data`, seeds via `scripts/docker-seed.js` on first run, then starts with `node server.js`. DB stored in named volume `popcorn_data`. `eslint.config.mjs` ignores `scripts/**` (CommonJS `require` incompatible with TS ESLint config).
 
 **Session auto-refresh**
 `apiFetch` in `src/services/apiFetch.ts` wraps all user-management API calls. On 401: attempts `/api/auth/refresh` (POST); if successful, retries original request; if refresh fails, calls `redirectToLogin()` which calls `window.location.replace('/login')` and throws `SESSION_EXPIRED`. `users.service.ts` uses `apiFetch` instead of bare `fetch`.
@@ -287,11 +307,11 @@ npm run test:watch  # watch mode
 
 | Area | What's covered |
 |---|---|
-| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `tmdbToStarRating` (TMDB 0–10 → Rating 0.5–5), `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10) |
+| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `tmdbToStarRating` (TMDB 0–10 → Rating 0.5–5), `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10; per-entry name dedup) |
 | Business logic | `applyClientFilters` (movies + series + language filter), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
 | Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation; `toastStore` — addToast, timers, removeToast; `ratingsStore` — setRating, removeRating, per-user isolation |
-| Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window), `useMovieReleases` (service call args), `useSeriesReleases` (disabled when no providers, enabled with providers) — all wrapped in `QueryClientProvider` with `retry: false` |
-| Components | `Button`, `Modal`, `FiltersPanel` (collapse/expand, badge count, text/number/star/boolean/date/select types), `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, fluid variant, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states), `StarRating` (5 stars, readonly mode, onChange, hover, half-star gradient) |
+| Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window), `useMovieReleases` (service call args), `useSeriesReleases` (disabled when no providers, enabled with providers), `useUserMovieTop10` / `useUserSeriesTop10` (genre_ids backfill via detail fetch, staleTime 5min), `useTrailer` (language preference via iso_639_1, YouTube filter, fallback to first; disabled/enabled; `pickYouTubeTrailer` pure function) — all wrapped in `QueryClientProvider` with `retry: false` |
+| Components | `Button`, `Modal`, `FiltersPanel` (collapse/expand, badge count, text/number/star/boolean/date/select types), `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, fluid variant, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states), `StarRating` (5 stars, readonly mode, onChange, hover, half-star gradient), `GenreGrid` (renders badges; deduplicates by resolved name + icon — Avatar case: Action+Adventure share icon → one badge), `TrailerPlayer` (iframe with correct src, no close button without onClose, close button present and calls onClose, custom className) |
 | Services | `apiFetch` (401 auto-refresh, redirect on session expiry) |
 | API routes | `/api/users/import` (per-row validation: missing fields, invalid role/password, intra-file duplicate, DB duplicate, invalid creator, invalid date) |
 
@@ -310,11 +330,11 @@ Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test user
 | Suite | What's covered |
 |---|---|
 | `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, successful login, logout, guest redirect from /users |
-| `movies.cy.ts` | Movie list, detail modal, watch providers section, platform filter, star rating filter, access control (guest) |
-| `series.cy.ts` | Series list, detail modal, watch providers section, platform filter, star rating filter |
+| `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, access control (guest), watched controls (admin/guest), trailer (button visible, open iframe, close via button, close via × in player) |
+| `series.cy.ts` | Series list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, watched controls (admin/guest), trailer (button visible, open iframe, close via button, close via × in player) |
 | `users.cy.ts` | List, create + toast, edit + toast, delete + toast, bulk delete + toast, self-protection, filters, import JSON + CSV, partial import failures, post-import cleanup |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
-| `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation |
+| `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation, Top10 card title + year visible, calendar trailer button |
 | `my-list.cy.ts` | Page header + tabs, empty state (movies/series), watched movie with count badge, saga grouping button, series tab with watched series, nav item hidden for admin / visible for guest |
 
 ---

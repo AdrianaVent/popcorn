@@ -2,8 +2,9 @@ import { seriesService } from '@/services/tmdb'
 import { TMDB_LANGUAGE } from '@/config/tmdb'
 import { WATCH_PROVIDERS_REGION } from '@/config/constants'
 import { fetchWatchProviderOptions } from '@/utils/watchProviders'
+import { getEquivalentGenreIds } from '@/config/genres'
 import type { SeriesFilters } from '@/types/series'
-import type { TMDBPagedResponse, TMDBSeries, TMDBSeriesDetail, TMDBSeasonDetail, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
+import type { TMDBPagedResponse, TMDBSeries, TMDBSeriesDetail, TMDBSeasonDetail, TMDBVideosResult, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
 function mergeSeriesPages(
   en: TMDBPagedResponse<TMDBSeries>,
@@ -53,6 +54,10 @@ export function fetchSeries(
     params['with_watch_providers'] = filters.provider_id
     params['watch_region'] = WATCH_PROVIDERS_REGION
   }
+  if (filters?.genre_ids?.length) {
+    const ids = [...new Set(filters.genre_ids.flatMap(getEquivalentGenreIds))]
+    params['with_genres'] = ids.join('|')
+  }
 
   // TMDB only supports a single value for with_original_language — two parallel requests
   // for 'en' and 'es', then merge, so non-EN/ES titles never reach the client.
@@ -76,4 +81,12 @@ export function fetchSeriesWatchProviders(id: number): Promise<WatchProvidersRes
 
 export function fetchSeriesWatchProviderOptions(): Promise<WatchProvider[]> {
   return fetchWatchProviderOptions(seriesService, WATCH_PROVIDERS_REGION)
+}
+
+export function fetchSeriesVideos(id: number): Promise<TMDBVideosResult> {
+  return seriesService.videos(id)
+}
+
+export function fetchSeasonVideos(seriesId: number, seasonNumber: number): Promise<TMDBVideosResult> {
+  return seriesService.seasonVideos(seriesId, seasonNumber)
 }

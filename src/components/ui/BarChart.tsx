@@ -12,6 +12,7 @@ import {
 } from 'recharts'
 import Text from '@/components/ui/Text'
 import ToggleSwitch from '@/components/ui/ToggleSwitch'
+import type { LucideIcon } from 'lucide-react'
 import type { GenreEntry } from '@/features/home/hooks/useMovieGenres'
 
 type Props = {
@@ -22,6 +23,7 @@ type Props = {
   globalQuery: { data?: GenreEntry[]; isLoading: boolean; isError: boolean }
   defaultMode?: 'user' | 'global'
   showUserToggle?: boolean
+  getRowIcon?: (name: string) => LucideIcon | null
   className?: string
 }
 
@@ -53,7 +55,7 @@ function ChartSkeleton({ orientation }: { orientation: 'horizontal' | 'vertical'
 
 type GenreTip = { label: string; x: number; y: number }
 
-export default function BarChart({ title, orientation, tooltipLabel, userQuery, globalQuery, defaultMode = 'user', showUserToggle = true, className = '' }: Props) {
+export default function BarChart({ title, orientation, tooltipLabel, userQuery, globalQuery, defaultMode = 'user', showUserToggle = true, getRowIcon, className = '' }: Props) {
   const { t } = useTranslation()
   const [mode, setMode] = useState<'user' | 'global'>(showUserToggle ? defaultMode : 'global')
   const [genreTip, setGenreTip] = useState<GenreTip | null>(null)
@@ -73,11 +75,12 @@ export default function BarChart({ title, orientation, tooltipLabel, userQuery, 
 
   const effectiveMode = mode
 
-  // Horizontal chart: genre names on Y axis (left), truncate + hover
+  // Horizontal chart: genre names on Y axis (left), icon + left-aligned text, truncate + hover
   const TruncatedYTick = useCallback(({ x, y, payload }: TickProps) => {
     const value = payload.value
     const isTruncated = value.length > 14
     const display = isTruncated ? value.slice(0, 14) + '…' : value
+    const Icon = getRowIcon?.(value) ?? null
     return (
       <g
         transform={`translate(${x},${y})`}
@@ -85,12 +88,15 @@ export default function BarChart({ title, orientation, tooltipLabel, userQuery, 
         onMouseLeave={isTruncated ? () => setGenreTip(null) : undefined}
         style={{ cursor: 'default' }}
       >
-        <text textAnchor="end" fill={axisColor} fontSize={12} dy="0.355em">
-          {display}
-        </text>
+        <foreignObject x={-110} y={-11} width={110} height={22}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, width: '100%', height: '100%', boxSizing: 'border-box' }}>
+            {Icon && <Icon size={11} strokeWidth={1.5} color={axisColor} style={{ flexShrink: 0 }} />}
+            <span style={{ fontSize: 12, color: axisColor, lineHeight: 1 }}>{display}</span>
+          </div>
+        </foreignObject>
       </g>
     )
-  }, [axisColor])
+  }, [axisColor, getRowIcon])
 
   // Vertical chart: genre names on X axis (bottom, rotated), truncate + hover
   const TruncatedXTick = useCallback(({ x, y, payload }: TickProps) => {

@@ -7,10 +7,21 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }))
 
+jest.mock('@/store/languageStore', () => ({
+  useLanguageStore: () => ({ language: 'en' }),
+}))
+
 jest.mock('@/components/ui/DatePicker', () => {
   function MockDatePicker() { return <input type="date" data-testid="date-picker" /> }
   return MockDatePicker
 })
+
+jest.mock('@/components/ui/Tooltip', () => ({
+  __esModule: true,
+  default: ({ content, children }: { content: string; children: React.ReactNode }) => (
+    <div data-tooltip={content}>{children}</div>
+  ),
+}))
 
 type Filters = { title: string; year: number }
 type StarFilters = { rating: number }
@@ -43,15 +54,14 @@ describe('FiltersPanel', () => {
     })
   })
 
-  describe('active filter count badge', () => {
-    it('shows no badge when collapsed with no active filters', async () => {
+  describe('collapsed summary pills', () => {
+    it('shows no summary when collapsed with no active filters', async () => {
       render(<FiltersPanel schema={schema} filters={defaultFilters} onChange={jest.fn()} />)
       await userEvent.click(screen.getAllByRole('button')[0])
-      expect(screen.queryByText('1')).not.toBeInTheDocument()
-      expect(screen.queryByText('2')).not.toBeInTheDocument()
+      expect(screen.queryByText(/""/)).not.toBeInTheDocument()
     })
 
-    it('shows count badge when collapsed with active filters', async () => {
+    it('shows text pill when collapsed with active title filter', async () => {
       render(
         <FiltersPanel
           schema={schema}
@@ -60,10 +70,10 @@ describe('FiltersPanel', () => {
         />
       )
       await userEvent.click(screen.getAllByRole('button')[0])
-      expect(screen.getByText('1')).toBeInTheDocument()
+      expect(screen.getByText('"inception"')).toBeInTheDocument()
     })
 
-    it('counts all active filters', async () => {
+    it('shows pills for all active filters when collapsed', async () => {
       render(
         <FiltersPanel
           schema={schema}
@@ -72,10 +82,11 @@ describe('FiltersPanel', () => {
         />
       )
       await userEvent.click(screen.getAllByRole('button')[0])
-      expect(screen.getByText('2')).toBeInTheDocument()
+      expect(screen.getByText('"inception"')).toBeInTheDocument()
+      expect(screen.getByText('2023')).toBeInTheDocument()
     })
 
-    it('does not show badge while expanded', () => {
+    it('does not show summary pills while expanded', () => {
       render(
         <FiltersPanel
           schema={schema}
@@ -83,7 +94,7 @@ describe('FiltersPanel', () => {
           onChange={jest.fn()}
         />
       )
-      expect(screen.queryByText('2')).not.toBeInTheDocument()
+      expect(screen.queryByText('"inception"')).not.toBeInTheDocument()
     })
   })
 
@@ -145,15 +156,26 @@ describe('FiltersPanel — star filter', () => {
     expect(onChange).toHaveBeenCalledWith({ rating: 0 })
   })
 
-  it('counts star filter as active when rating > 0', async () => {
+  it('shows clear button when rating > 0 (filter is active)', async () => {
     render(<FiltersPanel schema={starSchema} filters={{ rating: 8 }} onChange={jest.fn()} />)
     await userEvent.click(screen.getAllByRole('button')[0])
-    expect(screen.getByText('1')).toBeInTheDocument()
+    expect(screen.getByText('common.clearFilters')).toBeInTheDocument()
   })
 
-  it('does not count star filter as active when rating is 0', async () => {
+  it('shows no clear button when rating is 0 (filter inactive)', async () => {
     render(<FiltersPanel schema={starSchema} filters={{ rating: 0 }} onChange={jest.fn()} />)
     await userEvent.click(screen.getAllByRole('button')[0])
-    expect(screen.queryByText('1')).not.toBeInTheDocument()
+    expect(screen.queryByText('common.clearFilters')).not.toBeInTheDocument()
+  })
+
+  it('summary pill tooltip shows TMDB score /10, not star equivalent', () => {
+    const { container } = render(
+      <FiltersPanel schema={starSchema} filters={{ rating: 8 }} onChange={jest.fn()} />
+    )
+    // Panel starts open — collapse it to show summary pills
+    fireEvent.click(screen.getAllByRole('button')[0])
+    const tooltip = container.querySelector('[data-tooltip]')
+    expect(tooltip?.getAttribute('data-tooltip')).toContain('8/10')
+    expect(tooltip?.getAttribute('data-tooltip')).not.toContain('4★')
   })
 })

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import clsx from 'clsx'
 
 import Modal from '@/components/ui/Modal'
 import MediaPoster from '@/components/common/MediaPoster'
@@ -9,19 +10,21 @@ import Text from '@/components/ui/Text'
 
 import { useMovieDetail } from '@/features/movies/hooks/useMovieDetail'
 import { useWatchProviders } from '@/hooks/useWatchProviders'
-import { fetchMovieWatchProviders } from '@/features/movies/movies.service'
+import { fetchMovieWatchProviders, fetchMovieVideos } from '@/features/movies/movies.service'
 import { useMovieInTheaters } from '@/features/movies/hooks/useMovieInTheaters'
+import { useTrailer } from '@/hooks/useTrailer'
 import CollectionAccordion from './CollectionAccordion'
 import MovieMetaGrid from './MovieMetaGrid'
 import MediaDetailSkeleton from '@/components/common/MediaDetailSkeleton'
 import WatchProviders from '@/components/common/WatchProviders'
+import TrailerPlayer from '@/components/ui/TrailerPlayer'
+import Tooltip from '@/components/ui/Tooltip'
 import { getMovieUI } from '@/features/movies/getMovieUI'
-import { EyeIcon } from '@/components/icons'
+import WatchedToggleButton from '@/components/ui/WatchedToggleButton'
 import { useLanguageStore } from '@/store/languageStore'
 import { formatMonthYear } from '@/utils/formatDate'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useUserStore } from '@/store/userStore'
-import clsx from 'clsx'
 
 type Props = {
   movieId: number
@@ -32,9 +35,16 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
   const { t } = useTranslation()
   const { language } = useLanguageStore()
   const [currentId, setCurrentId] = useState(movieId)
+  const [showTrailer, setShowTrailer] = useState(false)
   const { detail, loading, error } = useMovieDetail(currentId)
   const { flatrate, rent, loading: providersLoading } = useWatchProviders(currentId, fetchMovieWatchProviders, 'movie')
   const { inTheaters, loading: inTheatersLoading } = useMovieInTheaters(currentId)
+  const { trailer } = useTrailer(
+    ['movie-trailer', currentId],
+    () => fetchMovieVideos(currentId),
+    true,
+    language,
+  )
 
   const userId = useUserStore((s) => s.userId)
   const role   = useUserStore((s) => s.role)
@@ -95,30 +105,44 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
                 >
                   {detail.title}
                 </Text>
-                {role !== 'admin' && (
-                  <button
-                    onClick={() => toggleMovie(userKey, {
-                      id: detail.id,
-                      title: detail.title,
-                      release_date: detail.release_date,
-                      vote_average: detail.vote_average,
-                      vote_count: detail.vote_count,
-                      poster_path: detail.poster_path,
-                      original_language: detail.original_language,
-                      collection_id: detail.belongs_to_collection?.id,
-                      collection_name: detail.belongs_to_collection?.name,
-                    })}
-                    className={clsx(
-                      'shrink-0 mt-1 flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md transition-colors whitespace-nowrap',
-                      isWatched
-                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                        : 'bg-foreground/10 text-foreground hover:bg-foreground/15'
-                    )}
-                  >
-                    <EyeIcon size={12} />
-                    {isWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
-                  </button>
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {trailer && (
+                    <Tooltip content={t('common.trailer')} placement="top">
+                      <button
+                        data-cy="trailer-button"
+                        onClick={() => setShowTrailer((v) => !v)}
+                        className={clsx(
+                          'w-7 h-7 flex items-center justify-center rounded border transition-colors cursor-pointer',
+                          showTrailer
+                            ? 'border-primary text-primary bg-primary/10'
+                            : 'border-border text-muted-foreground hover:border-primary/60 hover:text-primary hover:bg-primary/5',
+                        )}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                          <path d="M3 2l7 4-7 4V2z" />
+                        </svg>
+                      </button>
+                    </Tooltip>
+                  )}
+                  {role !== 'admin' && (
+                    <WatchedToggleButton
+                      isWatched={isWatched}
+                      label={isWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
+                      onClick={() => toggleMovie(userKey, {
+                        id: detail.id,
+                        title: detail.title,
+                        release_date: detail.release_date,
+                        vote_average: detail.vote_average,
+                        vote_count: detail.vote_count,
+                        poster_path: detail.poster_path,
+                        original_language: detail.original_language,
+                        collection_id: detail.belongs_to_collection?.id,
+                        collection_name: detail.belongs_to_collection?.name,
+                        genre_ids: detail.genres?.map((g) => g.id) ?? [],
+                      })}
+                    />
+                  )}
+                </div>
               </div>
 
               {detail.tagline && (
@@ -155,6 +179,8 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
 
             </div>
           </div>
+
+          {showTrailer && trailer && <TrailerPlayer trailerKey={trailer.key} onClose={() => setShowTrailer(false)} />}
 
           {/* COLLECTION */}
           {detail.belongs_to_collection && (
