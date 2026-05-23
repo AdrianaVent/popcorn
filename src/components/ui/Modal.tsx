@@ -39,6 +39,7 @@ export default function Modal({
         bg-black/50
         backdrop-blur-sm
         p-4
+        animate-fade-in
       "
     >
       <div
@@ -53,7 +54,7 @@ export default function Modal({
           border border-border
           rounded-2xl
           shadow-2xl
-          animate-in fade-in zoom-in-95
+          animate-modal-in
         "
       >
         {/* HEADER */}

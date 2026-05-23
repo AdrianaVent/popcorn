@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Table from '@/components/ui/Table/Table'
@@ -11,7 +11,8 @@ import LoadingOverlay from '@/components/ui/LoadingOverlay'
 import SeriesDetailModal from './components/SeriesDetailModal'
 
 import { useSeries, applyClientFilters } from './hooks/useSeries'
-import { fetchSeries, fetchSeriesDetail, fetchSeasonDetail, fetchSeriesWatchProviderOptions } from './series.service'
+import { fetchSeries, fetchSeriesDetail, fetchSeriesWatchProviderOptions } from './series.service'
+import { useSeriesEnrichment } from './hooks/useSeriesEnrichment'
 import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
 import { getStatusConfig } from './getSeriesUI'
 import StatusBadge from './components/StatusBadge'
@@ -67,9 +68,6 @@ export default function SeriesFeature() {
 
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [isExporting, setIsExporting] = useState(false)
-  const [statuses, setStatuses] = useState<Map<number, string>>(new Map())
-  const [totals, setTotals] = useState<Map<number, number>>(new Map())
-  const [runtimes, setRuntimes] = useState<Map<number, number | null>>(new Map())
   const { filters, setFilters } = useFilters<SeriesFilters>(initialFilters)
 
   const [sort, setSort] = useState<SortState<SeriesRow> | null>(null)
@@ -84,8 +82,6 @@ export default function SeriesFeature() {
     setSort((prev) => prev?.key === key ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' })
     goToPage(1)
   }, [goToPage])
-
-  const abortRef = useRef<AbortController | null>(null)
 
   const PAGE_SIZE = 20
 
@@ -128,52 +124,7 @@ export default function SeriesFeature() {
     return series
   }, [isNameSort, nameSortData, page, sort, series])
 
-  useEffect(() => {
-    if (!visibleSeries.length) return
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
-
-    Promise.allSettled(
-      visibleSeries.map(async (s) => {
-        const detail = await fetchSeriesDetail(s.id, language)
-        const validSeasons = (detail.seasons ?? []).filter((vs) => vs.air_date && vs.season_number > 0)
-        const numEps = validSeasons.reduce((sum, vs) => sum + vs.episode_count, 0)
-        const legacyRt = detail.episode_run_time?.[0] || null
-        let epRt = legacyRt ?? detail.last_episode_to_air?.runtime ?? null
-        if (epRt == null && validSeasons.length > 0) {
-          try {
-            const seasonDetail = await fetchSeasonDetail(s.id, validSeasons[0].season_number, language)
-            const knownRuntimes = seasonDetail.episodes
-              .map((e) => e.runtime)
-              .filter((r): r is number => r != null && r > 0)
-            if (knownRuntimes.length > 0) {
-              epRt = Math.round(knownRuntimes.reduce((a: number, b: number) => a + b, 0) / knownRuntimes.length)
-            }
-          } catch { /* ignore */ }
-        }
-        return { id: s.id, detail, numEps, epRt }
-      })
-    ).then((results) => {
-      if (controller.signal.aborted) return
-      const nextStatuses = new Map<number, string>()
-      const nextTotals = new Map<number, number>()
-      const nextRuntimes = new Map<number, number | null>()
-      results.forEach((result) => {
-        if (result.status === 'fulfilled') {
-          const { id, detail, numEps, epRt } = result.value
-          if (detail.status) nextStatuses.set(id, detail.status)
-          if (numEps) nextTotals.set(id, numEps)
-          nextRuntimes.set(id, epRt != null && numEps > 0 ? epRt * numEps : null)
-        }
-      })
-      setStatuses(nextStatuses)
-      setTotals(nextTotals)
-      setRuntimes(nextRuntimes)
-    })
-
-    return () => { controller.abort() }
-  }, [visibleSeries, language])
+  const { statuses, totals, runtimes } = useSeriesEnrichment(visibleSeries, language)
 
   const userId = useUserStore((s) => s.userId)
   const role = useUserStore((s) => s.role)

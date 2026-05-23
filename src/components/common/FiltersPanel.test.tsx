@@ -40,10 +40,13 @@ describe('FiltersPanel', () => {
       expect(screen.getByRole('textbox')).toBeInTheDocument()
     })
 
-    it('hides inputs when collapsed', async () => {
+    it('hides inputs when collapsed (opacity via inline style)', async () => {
       render(<FiltersPanel schema={schema} filters={defaultFilters} onChange={jest.fn()} />)
       await userEvent.click(screen.getAllByRole('button')[0])
-      expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+      // Content stays in DOM for animation; visually hidden via inline opacity style
+      const textbox = screen.getByRole('textbox')
+      expect(textbox).toBeInTheDocument()
+      expect(textbox.closest('[style*="opacity: 0"]')).not.toBeNull()
     })
 
     it('shows inputs again after re-expanding', async () => {

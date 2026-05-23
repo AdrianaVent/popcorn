@@ -55,7 +55,14 @@ export function fetchMovies(
   const params: Record<string, string | number> = {}
   if (sortBy)                    params['sort_by'] = sortBy
   if (filters?.vote_average_gte) params['vote_average.gte'] = filters.vote_average_gte
-  if (filters?.release_year)     params['primary_release_year'] = filters.release_year
+  const gte = filters?.release_year_gte
+  const lte = filters?.release_year_lte
+  if (gte && lte && gte === lte) {
+    params['primary_release_year'] = gte
+  } else {
+    if (gte) params['primary_release_date.gte'] = `${gte}-01-01`
+    if (lte) params['primary_release_date.lte'] = `${lte}-12-31`
+  }
   if (filters?.runtime_gte)      params['with_runtime.gte'] = filters.runtime_gte
   if (filters?.provider_id) {
     params['with_watch_providers'] = filters.provider_id

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Table from '@/components/ui/Table/Table'
@@ -11,7 +11,8 @@ import ExportButton from '@/components/common/ExportButton'
 import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 import { useMovies, applyClientFilters } from './hooks/useMovies'
-import { fetchMovies, fetchMovieDetail, fetchMovieWatchProviderOptions } from './movies.service'
+import { fetchMovies, fetchMovieWatchProviderOptions } from './movies.service'
+import { useMovieRuntimeEnrichment } from './hooks/useMovieRuntimeEnrichment'
 import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
 import type { Column, SortState } from '@/types/table'
 import type { MovieRow, MovieFilters } from '@/types/movie'
@@ -116,9 +117,6 @@ export default function MoviesFeature() {
     return Object.values(watchedMovies ?? {}) as MovieRow[]
   }, [filters.watched, watchedMovies])
 
-  const [runtimes, setRuntimes] = useState<Map<number, number | null>>(new Map())
-  const abortRef = useRef<AbortController | null>(null)
-
   const isTitleSort = sort?.key === 'title' && !inSearchMode && filters.watched !== 'watched'
 
   const TITLE_SORT_PAGE_CAP = 10
@@ -163,6 +161,8 @@ export default function MoviesFeature() {
     return movies
   }, [movies, filters.watched, watchedMovies, watchedModeItems, page, sort, isTitleSort, titleSortData])
 
+  const runtimes = useMovieRuntimeEnrichment(visibleMovies, language)
+
   const filteredMovies = useMemo(() => {
     if (sort?.key !== 'runtime') return visibleMovies
     const unset = sort.dir === 'asc' ? Infinity : -Infinity
@@ -184,29 +184,6 @@ export default function MoviesFeature() {
   }, [filters.watched, watchedModeItems, isTitleSort, titleSortData, watchedMovies, totalPages])
 
   const combinedLoading = isTitleSort ? titleSortLoading : loading
-
-  useEffect(() => {
-    if (!filteredMovies.length) return
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
-
-    Promise.allSettled(
-      filteredMovies.map((m) => fetchMovieDetail(m.id, language))
-    ).then((results) => {
-      if (controller.signal.aborted) return
-      const next = new Map<number, number | null>()
-      results.forEach((result, i) => {
-        next.set(
-          filteredMovies[i].id,
-          result.status === 'fulfilled' ? (result.value?.runtime ?? null) : null,
-        )
-      })
-      setRuntimes(next)
-    })
-
-    return () => { controller.abort() }
-  }, [filteredMovies, language])
 
   const handleExport = useCallback(async (format: 'json' | 'csv') => {
     setIsExporting(true)

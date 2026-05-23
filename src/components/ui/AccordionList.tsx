@@ -69,31 +69,39 @@ export default function AccordionList<T>({
         )}
       </div>
 
-      {/* CONTENT */}
-      {open && (
-        <div
-          className="overflow-y-auto bg-card/50"
-          style={{ maxHeight }}
-        >
-          {loading && (
-            <div className="p-3 flex flex-col gap-2">
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-12 rounded bg-border/50 animate-pulse"
-                />
-              ))}
-            </div>
-          )}
-
-          {!loading &&
-            items.map((item, index) => (
-              <div key={index}>
-                {renderItem(item, index)}
+      {/* CONTENT — grid-template-rows trick for smooth height transition */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateRows: open ? '1fr' : '0fr',
+          transition: 'grid-template-rows 280ms cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+      >
+        <div className="overflow-hidden">
+          <div
+            className="overflow-y-auto bg-card/50"
+            style={{ maxHeight }}
+          >
+            {loading && (
+              <div className="p-3 flex flex-col gap-2">
+                {[...Array(4)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-12 rounded bg-border/50 animate-pulse"
+                  />
+                ))}
               </div>
-            ))}
+            )}
+
+            {!loading &&
+              items.map((item, index) => (
+                <div key={index}>
+                  {renderItem(item, index)}
+                </div>
+              ))}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }

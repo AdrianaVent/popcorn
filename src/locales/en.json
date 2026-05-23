@@ -22,7 +22,8 @@
     "errorBoundary": "Something went wrong. You can try again or reload the page.",
     "clearFilters": "Clear filters",
     "minuteUnit": "m",
-    "trailer": "Trailer"
+    "trailer": "Trailer",
+    "search": "Search..."
   },
   "languageSwitcher": {
     "label": "Current language: {{language}}"

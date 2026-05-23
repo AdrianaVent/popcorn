@@ -27,11 +27,14 @@ export const staticSeriesFiltersSchema: FiltersSchema<SeriesFilters> = [
     type: 'star',
   },
   {
-    key: 'first_air_year',
+    key: 'first_air_year_gte',
+    keyTo: 'first_air_year_lte',
     label: 'series.filters.year',
-    type: 'number',
-    min: 1900,
-    max: CURRENT_YEAR,
+    type: 'year-range',
+    options: Array.from({ length: CURRENT_YEAR + 5 - 1950 + 1 }, (_, i) => {
+      const year = CURRENT_YEAR + 5 - i
+      return { value: year, label: String(year) }
+    }),
   },
   {
     key: 'watched',

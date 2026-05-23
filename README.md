@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.11.0-6B2737)
+![Version](https://img.shields.io/badge/version-0.11.1-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -432,7 +432,7 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 The project has two test layers: **479 unit/integration tests** (Jest) and **101 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 479 tests · 46 suites
+### Unit & integration tests (Jest) — 534 tests · 49 suites
 
 ```bash
 npm test           # run once
@@ -445,11 +445,11 @@ npm run test:watch # watch mode
 | Business logic | Client-side filters (movies + series), TMDB fetch error mapping, export utilities |
 | Stores | `watchedStore` (toggle movie/episode, season counts), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
 | Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases`, `useTrailer` (language preference, YouTube filtering, fallback) |
-| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button) |
+| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button), `SearchableSelect` (open/close, search, selection, clear), `YearRangePicker` (cross-filtering, null callbacks), `FilterFieldInput` (all field types, null guards) |
 | Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
 | API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date) |
 
-### End-to-end tests (Cypress) — 101 tests · 7 suites
+### End-to-end tests (Cypress) — 113 tests · 7 suites
 
 In CI, Cypress runs against the production build automatically. Locally, run against the dev server:
 
@@ -467,11 +467,11 @@ npm run cypress:run
 | Suite | Tests | What's covered |
 |---|---|---|
 | `auth.cy.ts` | 6 | Redirect when unauthenticated, invalid credentials, login, logout, session expiry |
-| `home.cy.ts` | 20 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar, Top 10 year display, calendar trailer button |
+| `home.cy.ts` | 24 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar, Top 10 year display, calendar trailer button, Top 10 genre filter dropdown |
 | `movies.cy.ts` | 29 | Movie list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, access control, trailer (show, open, close, X button) |
 | `series.cy.ts` | 24 | Series list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, episode runtime guard, trailer (show, open, close, X button) |
 | `users.cy.ts` | 15 | Create, edit, delete (single + bulk), toasts, import JSON/CSV, partial failures |
-| `my-list.cy.ts` | 9 | Tabs, empty state, watched movies/series, saga grouping, nav access control |
+| `my-list.cy.ts` | 12 | Tabs, empty state, watched movies/series, saga grouping, nav access control, star rating |
 | `settings.cy.ts` | 3 | Theme switching (light / dark), language switching (EN / ES) |
 
 Cypress creates and cleans up its own test users in the local database automatically. TMDB calls are intercepted — no real API key needed to run the E2E suite.
@@ -561,12 +561,13 @@ src/
 │   └── ui/             # Button, Input, Text, Modal, ModalFooter, Header,
 │                       # DatePicker, ConfirmModal, IconButton, Table/, LoadingOverlay,
 │                       # Toast/ToastItem, Toast/ToastContainer, BarChart, ToggleSwitch,
+│                       # SearchableSelect, YearRangePicker, FilterFieldInput,
 │                       # StarRating, Tooltip, ...
 ├── config/             # auth.ts · tmdb.ts · i18n.ts · constants.ts
 ├── db/                 # client.ts (SQLite singleton) · users.ts (typed queries)
 ├── features/
 │   ├── auth/login/     # LoginFeature · useLogin · login.service.ts
-│   ├── home/           # HomeFeature · useMovieGenres · useSeriesGenres · ReleaseCalendar
+│   ├── home/           # HomeFeature · useMovieGenres · useSeriesGenres · ReleaseCalendar · CalendarReleaseItem
 │   ├── movies/         # MoviesFeature · hooks · components · service
 │   ├── myList/         # MyListFeature · MovieCard · SeriesCard (tabs, saga grouping, ratings)
 │   ├── series/         # SeriesFeature · hooks · components · service
