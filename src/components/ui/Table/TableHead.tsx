@@ -31,8 +31,8 @@ export default function TableHead<T extends Record<string, unknown>>({
   onSort,
 }: TableHeadProps<T>) {
   return (
-    <thead className="sticky top-0 z-10 bg-background will-change-transform">
-      <tr className="bg-background border-y border-border/60 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
+    <thead>
+      <tr>
         {columns.map((col) => {
           const isActive = sort?.key === col.key
           const content = col.headerNode ?? (
@@ -46,6 +46,8 @@ export default function TableHead<T extends Record<string, unknown>>({
             <th
               key={String(col.key)}
               className={clsx(
+                'sticky top-0 z-10 bg-background',
+                'border-b border-border/60 shadow-[0_1px_0_rgba(0,0,0,0.04)]',
                 'px-2 py-4 text-[11px] font-semibold uppercase tracking-[0.14em] overflow-hidden',
                 isActive ? 'text-primary' : 'text-foreground',
                 col.sortable && 'cursor-pointer select-none hover:text-primary transition-colors',

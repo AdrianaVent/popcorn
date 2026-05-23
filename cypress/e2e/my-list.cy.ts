@@ -165,4 +165,51 @@ describe('My List', () => {
     cy.visitAsGuest('/my-list')
     cy.get('nav').contains('My list').should('be.visible')
   })
+
+  // ─── Star rating ──────────────────────────────────────────────
+
+  it('shows "Rate it" prompt when a watched movie has no rating', () => {
+    cy.login('cypress_guest', 'CypressGuest1!').then((resp) => {
+      const { userId, role } = resp.body
+      cy.visit('/my-list', {
+        onBeforeLoad: (win: Window) => {
+          win.localStorage.setItem('popcorn-language', JSON.stringify({ state: { language: 'en', userLanguages: { [userId]: 'en' } }, version: 0 }))
+          win.localStorage.setItem('popcorn-user', JSON.stringify({ state: { userId, role }, version: 0 }))
+          seedWatched(win, userId)
+        },
+      })
+    })
+    cy.contains('Rate it').should('be.visible')
+  })
+
+  it('clicking a star sets a rating and hides the "Rate it" prompt', () => {
+    cy.login('cypress_guest', 'CypressGuest1!').then((resp) => {
+      const { userId, role } = resp.body
+      cy.visit('/my-list', {
+        onBeforeLoad: (win: Window) => {
+          win.localStorage.setItem('popcorn-language', JSON.stringify({ state: { language: 'en', userLanguages: { [userId]: 'en' } }, version: 0 }))
+          win.localStorage.setItem('popcorn-user', JSON.stringify({ state: { userId, role }, version: 0 }))
+          seedWatched(win, userId)
+        },
+      })
+    })
+    cy.contains('Rate it').should('be.visible')
+    cy.get('[role="slider"] svg').eq(4).click()
+    cy.contains('Rate it').should('not.exist')
+  })
+
+  it('shows "Finish to rate" for a series not yet completed', () => {
+    cy.login('cypress_guest', 'CypressGuest1!').then((resp) => {
+      const { userId, role } = resp.body
+      cy.visit('/my-list', {
+        onBeforeLoad: (win: Window) => {
+          win.localStorage.setItem('popcorn-language', JSON.stringify({ state: { language: 'en', userLanguages: { [userId]: 'en' } }, version: 0 }))
+          win.localStorage.setItem('popcorn-user', JSON.stringify({ state: { userId, role }, version: 0 }))
+          seedWatched(win, userId)
+        },
+      })
+    })
+    cy.contains('button', 'Series').click()
+    cy.contains('Finish to rate').should('be.visible')
+  })
 })

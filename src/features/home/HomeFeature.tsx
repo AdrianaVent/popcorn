@@ -34,6 +34,7 @@ export default function HomeFeature() {
     const now = new Date()
     return { year: now.getFullYear(), month: now.getMonth() + 1 }
   })
+  const [calendarDir, setCalendarDir] = useState<'left' | 'right' | null>(null)
   const [selectedMovieId, setSelectedMovieId]   = useState<number | null>(null)
   const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null)
 
@@ -81,15 +82,25 @@ export default function HomeFeature() {
   const isGenreMovies = genreTab === 'movies'
   const calendarQuery = calendarTab === 'movies' ? movieReleases : seriesReleases
 
-  const handlePrevMonth = () =>
+  const handlePrevMonth = () => {
+    setCalendarDir('left')
     setCalendar((c) => c.month === 1 ? { year: c.year - 1, month: 12 } : { ...c, month: c.month - 1 })
+  }
 
-  const handleNextMonth = () =>
+  const handleNextMonth = () => {
+    setCalendarDir('right')
     setCalendar((c) => c.month === 12 ? { year: c.year + 1, month: 1 } : { ...c, month: c.month + 1 })
+  }
 
   const handleToday = () => {
+    setCalendarDir(null)
     const now = new Date()
     setCalendar({ year: now.getFullYear(), month: now.getMonth() + 1 })
+  }
+
+  const handleCalendarTabChange = (tab: typeof calendarTab) => {
+    setCalendarDir(null)
+    setCalendarTab(tab)
   }
   const handleEntryClick = (id: number) => {
     if (calendarTab === 'movies') setSelectedMovieId(id)
@@ -118,6 +129,7 @@ export default function HomeFeature() {
           defaultMode={top10DefaultMode}
           showUserToggle={role !== 'admin'}
           onItemClick={handleTop10Click}
+          className="animate-fade-in"
         />
 
         {/* Calendar card */}
@@ -126,13 +138,14 @@ export default function HomeFeature() {
           year={calendar.year}
           month={calendar.month}
           tab={calendarTab}
-          onTabChange={setCalendarTab}
+          onTabChange={handleCalendarTabChange}
           onPrevMonth={handlePrevMonth}
           onNextMonth={handleNextMonth}
           onToday={handleToday}
           query={calendarQuery}
           genreMap={genreMap}
           onEntryClick={handleEntryClick}
+          animateFrom={calendarDir ?? undefined}
         />
 
         {/* Genres card */}
@@ -147,6 +160,7 @@ export default function HomeFeature() {
           defaultMode={isGenreMovies ? movieDefaultMode : seriesDefaultMode}
           showUserToggle={role !== 'admin'}
           getRowIcon={getGenreIconByName}
+          className="animate-fade-in"
         />
       </div>
       </div>

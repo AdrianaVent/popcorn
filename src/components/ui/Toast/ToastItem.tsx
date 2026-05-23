@@ -41,7 +41,7 @@ export default function ToastItem({ toast, onDismiss }: Props) {
   return (
     <div
       role="alert"
-      className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-md border border-l-4 text-sm font-medium max-w-sm w-full ${container}`}
+      className={`animate-toast-in flex items-center gap-3 px-4 py-3 rounded-lg shadow-md border border-l-4 text-sm font-medium max-w-sm w-full ${container}`}
     >
       <span className={`shrink-0 flex items-center justify-center w-7 h-7 rounded-full ${iconBg}`}>
         <Icon size={14} />

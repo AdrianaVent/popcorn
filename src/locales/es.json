@@ -22,7 +22,8 @@
     "errorBoundary": "Algo ha ido mal. Puedes volver a intentarlo o recargar la página.",
     "clearFilters": "Limpiar filtros",
     "minuteUnit": "min",
-    "trailer": "Tráiler"
+    "trailer": "Tráiler",
+    "search": "Buscar..."
   },
   "languageSwitcher": {
     "label": "Idioma actual: {{language}}"

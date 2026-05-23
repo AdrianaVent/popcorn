@@ -145,7 +145,7 @@ export default function MyListFeature() {
 
       {/* Movies grid */}
       {tab === 'movies' && !isEmpty && (
-        <div key={String(groupBySaga)} className="flex-1 overflow-y-auto">
+        <div key={`movies-${String(groupBySaga)}`} className="flex-1 overflow-y-auto animate-fade-in">
           {groupBySaga ? (
             <div className="flex flex-col gap-8 pb-6">
               {sagaGroups.filter((g) => g.name).map((group) => (
@@ -205,7 +205,7 @@ export default function MyListFeature() {
 
       {/* Series grid */}
       {tab === 'series' && !isEmpty && (
-        <div className="flex-1 overflow-y-auto">
+        <div key="series" className="flex-1 overflow-y-auto animate-fade-in">
           <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-4 pb-6">
             {seriesList.map((series, i) => (
                 <SeriesCard
