@@ -48,7 +48,14 @@ export function fetchSeries(
   if (sortBy)                    params['sort_by'] = sortBy
   if (filters?.vote_average_gte) params['vote_average.gte'] = filters.vote_average_gte
   if (filters?.runtime_gte)      params['with_runtime.gte'] = filters.runtime_gte
-  if (filters?.first_air_year)   params['first_air_date_year'] = filters.first_air_year
+  const gte = filters?.first_air_year_gte
+  const lte = filters?.first_air_year_lte
+  if (gte && lte && gte === lte) {
+    params['first_air_date_year'] = gte
+  } else {
+    if (gte) params['first_air_date.gte'] = `${gte}-01-01`
+    if (lte) params['first_air_date.lte'] = `${lte}-12-31`
+  }
   if (filters?.status)           params['with_status'] = Number(filters.status)
   if (filters?.provider_id) {
     params['with_watch_providers'] = filters.provider_id

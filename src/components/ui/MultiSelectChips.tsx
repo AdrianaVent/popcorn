@@ -109,7 +109,7 @@ export default function MultiSelectChips({ options, value, onChange, placeholder
         <div
           ref={dropdownRef}
           style={{ position: 'fixed', zIndex: 9999, ...dropdownStyle }}
-          className="p-2 rounded-lg border border-border bg-card shadow-lg min-w-70 max-w-95"
+          className="animate-fade-in p-2 rounded-lg border border-border bg-card shadow-lg min-w-70 max-w-95"
         >
           <div className="flex flex-wrap gap-1">
             {options.map((opt) => {

@@ -14,7 +14,7 @@ export type Column<T extends Record<string, unknown>> = {
   sortable?: boolean
 }
 
-export type FilterFieldType = 'text' | 'number' | 'boolean' | 'select' | 'date' | 'star' | 'genre-multi'
+export type FilterFieldType = 'text' | 'number' | 'boolean' | 'select' | 'date' | 'star' | 'genre-multi' | 'searchable-select' | 'year-range'
 
 export type FilterOption = {
   value: string | number
@@ -24,6 +24,7 @@ export type FilterOption = {
 
 export type FilterField<T> = {
   key: keyof T
+  keyTo?: keyof T
   label: string
   type: FilterFieldType
   options?: FilterOption[]

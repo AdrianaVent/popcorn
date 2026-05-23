@@ -58,6 +58,9 @@ src/
 │                               # ContentTabToggle (icon-button tab switcher — film/tv),
 │                               # GenreGrid (genre badge list with icon + name deduplication),
 │                               # MultiSelectChips (portal-based genre multi-select dropdown),
+│                               # SearchableSelect (portal-based single-select with search input),
+│                               # YearRangePicker (two SearchableSelects cross-filtering each other),
+│                               # FilterFieldInput (generic field renderer — dispatches on FilterFieldType),
 │                               # ToggleSwitch, PageSkeleton,
 │                               # StarRating (5-star, half-star; value: 0.5–5 | null),
 │                               # Tooltip (portal-based, 150ms delay, placement: top/right/bottom/left),
@@ -74,7 +77,9 @@ src/
 │   ├── auth/login/             # LoginFeature, LoginForm, useLogin, login.service.ts
 │   ├── home/                   # HomeFeature — genre donut charts + Top10 cards + release calendar
 │   │   ├── components/         # ReleaseCalendar (month grid, dots on release days, navigation),
-│   │   │                       # Top10Card (ranked list with poster, year, genre icons, star rating)
+│   │   │                       # CalendarReleaseItem (single release entry with trailer, genre icons, status),
+│   │   │                       # Top10Card (ranked list with poster, year, genre icons, star rating;
+│   │   │                       #   genre filter via portal dropdown — data-cy="top10-genre-dropdown")
 │   │   └── hooks/              # useMovieGenres (user + global), useSeriesGenres (user + global),
 │   │                           # buildGenreCounts (shared genre aggregation utility — deduplicates same-named genres per entry),
 │   │                           # useMovieReleases, useSeriesReleases (monthly TMDB releases),
@@ -83,7 +88,8 @@ src/
 │   │   ├── components/         # MovieDetailModal, MovieMetaGrid,
 │   │   │                       # CollectionAccordion (each saga item has inline trailer)
 │   │   ├── hooks/              # useMovies, useMovieDetail, useCollectionDetail,
-│   │   │                       # useMovieInTheaters
+│   │   │                       # useMovieInTheaters,
+│   │   │                       # useMovieRuntimeEnrichment (Promise.allSettled runtime backfill via AbortController)
 │   │   ├── MoviesFeature.tsx
 │   │   ├── movies.service.ts   # fetchMovies, fetchMovieDetail, fetchCollectionDetail,
 │   │   │                       # fetchMovieWatchProviders, fetchMovieWatchProviderOptions,
@@ -93,8 +99,12 @@ src/
 │   │   └── index.ts
 │   ├── series/
 │   │   ├── components/         # SeriesDetailModal, SeriesMetaGrid,
-│   │   │                       # SeasonsAccordion (each season has inline trailer; specials hidden)
-│   │   ├── hooks/              # useSeries, useSeriesDetail
+│   │   │                       # SeasonsAccordion (thin wrapper — delegates to seasons/SeasonItem),
+│   │   │                       # seasons/SeasonItem (trailer, mark-season-watched, episode list),
+│   │   │                       # seasons/EpisodeRow (episode with watched state + WatchedEpisodeButton),
+│   │   │                       # seasons/WatchedEpisodeButton (toggle episode watched)
+│   │   ├── hooks/              # useSeries, useSeriesDetail,
+│   │   │                       # useSeriesEnrichment (Promise.allSettled status/totals/runtimes backfill)
 │   │   ├── SeriesFeature.tsx
 │   │   ├── series.service.ts   # fetchSeries, fetchSeriesDetail, fetchSeasonDetail,
 │   │   │                       # fetchSeriesWatchProviders, fetchSeriesWatchProviderOptions,
@@ -195,6 +205,11 @@ data/
 | Top10 genre enrichment for user mode (backfills missing genre_ids via TanStack Query) | Done |
 | buildGenreCounts per-entry deduplication (one count per genre name per movie/series) | Done |
 | YouTube trailers (movie modal, series modal, seasons accordion, saga accordion, release calendar) | Done |
+| UI transition animations (Modal fade+scale, Toast slide-in, dropdowns fade-in, AccordionList height, MyList tab crossfade) | Done |
+| Top10 genre dropdown — portal-based (fixes overflow clipping in scrollable containers) | Done |
+| Sticky table header — per-`<th>` sticky (fixes poster bleed-through caused by GPU compositing conflict) | Done |
+| Component extraction — FilterFieldInput (from FiltersPanel), CalendarReleaseItem (from ReleaseCalendar), seasons/ subfolder (from SeasonsAccordion) | Done |
+| Hook extraction — useMovieRuntimeEnrichment (from MoviesFeature), useSeriesEnrichment (from SeriesFeature) | Done |
 
 ---
 
@@ -252,7 +267,7 @@ All TMDB data fetching and the users list use `useQuery` from `@tanstack/react-q
 `GET /api/users` accepts `page`, `pageSize` (default 20), `username`, `role`, `created_after`, `created_by` as query params. `usersDb.findPaginated` builds a dynamic SQL `WHERE` clause and returns `{ users, total }` with `LIMIT/OFFSET`. The response shape is `{ users, totalPages, totalResults, creators }` — `creators` is the distinct list of users who appear as `created_by`, used to populate the filter dropdown without a second request. `UsersFeature` query key is `['users', page, filters]`; filter changes reset the page to 1 synchronously via `handleSetFilters` (no `useEffect`). Export calls `fetchUsers(1, {}, 9999)` to get all users regardless of the current page. Page size matches TMDB (20 results per page).
 
 **Table loading/error/empty states**
-`Table` accepts `loading`, `error`, `onRetry` and `emptyMessage` props. When `loading=true`, `TableBody` renders skeleton rows matching the real column structure — same headers, same widths, animated pulse cells. Error and empty states render as absolute overlays inside the table container. This eliminates the mount/unmount swap between `TableSkeleton` and `Table` that caused layout shifts. `MoviesFeature` and `SeriesFeature` render a single `<Table>` unconditionally; `loading.tsx` files use `PageSkeleton` (shared component: real `Header` + real `FiltersPanel` with `disabled` + `TableSkeleton`) — the real components are shown blocked immediately during bundle download so the page is never blank. Table footer (`TableFooter`) is always rendered regardless of row count; during `isLoading` it shows an animated skeleton matching the footer layout. The sticky `<thead>` has `bg-background will-change-transform` to force GPU compositing and prevent the header from disappearing on scroll.
+`Table` accepts `loading`, `error`, `onRetry` and `emptyMessage` props. When `loading=true`, `TableBody` renders skeleton rows matching the real column structure — same headers, same widths, animated pulse cells. Error and empty states render as absolute overlays inside the table container. This eliminates the mount/unmount swap between `TableSkeleton` and `Table` that caused layout shifts. `MoviesFeature` and `SeriesFeature` render a single `<Table>` unconditionally; `loading.tsx` files use `PageSkeleton` (shared component: real `Header` + real `FiltersPanel` with `disabled` + `TableSkeleton`) — the real components are shown blocked immediately during bundle download so the page is never blank. Table footer (`TableFooter`) is always rendered regardless of row count; during `isLoading` it shows an animated skeleton matching the footer layout. Each `<th>` carries `sticky top-0 z-10 bg-background` individually — moving `sticky` from `<thead>` to each `<th>` avoids the GPU compositing conflict that caused Next.js `<Image>` layers to bleed through the header on scroll (`will-change-transform` on `<thead>` created a stacking context that lost the z-order fight).
 
 **Error boundaries**
 `ErrorBoundary` in `src/components/common/` is a React class component wrapping a functional `ErrorFallback` (needed because hooks cannot be used in class components). Wraps `MoviesPage`, `SeriesPage`, and `UsersPage`. On error, renders a translated message with a reset button that clears the error state and remounts the children.
@@ -311,7 +326,7 @@ npm run test:watch  # watch mode
 | Business logic | `applyClientFilters` (movies + series + language filter), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
 | Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation; `toastStore` — addToast, timers, removeToast; `ratingsStore` — setRating, removeRating, per-user isolation |
 | Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window), `useMovieReleases` (service call args), `useSeriesReleases` (disabled when no providers, enabled with providers), `useUserMovieTop10` / `useUserSeriesTop10` (genre_ids backfill via detail fetch, staleTime 5min), `useTrailer` (language preference via iso_639_1, YouTube filter, fallback to first; disabled/enabled; `pickYouTubeTrailer` pure function) — all wrapped in `QueryClientProvider` with `retry: false` |
-| Components | `Button`, `Modal`, `FiltersPanel` (collapse/expand, badge count, text/number/star/boolean/date/select types), `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, fluid variant, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states), `StarRating` (5 stars, readonly mode, onChange, hover, half-star gradient), `GenreGrid` (renders badges; deduplicates by resolved name + icon — Avatar case: Action+Adventure share icon → one badge), `TrailerPlayer` (iframe with correct src, no close button without onClose, close button present and calls onClose, custom className) |
+| Components | `Button`, `Modal`, `FiltersPanel` (collapse/expand, badge count, text/number/star/boolean/date/select types), `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, fluid variant, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states), `StarRating` (5 stars, readonly mode, onChange, hover, half-star gradient), `GenreGrid` (renders badges; deduplicates by resolved name + icon — Avatar case: Action+Adventure share icon → one badge), `TrailerPlayer` (iframe with correct src, no close button without onClose, close button present and calls onClose, custom className), `SearchableSelect` (trigger label, X clear, open/close, search filtering, case-insensitive, empty state, option highlight, outside-click close), `YearRangePicker` (fromOptions capped at valueTo, toOptions floored at valueFrom, null callbacks), `FilterFieldInput` (all 8 field types: text/number/boolean/select/date/star/searchable-select/year-range/genre-multi; null guard for missing options/keyTo) |
 | Services | `apiFetch` (401 auto-refresh, redirect on session expiry) |
 | API routes | `/api/users/import` (per-row validation: missing fields, invalid role/password, intra-file duplicate, DB duplicate, invalid creator, invalid date) |
 
@@ -334,8 +349,8 @@ Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test user
 | `series.cy.ts` | Series list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, watched controls (admin/guest), trailer (button visible, open iframe, close via button, close via × in player) |
 | `users.cy.ts` | List, create + toast, edit + toast, delete + toast, bulk delete + toast, self-protection, filters, import JSON + CSV, partial import failures, post-import cleanup |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
-| `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation, Top10 card title + year visible, calendar trailer button |
-| `my-list.cy.ts` | Page header + tabs, empty state (movies/series), watched movie with count badge, saga grouping button, series tab with watched series, nav item hidden for admin / visible for guest |
+| `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation, Top10 card title + year visible, calendar trailer button, Top10 genre dropdown (open, close, genre-filtered fetch, label update) |
+| `my-list.cy.ts` | Page header + tabs, empty state (movies/series), watched movie with count badge, saga grouping button, series tab with watched series, nav item hidden for admin / visible for guest, star rating ("Rate it" prompt, click to rate, "Finish to rate" for incomplete series) |
 
 ---
 

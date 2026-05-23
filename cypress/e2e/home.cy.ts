@@ -188,6 +188,45 @@ describe('Top10 card', () => {
     cy.wait('@top10')
     cy.contains('Avatar').closest('li').contains('2009').should('be.visible')
   })
+
+  // ─── Genre filter dropdown ────────────────────────────────────
+
+  it('opens the genre dropdown when the genre button is clicked', () => {
+    cy.wait('@top10')
+    cy.contains('button', 'All genres').click()
+    cy.get('[data-cy="top10-genre-dropdown"]').contains('Drama').should('be.visible')
+    cy.get('[data-cy="top10-genre-dropdown"]').contains('Action & Adventure').should('be.visible')
+  })
+
+  it('closing the dropdown via a second click hides the options', () => {
+    cy.wait('@top10')
+    cy.contains('button', 'All genres').click()
+    cy.get('[data-cy="top10-genre-dropdown"]').should('be.visible')
+    cy.contains('button', 'All genres').click()
+    cy.get('[data-cy="top10-genre-dropdown"]').should('not.exist')
+  })
+
+  it('selecting a genre fetches genre-filtered results and updates the list', () => {
+    cy.intercept('GET', /\/discover\/movie.*with_genres=18/, {
+      page: 1,
+      results: [{ id: 999, title: 'Drama King', release_date: '2022-03-01', vote_average: 8.9, vote_count: 6000, poster_path: null, genre_ids: [18] }],
+      total_pages: 1,
+      total_results: 1,
+    }).as('genreTop10')
+    cy.wait('@top10')
+    cy.contains('button', 'All genres').click()
+    cy.get('[data-cy="top10-genre-dropdown"]').contains('Drama').click()
+    cy.wait('@genreTop10')
+    cy.contains('Drama King').should('be.visible')
+  })
+
+  it('genre button label updates to the selected genre name', () => {
+    cy.intercept('GET', /\/discover\/movie.*with_genres=18/, { page: 1, results: [], total_pages: 1, total_results: 0 })
+    cy.wait('@top10')
+    cy.contains('button', 'All genres').click()
+    cy.get('[data-cy="top10-genre-dropdown"]').contains('Drama').click()
+    cy.contains('button', 'Drama').should('be.visible')
+  })
 })
 
 const calendarMovies = {

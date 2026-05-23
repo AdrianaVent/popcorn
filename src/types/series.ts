@@ -8,7 +8,8 @@ export type SeriesRow = Pick<
 export type SeriesFilters = {
   title?: string
   vote_average_gte?: number
-  first_air_year?: number
+  first_air_year_gte?: number
+  first_air_year_lte?: number
   runtime_gte?: number
   status?: string
   watched?: 'watched' | 'unwatched'

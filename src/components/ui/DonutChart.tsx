@@ -154,7 +154,7 @@ export default function DonutChart({
       )}
 
       {!query.isLoading && !query.isError && data.length > 0 && (
-        <div key={mode} className="flex flex-1 items-stretch gap-2 min-h-0">
+        <div key={mode} className="flex flex-1 items-stretch gap-2 min-h-0 animate-fade-in">
           {/* Donut — square; ResizeObserver measures the flex cell, chart gets exact pixels */}
           <div ref={containerRef} className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
             <div className="relative" style={{ width: chartPx, height: chartPx }}>

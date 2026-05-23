@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, LayoutGrid } from 'lucide-react'
 import ContentTabToggle, { type ContentTab } from '@/components/ui/ContentTabToggle'
@@ -87,6 +88,9 @@ export default function Top10Card({
   const [selectedGenreId, setSelectedGenreId] = useState<number | null>(null)
   const [isGenreOpen, setIsGenreOpen] = useState(false)
   const genreRef = useRef<HTMLDivElement>(null)
+  const genreTriggerRef = useRef<HTMLButtonElement>(null)
+  const genreDropdownRef = useRef<HTMLDivElement>(null)
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({})
 
   const isMovies = tab === 'movies'
   const globalQuery   = isMovies ? globalMovieQuery : globalSeriesQuery
@@ -149,13 +153,32 @@ export default function Top10Card({
   // All genre IDs for the current tab
   const genreIds = (isMovies ? MOVIE_GENRE_IDS : SERIES_GENRE_IDS).filter((id) => id !== 10770)
 
-  // Close popover on outside click
+  const openDropdown = useCallback(() => {
+    const rect = genreTriggerRef.current?.getBoundingClientRect()
+    if (rect) setDropdownStyle({ top: rect.bottom + 4, left: rect.left })
+    setIsGenreOpen(true)
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!isGenreOpen || !genreDropdownRef.current || !genreTriggerRef.current) return
+    const drop = genreDropdownRef.current.getBoundingClientRect()
+    const trigger = genreTriggerRef.current.getBoundingClientRect()
+    let { top, left } = dropdownStyle as { top: number; left: number }
+    if (drop.bottom > window.innerHeight) top = trigger.top - drop.height - 4
+    if (drop.right > window.innerWidth) left = window.innerWidth - drop.width - 8
+    if (top !== (dropdownStyle as { top: number }).top || left !== (dropdownStyle as { left: number }).left) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDropdownStyle({ top, left })
+    }
+  }, [isGenreOpen, dropdownStyle])
+
   useEffect(() => {
     if (!isGenreOpen) return
     function handleOutside(e: MouseEvent) {
-      if (genreRef.current && !genreRef.current.contains(e.target as Node)) {
-        setIsGenreOpen(false)
-      }
+      if (
+        !genreTriggerRef.current?.contains(e.target as Node) &&
+        !genreDropdownRef.current?.contains(e.target as Node)
+      ) setIsGenreOpen(false)
     }
     document.addEventListener('mousedown', handleOutside)
     return () => document.removeEventListener('mousedown', handleOutside)
@@ -178,68 +201,74 @@ export default function Top10Card({
         </div>
         <div className="flex items-center gap-2">
           {/* Genre picker */}
-          <div ref={genreRef} className="relative">
-        <button
-          type="button"
-          onClick={() => setIsGenreOpen((v) => !v)}
-          className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md border transition-colors cursor-pointer ${
-            selectedGenreId !== null
-              ? 'border-primary bg-primary/10 text-primary'
-              : 'border-border bg-muted text-foreground hover:bg-muted/60'
-          }`}
-        >
-          {[selectedGenreId].map((id) => {
-            if (id === null) return <LayoutGrid key="default" size={12} className="shrink-0" />
-            const Icon = getGenreIcon(id)
-            return Icon ? <Icon key={id} size={12} className="shrink-0" /> : <LayoutGrid key="default" size={12} className="shrink-0" />
-          })}
-          <span className="max-w-35 truncate">{activeGenreName}</span>
-          <ChevronDown
-            size={11}
-            className={`shrink-0 transition-transform duration-150 ${isGenreOpen ? 'rotate-180' : ''}`}
-          />
-        </button>
-
-        {isGenreOpen && (
-          <div className="absolute left-0 top-full mt-1 z-50 rounded-xl border border-border bg-card shadow-lg p-2 w-64">
-            {/* All genres */}
+          <div ref={genreRef}>
             <button
+              ref={genreTriggerRef}
               type="button"
-              onClick={() => { setSelectedGenreId(null); setIsGenreOpen(false) }}
-              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium mb-1 transition-colors ${
-                selectedGenreId === null
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-foreground hover:bg-muted/60'
+              onClick={() => isGenreOpen ? setIsGenreOpen(false) : openDropdown()}
+              className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md border transition-colors cursor-pointer ${
+                selectedGenreId !== null
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-muted text-foreground hover:bg-muted/60'
               }`}
             >
-              <LayoutGrid size={12} className="shrink-0" />
-              {t('dashboard.top10.allGenres')}
+              {[selectedGenreId].map((id) => {
+                if (id === null) return <LayoutGrid key="default" size={12} className="shrink-0" />
+                const Icon = getGenreIcon(id)
+                return Icon ? <Icon key={id} size={12} className="shrink-0" /> : <LayoutGrid key="default" size={12} className="shrink-0" />
+              })}
+              <span className="max-w-35 truncate">{activeGenreName}</span>
+              <ChevronDown
+                size={11}
+                className={`shrink-0 transition-transform duration-150 ${isGenreOpen ? 'rotate-180' : ''}`}
+              />
             </button>
 
-            <div className="grid grid-cols-2 gap-0.5">
-              {genreIds.map((id) => {
-                const Icon = getGenreIcon(id)
-                const name = resolveGenreName(id, language)
-                const isSelected = selectedGenreId === id
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => { setSelectedGenreId(id); setIsGenreOpen(false) }}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors text-left ${
-                      isSelected
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-foreground hover:bg-muted/60'
-                    }`}
-                  >
-                    {Icon && <Icon size={12} className="shrink-0" />}
-                    <span className="truncate">{name}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
+            {isGenreOpen && typeof window !== 'undefined' && createPortal(
+              <div
+                ref={genreDropdownRef}
+                data-cy="top10-genre-dropdown"
+                className="animate-fade-in fixed z-9999 rounded-xl border border-border bg-card shadow-lg p-2 w-64"
+                style={dropdownStyle}
+              >
+                <button
+                  type="button"
+                  onClick={() => { setSelectedGenreId(null); setIsGenreOpen(false) }}
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium mb-1 transition-colors ${
+                    selectedGenreId === null
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted/60'
+                  }`}
+                >
+                  <LayoutGrid size={12} className="shrink-0" />
+                  {t('dashboard.top10.allGenres')}
+                </button>
+
+                <div className="grid grid-cols-2 gap-0.5">
+                  {genreIds.map((id) => {
+                    const Icon = getGenreIcon(id)
+                    const name = resolveGenreName(id, language)
+                    const isSelected = selectedGenreId === id
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => { setSelectedGenreId(id); setIsGenreOpen(false) }}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors text-left ${
+                          isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-foreground hover:bg-muted/60'
+                        }`}
+                      >
+                        {Icon && <Icon size={12} className="shrink-0" />}
+                        <span className="truncate">{name}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>,
+              document.body,
+            )}
           </div>
 
           {showUserToggle && (
@@ -257,7 +286,7 @@ export default function Top10Card({
 
       <div className="relative flex-1 min-h-0">
         {loading && (
-          <div key={`${tab}-${mode}-${selectedGenreId}`} className="absolute inset-0 overflow-y-auto">
+          <div key={`${tab}-${mode}-${selectedGenreId}`} className="absolute inset-0 overflow-y-auto animate-fade-in">
             <div className="flex flex-col gap-0.5">
               {Array.from({ length: 10 }).map((_, i) => <ItemSkeleton key={i} />)}
             </div>
@@ -279,7 +308,7 @@ export default function Top10Card({
         )}
 
         {!loading && !error && items.length > 0 && (
-          <div key={`${tab}-${mode}-${selectedGenreId}`} className="absolute inset-0 overflow-y-auto">
+          <div key={`${tab}-${mode}-${selectedGenreId}`} className="absolute inset-0 overflow-y-auto animate-fade-in">
             <ol className="flex flex-col gap-0.5">
               {items.map((item, i) => (
                 <li key={item.id}>

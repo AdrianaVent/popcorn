@@ -5,14 +5,12 @@ import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import type { TFunction } from 'i18next'
 import Text from '@/components/ui/Text'
-import DatePicker from '@/components/ui/DatePicker'
-import StarRating from '@/components/ui/StarRating'
-import MultiSelectChips from '@/components/ui/MultiSelectChips'
+import FilterFieldInput from '@/components/ui/FilterFieldInput'
 import SummaryPill from '@/components/ui/SummaryPill'
 import Tooltip from '@/components/ui/Tooltip'
+import StarRating from '@/components/ui/StarRating'
 import { ChevronDownIcon, XIcon } from '@/components/icons'
 import type { FilterField, FiltersSchema } from '@/types/table'
-import { updateFilterValue } from '@/utils/updateFilterValue'
 import { tmdbToStarRating } from '@/utils/formatNumber'
 import { formatShortDate } from '@/utils/formatDate'
 import { useLanguageStore } from '@/store/languageStore'
@@ -31,6 +29,7 @@ function renderSummary<T extends Record<string, unknown>>(
   value: T[keyof T],
   t: TFunction,
   language: string,
+  valueTo?: T[keyof T],
 ): React.ReactNode {
   const label = t(field.label)
 
@@ -63,7 +62,8 @@ function renderSummary<T extends Record<string, unknown>>(
         </Tooltip>
       )
     }
-    case 'select': {
+    case 'select':
+    case 'searchable-select': {
       const opt = field.options?.find((o) => String(o.value) === String(value))
       if (!opt) return null
       const optLabel = t(String(opt.label))
@@ -101,6 +101,22 @@ function renderSummary<T extends Record<string, unknown>>(
         </Tooltip>
       )
     }
+    case 'year-range': {
+      const from = typeof value === 'number' && value > 0 ? value : null
+      const to = typeof valueTo === 'number' && valueTo > 0 ? valueTo : null
+      if (!from && !to) return null
+      const text = from && to
+        ? (from === to ? String(from) : `${from}–${to}`)
+        : from ? `${from} →` : `→ ${to}`
+      const tooltip = from && to
+        ? `${label}: ${from === to ? from : `${from}–${to}`}`
+        : from ? `${label}: ≥ ${from}` : `${label}: ≤ ${to}`
+      return (
+        <Tooltip content={tooltip} placement="bottom">
+          <SummaryPill>{text}</SummaryPill>
+        </Tooltip>
+      )
+    }
     default:
       return null
   }
@@ -117,9 +133,14 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
   const { language } = useLanguageStore()
   const [open, setOpen] = useState(true)
 
-  const activeCount = schema.filter(({ key, type }) => {
-    const val = filters[key]
-    if (type === 'genre-multi') return Array.isArray(val) && (val as unknown[]).length > 0
+  const activeCount = schema.filter((field) => {
+    const val = filters[field.key]
+    if (field.type === 'genre-multi') return Array.isArray(val) && (val as unknown[]).length > 0
+    if (field.type === 'year-range') {
+      const valTo = field.keyTo ? filters[field.keyTo] : undefined
+      return (val !== undefined && val !== null && val !== '') ||
+             (valTo !== undefined && valTo !== null && valTo !== '')
+    }
     if (val === undefined || val === null || val === '') return false
     if (typeof val === 'number' && val === 0) return false
     return true
@@ -132,6 +153,7 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
         : field.type === 'number' || field.type === 'star' ? 0
         : field.type === 'genre-multi' ? []
         : '',
+      ...(field.type === 'year-range' && field.keyTo ? { [field.keyTo]: '' } : {}),
     }), { ...filters })
     onChange(cleared as T)
   }
@@ -150,10 +172,10 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
           </Text>
 
           {!open && activeCount > 0 && (
-            <div className="flex flex-wrap items-center gap-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-1 min-w-0 animate-fade-in">
               {schema.map((field) => (
                 <Fragment key={String(field.key)}>
-                  {renderSummary(field, filters[field.key], t, language)}
+                  {renderSummary(field, filters[field.key], t, language, field.keyTo ? filters[field.keyTo] : undefined)}
                 </Fragment>
               ))}
             </div>
@@ -181,132 +203,29 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
       </div>
 
       {/* Body */}
-      {open && (
-        <div className="flex items-center gap-4 px-4 pb-3 border-t border-border pt-3 overflow-x-auto">
-          {schema.map((field, index) => {
-            const value = filters[field.key]
-
-            return (
-              <div key={String(field.key)} className="flex items-center gap-2">
-
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {t(field.label)}
-                </span>
-
-                {field.type === 'text' && (
-                  <input
-                    data-cy={`filter-${String(field.key)}`}
-                    value={typeof value === 'string' ? value : ''}
-                    onChange={(e) =>
-                      onChange(
-                        updateFilterValue(filters, field.key, e.target.value as T[keyof T])
-                      )
-                    }
-                    className="w-44 px-2 py-1 text-xs border border-border rounded-md bg-background text-foreground outline-none focus:border-primary/50 transition-colors"
-                  />
-                )}
-
-                {field.type === 'number' && (
-                  <input
-                    type="number"
-                    value={typeof value === 'number' ? value : ''}
-                    min={field.min}
-                    max={field.max}
-                    onChange={(e) =>
-                      onChange(
-                        updateFilterValue(
-                          filters,
-                          field.key,
-                          (e.target.value ? Number(e.target.value) : '') as T[keyof T]
-                        )
-                      )
-                    }
-                    className="w-16 px-2 py-1 text-xs border border-border rounded-md bg-background text-foreground outline-none focus:border-primary/50 transition-colors"
-                  />
-                )}
-
-                {field.type === 'star' && (
-                  <div data-cy={`filter-${String(field.key)}`} className="flex items-center gap-1.5">
-                    <StarRating
-                      value={typeof value === 'number' && value > 0 ? tmdbToStarRating(value) : null}
-                      onChange={(rating) =>
-                        onChange(updateFilterValue(filters, field.key, (rating * 2) as T[keyof T]))
-                      }
-                      size={16}
-                    />
-                    {typeof value === 'number' && value > 0 && (
-                      <button
-                        onClick={() => onChange(updateFilterValue(filters, field.key, 0 as T[keyof T]))}
-                        className="text-[13px] leading-none text-muted-foreground hover:text-foreground transition-colors"
-                        aria-label="Clear"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {field.type === 'boolean' && (
-                  <input
-                    type="checkbox"
-                    checked={Boolean(value)}
-                    onChange={(e) =>
-                      onChange(
-                        updateFilterValue(filters, field.key, e.target.checked as T[keyof T])
-                      )
-                    }
-                  />
-                )}
-
-                {field.type === 'date' && (
-                  <DatePicker
-                    value={typeof value === 'string' && value ? value : undefined}
-                    onChange={(v) => onChange(updateFilterValue(filters, field.key, (v ?? '') as T[keyof T]))}
-                  />
-                )}
-
-                {field.type === 'select' && field.options && (
-                  <select
-                    data-cy={`filter-${String(field.key)}`}
-                    value={typeof value === 'string' ? value : ''}
-                    onChange={(e) =>
-                      onChange(
-                        updateFilterValue(filters, field.key, (e.target.value || undefined) as T[keyof T])
-                      )
-                    }
-                    className="px-2 py-1 text-xs border border-border rounded-md bg-background text-foreground outline-none focus:border-primary/50 transition-colors cursor-pointer"
-                  >
-                    <option value="">{t('common.all')}</option>
-                    {field.options.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {t(String(opt.label))}
-                      </option>
-                    ))}
-                  </select>
-                )}
-
-                {field.type === 'genre-multi' && field.options && (
-                  <div data-cy={`filter-${String(field.key)}`}>
-                    <MultiSelectChips
-                      options={field.options}
-                      value={Array.isArray(value) ? (value as number[]) : []}
-                      onChange={(next) =>
-                        onChange(updateFilterValue(filters, field.key, next as T[keyof T]))
-                      }
-                      placeholder={t('common.all')}
-                    />
-                  </div>
-                )}
-
-                {index < schema.length - 1 && (
-                  <div className="w-px h-6 bg-border mx-2" />
-                )}
-
-              </div>
-            )
-          })}
+      <div
+        className="grid"
+        style={{ gridTemplateRows: open ? '1fr' : '0fr', transition: 'grid-template-rows 300ms ease-in-out' }}
+      >
+        <div className="overflow-hidden min-h-0">
+        <div
+          className="flex items-center gap-4 px-4 pb-3 border-t border-border pt-3 overflow-x-auto"
+          style={{ opacity: open ? 1 : 0, transition: 'opacity 200ms ease-in-out' }}
+        >
+          {schema.map((field, index) => (
+            <div key={String(field.key)} className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {t(field.label)}
+              </span>
+              <FilterFieldInput field={field} value={filters[field.key]} filters={filters} onChange={onChange} />
+              {index < schema.length - 1 && (
+                <div className="w-px h-6 bg-border mx-2" />
+              )}
+            </div>
+          ))}
         </div>
-      )}
+        </div>
+      </div>
 
     </div>
   )

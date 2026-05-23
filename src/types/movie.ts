@@ -8,7 +8,8 @@ export type MovieRow = Pick<
 export type MovieFilters = {
   title?: string
   vote_average_gte?: number
-  release_year?: number
+  release_year_gte?: number
+  release_year_lte?: number
   runtime_gte?: number
   watched?: 'watched' | 'unwatched'
   provider_id?: string
