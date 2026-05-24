@@ -23,7 +23,15 @@
     "clearFilters": "Limpiar filtros",
     "minuteUnit": "min",
     "trailer": "Tráiler",
-    "search": "Buscar..."
+    "search": "Buscar...",
+    "watched": "Visto",
+    "rent": "Alquiler",
+    "buy": "Compra",
+    "units": {
+      "d": "d",
+      "h": "h",
+      "min": "min"
+    }
   },
   "languageSwitcher": {
     "label": "Idioma actual: {{language}}"
@@ -80,7 +88,7 @@
       "panel": "Filtros",
       "title": "Título",
       "ratingGte": "Valoración ≥",
-      "runtimeGte": "Duración (min) ≥",
+      "runtimeGte": "Duración ≥",
       "year": "Año",
       "watched": "Visto",
       "platform": "Plataforma",
@@ -89,6 +97,7 @@
     "columns": {
       "poster": "Póster",
       "title": "Título",
+      "genres": "Géneros",
       "releaseDate": "Estreno",
       "runtime": "Duración",
       "rating": "Valoración",
@@ -120,7 +129,7 @@
       "panel": "Filtros",
       "title": "Título",
       "ratingGte": "Valoración ≥",
-      "runtimeGte": "Duración (min) ≥",
+      "runtimeGte": "Duración ≥",
       "year": "Año",
       "status": "Estado",
       "watched": "Visto",
@@ -130,6 +139,7 @@
     "columns": {
       "poster": "Póster",
       "title": "Título",
+      "genres": "Géneros",
       "firstAirDate": "Estreno",
       "runtime": "Duración",
       "rating": "Valoración",

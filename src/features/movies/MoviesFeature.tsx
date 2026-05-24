@@ -23,8 +23,7 @@ import { useWatchedStore } from '@/store/watchedStore'
 import { useToastStore } from '@/store/toastStore'
 import { useFilters } from '@/hooks/useFilters'
 import { useFilterSchema } from '@/hooks/useFilterSchema'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import type { TMDBMovieDetail } from '@/types/tmdb'
+import { useQuery } from '@tanstack/react-query'
 
 import { staticMovieFiltersSchema } from './movieFilters.schema'
 import { resolveGenreName, MOVIE_GENRE_IDS } from '@/config/genres'
@@ -34,8 +33,34 @@ import StarRating from '@/components/ui/StarRating'
 import Tooltip from '@/components/ui/Tooltip'
 import { formatShortDate } from '@/utils/formatDate'
 import PageLayout from '@/components/layouts/PageLayout'
-import { FilmIcon, EyeIcon, EyeSlashIcon } from '@/components/icons'
-import clsx from 'clsx'
+import { FilmIcon } from '@/components/icons'
+import { useTruncated } from '@/hooks/useTruncated'
+function TitleCell({ title }: { title: string }) {
+  const { ref, isTruncated } = useTruncated<HTMLSpanElement>(title)
+  return (
+    <Tooltip content={title} disabled={!isTruncated} placement="top">
+      <span ref={ref} className="block truncate font-medium text-foreground">{title}</span>
+    </Tooltip>
+  )
+}
+
+function GenresCell({ genreIds, language }: { genreIds?: number[]; language: string }) {
+  const genres = Array.from(
+    new Map(
+      (genreIds ?? []).map((gid) => [getGenreIcon(gid), gid] as const).filter(([Icon]) => Icon !== null)
+    ).entries()
+  )
+  if (genres.length === 0) return null
+  return (
+    <span className="flex flex-wrap items-center gap-1.5">
+      {genres.map(([Icon, gid]) => (
+        <Tooltip key={gid} content={resolveGenreName(gid, language)} placement="top">
+          {Icon && <Icon size={13} className="text-muted-foreground shrink-0" />}
+        </Tooltip>
+      ))}
+    </span>
+  )
+}
 
 type MovieCSVRow = {
   title: string
@@ -94,8 +119,6 @@ export default function MoviesFeature() {
   const role = useUserStore((s) => s.role)
   const userKey = String(userId ?? 'guest')
   const watchedMovies  = useWatchedStore((s) => s.movies[userKey])
-  const toggleMovie    = useWatchedStore((s) => s.toggleMovie)
-  const queryClient    = useQueryClient()
 
   const PAGE_SIZE = 20
 
@@ -237,59 +260,52 @@ export default function MoviesFeature() {
   }, [filters, totalPages, language, watchedModeItems, watchedMovies, t, addToast])
 
   const columns: Column<MovieRow>[] = [
-    ...(role !== 'admin' ? [{
-      key: 'watched' as keyof MovieRow,
-      header: '',
-      render: (row: MovieRow) => {
-        const isWatched = !!watchedMovies?.[row.id]
-        return (
-          <button
-            data-cy="movie-watched-btn"
-            onClick={(e) => {
-              e.stopPropagation()
-              const cached = queryClient.getQueryData<TMDBMovieDetail>(['movie-detail', row.id, language])
-              toggleMovie(userKey, {
-                id: row.id,
-                title: row.title,
-                release_date: row.release_date,
-                vote_average: row.vote_average,
-                vote_count: row.vote_count,
-                poster_path: row.poster_path,
-                original_language: row.original_language,
-                collection_id: cached?.belongs_to_collection?.id,
-                collection_name: cached?.belongs_to_collection?.name,
-                genre_ids: cached?.genre_ids ?? row.genre_ids,
-              })
-            }}
-            className={clsx(
-              'flex items-center justify-center w-full transition-colors cursor-pointer',
-              isWatched ? 'text-primary hover:opacity-70' : 'text-gray-400 dark:text-gray-500 hover:text-muted-foreground'
-            )}
-          >
-            {isWatched ? <EyeIcon size={15} strokeWidth={2.5} /> : <EyeSlashIcon size={15} />}
-          </button>
-        )
-      },
-      width: 'xs' as const,
-      align: 'center' as const,
-    }] : []),
     {
       key: 'poster_path',
       header: t('movies.columns.poster'),
-      render: (row) => <MediaPoster posterPath={row.poster_path} title={row.title} />,
+      render: (row) => {
+        const isWatched = role !== 'admin' && !!watchedMovies?.[row.id]
+        return (
+          <div className="relative w-9 h-14 overflow-hidden rounded">
+            <MediaPoster posterPath={row.poster_path} title={row.title} />
+            {isWatched && (
+              <div className="absolute top-1 -left-4 w-12 py-px pl-2 rotate-[-35deg] bg-primary text-primary-foreground text-[6px] font-semibold uppercase tracking-wider text-center shadow-sm pointer-events-none">
+                {t('common.watched')}
+              </div>
+            )}
+          </div>
+        )
+      },
       width: 'xs',
       align: 'center',
     },
     {
       key: 'title',
       header: t('movies.columns.title'),
-      render: (row) => (
-        <span className="block truncate font-medium text-foreground">
-          {row.title}
-        </span>
-      ),
+      render: (row) => <TitleCell title={row.title} />,
       width: 'flex',
       align: 'left',
+      sortable: !inSearchMode,
+    },
+    {
+      key: 'genre_ids',
+      header: t('movies.columns.genres'),
+      render: (row) => <GenresCell genreIds={row.genre_ids as number[] | undefined} language={language} />,
+      width: 'md',
+      align: 'left',
+    },
+    {
+      key: 'vote_average',
+      header: t('movies.columns.rating'),
+      render: (row) => (
+        <Tooltip content={`${row.vote_average.toFixed(1)} / 10`} placement="top">
+          <div className="flex justify-center">
+            <StarRating value={tmdbToStarRating(row.vote_average)} readonly size={14} />
+          </div>
+        </Tooltip>
+      ),
+      width: 'md',
+      align: 'center',
       sortable: !inSearchMode,
     },
     {
@@ -312,28 +328,6 @@ export default function MoviesFeature() {
       width: 'sm',
       align: 'center',
       sortable: true,
-    },
-    {
-      key: 'vote_average',
-      header: t('movies.columns.rating'),
-      render: (row) => (
-        <Tooltip content={`${row.vote_average.toFixed(1)} / 10`} placement="top">
-          <div className="flex justify-center">
-            <StarRating value={tmdbToStarRating(row.vote_average)} readonly size={14} />
-          </div>
-        </Tooltip>
-      ),
-      width: 'md',
-      align: 'center',
-      sortable: !inSearchMode,
-    },
-    {
-      key: 'vote_count',
-      header: t('movies.columns.votes'),
-      render: (row) => formatVoteCount(row.vote_count, language),
-      width: 'sm',
-      align: 'center',
-      sortable: !inSearchMode,
     },
   ]
 

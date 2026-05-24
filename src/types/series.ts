@@ -3,7 +3,7 @@ import type { TMDBSeries } from './tmdb'
 export type SeriesRow = Pick<
   TMDBSeries,
   'id' | 'name' | 'first_air_date' | 'vote_average' | 'vote_count' | 'poster_path' | 'original_language'
-> & { status?: string; runtime?: number | null; [key: string]: unknown }
+> & { status?: string; runtime?: number | null; genre_ids?: number[]; [key: string]: unknown }
 
 export type SeriesFilters = {
   title?: string

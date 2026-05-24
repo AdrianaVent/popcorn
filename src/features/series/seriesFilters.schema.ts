@@ -10,6 +10,18 @@ export const staticSeriesFiltersSchema: FiltersSchema<SeriesFilters> = [
     type: 'text',
   },
   {
+    key: 'status',
+    label: 'series.filters.status',
+    type: 'select',
+    options: [
+      { value: '0', label: 'series.status.returning' },
+      { value: '2', label: 'series.status.inProduction' },
+      { value: '1', label: 'series.status.planned' },
+      { value: '3', label: 'series.status.ended' },
+      { value: '4', label: 'series.status.canceled' },
+    ],
+  },
+  {
     key: 'genre_ids',
     label: 'series.filters.genres',
     type: 'genre-multi',
@@ -46,22 +58,14 @@ export const staticSeriesFiltersSchema: FiltersSchema<SeriesFilters> = [
     ],
   },
   {
-    key: 'status',
-    label: 'series.filters.status',
-    type: 'select',
-    options: [
-      { value: '0', label: 'series.status.returning' },
-      { value: '2', label: 'series.status.inProduction' },
-      { value: '1', label: 'series.status.planned' },
-      { value: '3', label: 'series.status.ended' },
-      { value: '4', label: 'series.status.canceled' },
-    ],
-  },
-  {
     key: 'runtime_gte',
     label: 'series.filters.runtimeGte',
     type: 'number',
     min: 1,
-    unit: 'common.minuteUnit',
+    units: [
+      { value: 'd', label: 'common.units.d', multiplier: 1440 },
+      { value: 'h', label: 'common.units.h', multiplier: 60 },
+      { value: 'min', label: 'common.units.min', multiplier: 1 },
+    ],
   },
 ]
