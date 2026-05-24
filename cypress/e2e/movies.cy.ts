@@ -112,42 +112,64 @@ describe('Movies', () => {
     cy.contains('Export').should('not.exist')
   })
 
-  // ─── Eye icon column ─────────────────────────────────────────
+  // ─── Watched ribbon on poster ─────────────────────────────────
 
-  describe('Eye icon watched column', () => {
-    it('is not visible for admin users', () => {
+  describe('Watched ribbon on poster', () => {
+    const mockDetail = {
+      id: 550,
+      title: 'Fight Club',
+      release_date: '1999-10-15',
+      vote_average: 8.4,
+      vote_count: 26000,
+      runtime: 139,
+      overview: 'A depressed man forms an underground fight club.',
+      genres: [{ id: 18, name: 'Drama' }],
+      original_language: 'en',
+      poster_path: '/poster.jpg',
+      belongs_to_collection: null,
+      status: 'Released',
+      tagline: '',
+    }
+
+    it('is never shown for admin users', () => {
       cy.wait('@tmdb')
-      cy.contains('tr', 'Fight Club').find('[data-cy="movie-watched-btn"]').should('not.exist')
+      cy.get('[data-cy="watched-ribbon"]').should('not.exist')
     })
 
-    it('is visible for guest users', () => {
+    it('is not shown for guest users on unwatched movies', () => {
       cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'movies.json' }).as('tmdb-guest')
       cy.visitAsGuest('/movies')
       cy.wait('@tmdb-guest')
-      cy.contains('tr', 'Fight Club').find('[data-cy="movie-watched-btn"]').should('exist')
+      cy.contains('tr', 'Fight Club').find('[data-cy="watched-ribbon"]').should('not.exist')
     })
 
-    it('marks a movie as watched on click and updates button style', () => {
+    it('appears on the poster after marking a movie as watched from the modal', () => {
       cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'movies.json' }).as('tmdb-guest')
       cy.visitAsGuest('/movies')
       cy.wait('@tmdb-guest')
-
-      cy.contains('tr', 'Fight Club').find('[data-cy="movie-watched-btn"]').as('btn')
-      cy.get('@btn').should('not.have.class', 'text-primary')
-      cy.get('@btn').click()
-      cy.get('@btn').should('have.class', 'text-primary')
+      cy.intercept('GET', /\/movie\/550(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/movie\/550\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/movie\/550\/release_dates/, { results: [] }).as('releaseDates')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.get('[role="dialog"]').contains('Mark as watched').click()
+      cy.get('body').type('{esc}')
+      cy.contains('tr', 'Fight Club').find('[data-cy="watched-ribbon"]').should('exist')
     })
 
-    it('unmarks a movie on second click', () => {
+    it('ribbon disappears after unmarking from the modal', () => {
       cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'movies.json' }).as('tmdb-guest')
       cy.visitAsGuest('/movies')
       cy.wait('@tmdb-guest')
-
-      cy.contains('tr', 'Fight Club').find('[data-cy="movie-watched-btn"]').as('btn')
-      cy.get('@btn').click()
-      cy.get('@btn').should('have.class', 'text-primary')
-      cy.get('@btn').click()
-      cy.get('@btn').should('not.have.class', 'text-primary')
+      cy.intercept('GET', /\/movie\/550(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/movie\/550\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/movie\/550\/release_dates/, { results: [] }).as('releaseDates')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.get('[role="dialog"]').contains('Mark as watched').click()
+      cy.get('[role="dialog"]').contains('Watched').click()
+      cy.get('body').type('{esc}')
+      cy.contains('tr', 'Fight Club').find('[data-cy="watched-ribbon"]').should('not.exist')
     })
   })
 

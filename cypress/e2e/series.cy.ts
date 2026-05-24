@@ -92,6 +92,63 @@ describe('Series', () => {
     })
   })
 
+  // ─── Watched ribbon on poster ─────────────────────────────────
+
+  describe('Watched ribbon on poster', () => {
+    const mockDetail = {
+      id: 1396,
+      name: 'Breaking Bad',
+      first_air_date: '2008-01-20',
+      vote_average: 9.5,
+      vote_count: 12000,
+      overview: 'A chemistry teacher turns to manufacturing meth.',
+      genres: [{ id: 18, name: 'Drama' }],
+      original_language: 'en',
+      poster_path: '/poster.jpg',
+      number_of_seasons: 1,
+      number_of_episodes: 2,
+      episode_run_time: [47],
+      status: 'Ended',
+      tagline: '',
+      seasons: [
+        { id: 3739, name: 'Season 1', season_number: 1, episode_count: 2, poster_path: null, air_date: '2008-01-20' },
+      ],
+    }
+
+    const mockSeason = {
+      episodes: [
+        { id: 62085, name: 'Pilot', episode_number: 1, runtime: 58, air_date: '2008-01-20' },
+        { id: 62086, name: 'Cat\'s in the Bag', episode_number: 2, runtime: 48, air_date: '2008-01-27' },
+      ],
+    }
+
+    it('is never shown for admin users', () => {
+      cy.wait('@tmdb')
+      cy.get('[data-cy="watched-ribbon"]').should('not.exist')
+    })
+
+    it('is not shown for guest users on unwatched series', () => {
+      cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'series.json' }).as('tmdb-guest')
+      cy.visitAsGuest('/series')
+      cy.wait('@tmdb-guest')
+      cy.contains('tr', 'Breaking Bad').find('[data-cy="watched-ribbon"]').should('not.exist')
+    })
+
+    it('appears on the poster after marking all episodes as watched', () => {
+      cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'series.json' }).as('tmdb-guest')
+      cy.visitAsGuest('/series')
+      cy.wait('@tmdb-guest')
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} }).as('providers')
+      cy.intercept('GET', /\/tv\/1396\/season\/1/, mockSeason).as('season')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.get('[role="dialog"]').contains('Mark as watched').click()
+      cy.get('body').type('{esc}')
+      cy.contains('tr', 'Breaking Bad').find('[data-cy="watched-ribbon"]').should('exist')
+    })
+  })
+
   // ─── Watched — admin ──────────────────────────────────────────
 
   describe('Watched controls (admin)', () => {

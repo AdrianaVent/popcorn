@@ -47,7 +47,7 @@ export function fetchSeries(
   const params: Record<string, string | number> = {}
   if (sortBy)                    params['sort_by'] = sortBy
   if (filters?.vote_average_gte) params['vote_average.gte'] = filters.vote_average_gte
-  if (filters?.runtime_gte)      params['with_runtime.gte'] = filters.runtime_gte
+  // runtime_gte is total series duration — applied client-side after enrichment, not via TMDB (which filters per-episode)
   const gte = filters?.first_air_year_gte
   const lte = filters?.first_air_year_lte
   if (gte && lte && gte === lte) {

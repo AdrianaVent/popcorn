@@ -34,33 +34,7 @@ import Tooltip from '@/components/ui/Tooltip'
 import { formatShortDate } from '@/utils/formatDate'
 import PageLayout from '@/components/layouts/PageLayout'
 import { FilmIcon } from '@/components/icons'
-import { useTruncated } from '@/hooks/useTruncated'
-function TitleCell({ title }: { title: string }) {
-  const { ref, isTruncated } = useTruncated<HTMLSpanElement>(title)
-  return (
-    <Tooltip content={title} disabled={!isTruncated} placement="top">
-      <span ref={ref} className="block truncate font-medium text-foreground">{title}</span>
-    </Tooltip>
-  )
-}
-
-function GenresCell({ genreIds, language }: { genreIds?: number[]; language: string }) {
-  const genres = Array.from(
-    new Map(
-      (genreIds ?? []).map((gid) => [getGenreIcon(gid), gid] as const).filter(([Icon]) => Icon !== null)
-    ).entries()
-  )
-  if (genres.length === 0) return null
-  return (
-    <span className="flex flex-wrap items-center gap-1.5">
-      {genres.map(([Icon, gid]) => (
-        <Tooltip key={gid} content={resolveGenreName(gid, language)} placement="top">
-          {Icon && <Icon size={13} className="text-muted-foreground shrink-0" />}
-        </Tooltip>
-      ))}
-    </span>
-  )
-}
+import { TitleCell, GenresCell } from '@/components/common/MediaTableCells'
 
 type MovieCSVRow = {
   title: string
@@ -269,7 +243,7 @@ export default function MoviesFeature() {
           <div className="relative w-9 h-14 overflow-hidden rounded">
             <MediaPoster posterPath={row.poster_path} title={row.title} />
             {isWatched && (
-              <div className="absolute top-1 -left-4 w-12 py-px pl-2 rotate-[-35deg] bg-primary text-primary-foreground text-[6px] font-semibold uppercase tracking-wider text-center shadow-sm pointer-events-none">
+              <div data-cy="watched-ribbon" className="absolute top-1 -left-4 w-12 py-px pl-2 rotate-[-35deg] bg-primary text-primary-foreground text-[6px] font-semibold uppercase tracking-wider text-center shadow-sm pointer-events-none">
                 {t('common.watched')}
               </div>
             )}

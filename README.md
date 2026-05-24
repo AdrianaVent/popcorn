@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.12.0-6B2737)
+![Version](https://img.shields.io/badge/version-0.12.1-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -431,9 +431,9 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-The project has two test layers: **479 unit/integration tests** (Jest) and **101 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+The project has two test layers: **545 unit/integration tests** (Jest) and **101 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 534 tests · 49 suites
+### Unit & integration tests (Jest) — 545 tests · 50 suites
 
 ```bash
 npm test           # run once
@@ -445,7 +445,7 @@ npm run test:watch # watch mode
 | Pure functions | `getMovieUI`, `getSeriesUI`, `formatDate`, `formatVoteCount`, `deduplicateProviders`, `buildGenreCounts`, `toCSV` |
 | Business logic | Client-side filters (movies + series), TMDB fetch error mapping, export utilities |
 | Stores | `watchedStore` (toggle movie/episode, season counts), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
-| Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases`, `useTrailer` (language preference, YouTube filtering, fallback) |
+| Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases`, `useTrailer` (language preference, YouTube filtering, fallback), `useSeriesEnrichment` (status/totals/runtimes/genreIds backfill, stable-reference pattern) |
 | Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button), `SearchableSelect` (open/close, search, selection, clear), `YearRangePicker` (cross-filtering, null callbacks), `FilterFieldInput` (all field types, null guards) |
 | Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
 | API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date) |

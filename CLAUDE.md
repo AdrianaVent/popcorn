@@ -105,7 +105,7 @@ src/
 │   │   │                       # seasons/EpisodeRow (episode with watched state + WatchedEpisodeButton),
 │   │   │                       # seasons/WatchedEpisodeButton (toggle episode watched)
 │   │   ├── hooks/              # useSeries, useSeriesDetail,
-│   │   │                       # useSeriesEnrichment (Promise.allSettled status/totals/runtimes backfill)
+│   │   │                       # useSeriesEnrichment (Promise.allSettled status/totals/runtimes/genreIds backfill)
 │   │   ├── SeriesFeature.tsx
 │   │   ├── series.service.ts   # fetchSeries, fetchSeriesDetail, fetchSeasonDetail,
 │   │   │                       # fetchSeriesWatchProviders, fetchSeriesWatchProviderOptions,
@@ -216,6 +216,11 @@ data/
 | Duration filter with d/h/min unit selector (value stored in minutes; pill auto-converts back) | Done |
 | Tooltip on truncated titles in movies/series tables (ResizeObserver via useTruncated) | Done |
 | Watch provider tooltip clarifies rent (€) and buy (🛒) icons with label | Done |
+| TitleCell + GenresCell extracted to MediaTableCells (shared by movies and series) | Done |
+| Series genre_ids backfill via enrichment (useSeriesEnrichment now returns genreIds map) | Done |
+| Series runtime filter applied client-side on total duration (not TMDB per-episode) | Done |
+| Cypress E2E — watched ribbon tests for movies and series (admin/guest/mark/unmark) | Done |
+| useSeriesEnrichment unit tests (8 cases; stable-reference pattern for renderHook) | Done |
 
 ---
 
