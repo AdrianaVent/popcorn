@@ -108,4 +108,25 @@ describe('WatchProviders', () => {
     )
     expect(screen.getByText('common.availableOn')).toBeInTheDocument()
   })
+
+  it('tooltip for flatrate provider shows only the provider name', () => {
+    render(
+      <WatchProviders flatrate={[flatrate(8, 'Netflix')]} rent={[]} />,
+    )
+    expect(screen.getByText('Netflix')).toBeInTheDocument()
+  })
+
+  it('tooltip for rent provider appends the rent label', () => {
+    render(
+      <WatchProviders flatrate={[]} rent={[paid(2, 'Apple TV', 'rent')]} />,
+    )
+    expect(screen.getByText('Apple TV (common.rent)')).toBeInTheDocument()
+  })
+
+  it('tooltip for buy provider appends the buy label', () => {
+    render(
+      <WatchProviders flatrate={[]} rent={[paid(10, 'Amazon Video', 'buy')]} />,
+    )
+    expect(screen.getByText('Amazon Video (common.buy)')).toBeInTheDocument()
+  })
 })

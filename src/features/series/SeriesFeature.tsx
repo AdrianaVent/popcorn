@@ -34,8 +34,34 @@ import type { Column, SortState } from '@/types/table'
 import type { SeriesRow, SeriesFilters } from '@/types/series'
 import type { WatchProvider } from '@/types/tmdb'
 import PageLayout from '@/components/layouts/PageLayout'
-import { TvIcon, EyeIcon, EyeSlashIcon } from '@/components/icons'
-import clsx from 'clsx'
+import { TvIcon } from '@/components/icons'
+import { useTruncated } from '@/hooks/useTruncated'
+function TitleCell({ title }: { title: string }) {
+  const { ref, isTruncated } = useTruncated<HTMLSpanElement>(title)
+  return (
+    <Tooltip content={title} disabled={!isTruncated} placement="top">
+      <span ref={ref} className="block truncate font-medium text-foreground">{title}</span>
+    </Tooltip>
+  )
+}
+
+function GenresCell({ genreIds, language }: { genreIds?: number[]; language: string }) {
+  const genres = Array.from(
+    new Map(
+      (genreIds ?? []).map((gid) => [getGenreIcon(gid), gid] as const).filter(([Icon]) => Icon !== null)
+    ).entries()
+  )
+  if (genres.length === 0) return null
+  return (
+    <span className="flex flex-wrap items-center gap-1.5">
+      {genres.map(([Icon, gid]) => (
+        <Tooltip key={gid} content={resolveGenreName(gid, language)} placement="top">
+          {Icon && <Icon size={13} className="text-muted-foreground shrink-0" />}
+        </Tooltip>
+      ))}
+    </span>
+  )
+}
 
 type SeriesExportRow = SeriesRow & { status: string }
 
@@ -291,40 +317,61 @@ export default function SeriesFeature() {
   }, [filters, totalPages, language, watchedModeItems, seriesEpisodes, totals, statuses, t, addToast])
 
   const columns: Column<SeriesRow>[] = [
-    ...(role !== 'admin' ? [{
-      key: 'watched' as keyof SeriesRow,
-      header: '',
-      render: (row: SeriesRow) => {
-        const total = totals.get(row.id) ?? 0
-        const watched = Object.keys(seriesEpisodes?.[row.id] ?? {}).length
-        const isWatched = total > 0 && watched >= total
-        return (
-          <span className={clsx(
-            'flex items-center justify-center w-full transition-colors cursor-pointer',
-            isWatched ? 'text-primary hover:opacity-70' : 'text-gray-400 dark:text-gray-500 hover:text-muted-foreground'
-          )}>
-            {isWatched ? <EyeIcon size={15} strokeWidth={2.5} /> : <EyeSlashIcon size={15} />}
-          </span>
-        )
-      },
-      width: 'xs' as const,
-      align: 'center' as const,
-    }] : []),
     {
       key: 'poster_path',
       header: t('series.columns.poster'),
-      render: (row) => <MediaPoster posterPath={row.poster_path} title={row.name} />,
+      render: (row) => {
+        const total = totals.get(row.id) ?? 0
+        const watched = Object.keys(seriesEpisodes?.[row.id] ?? {}).length
+        const isWatched = role !== 'admin' && total > 0 && watched >= total
+        return (
+          <div className="relative w-9 h-14 overflow-hidden rounded">
+            <MediaPoster posterPath={row.poster_path} title={row.name} />
+            {isWatched && (
+              <div className="absolute top-1 -left-4 w-12 py-px pl-2 rotate-[-35deg] bg-primary text-primary-foreground text-[6px] font-semibold uppercase tracking-wider text-center shadow-sm pointer-events-none">
+                {t('common.watched')}
+              </div>
+            )}
+          </div>
+        )
+      },
       width: 'xs',
       align: 'center',
     },
     {
       key: 'name',
       header: t('series.columns.title'),
-      render: (row) => (
-        <span className="block truncate font-medium text-foreground">{row.name}</span>
-      ),
+      render: (row) => <TitleCell title={row.name} />,
       width: 'flex',
       align: 'left',
+      sortable: !inSearchMode,
+    },
+    {
+      key: 'status',
+      header: t('series.columns.status'),
+      render: (row) => <StatusBadge status={statuses.get(row.id)} />,
+      width: 'md',
+      align: 'center',
+    },
+    {
+      key: 'genre_ids',
+      header: t('series.columns.genres'),
+      render: (row) => <GenresCell genreIds={row.genre_ids} language={language} />,
+      width: 'md',
+      align: 'left',
+    },
+    {
+      key: 'vote_average',
+      header: t('series.columns.rating'),
+      render: (row) => (
+        <Tooltip content={`${row.vote_average.toFixed(1)} / 10`} placement="top">
+          <div className="flex justify-center">
+            <StarRating value={tmdbToStarRating(row.vote_average)} readonly size={14} />
+          </div>
+        </Tooltip>
+      ),
+      width: 'md',
+      align: 'center',
       sortable: !inSearchMode,
     },
     {
@@ -347,35 +394,6 @@ export default function SeriesFeature() {
       width: 'sm',
       align: 'center',
       sortable: true,
-    },
-    {
-      key: 'vote_average',
-      header: t('series.columns.rating'),
-      render: (row) => (
-        <Tooltip content={`${row.vote_average.toFixed(1)} / 10`} placement="top">
-          <div className="flex justify-center">
-            <StarRating value={tmdbToStarRating(row.vote_average)} readonly size={14} />
-          </div>
-        </Tooltip>
-      ),
-      width: 'md',
-      align: 'center',
-      sortable: !inSearchMode,
-    },
-    {
-      key: 'vote_count',
-      header: t('series.columns.votes'),
-      render: (row) => formatVoteCount(row.vote_count, language),
-      width: 'sm',
-      align: 'center',
-      sortable: !inSearchMode,
-    },
-    {
-      key: 'status',
-      header: t('series.columns.status'),
-      render: (row) => <StatusBadge status={statuses.get(row.id)} />,
-      width: 'md',
-      align: 'center',
     },
   ]
 

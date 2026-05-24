@@ -29,9 +29,13 @@ function PaidBadge({ source }: { source: 'rent' | 'buy' }) {
   )
 }
 
-function ProviderLogo({ provider, paidSource }: { provider: WatchProvider; paidSource: 'rent' | 'buy' | null }) {
+function ProviderLogo({ provider, paidSource, t }: { provider: WatchProvider; paidSource: 'rent' | 'buy' | null; t: (k: string) => string }) {
   const logo = getTMDBImageUrl(provider.logo_path, 'w92')
   if (!logo) return null
+
+  const label = paidSource
+    ? `${provider.provider_name} (${t(paidSource === 'rent' ? 'common.rent' : 'common.buy')})`
+    : provider.provider_name
 
   return (
     <div className="relative group">
@@ -44,7 +48,7 @@ function ProviderLogo({ provider, paidSource }: { provider: WatchProvider; paidS
       />
       {paidSource && <PaidBadge source={paidSource} />}
       <span className="pointer-events-none absolute top-full left-0 mt-1.5 px-2 py-0.5 rounded bg-popover border border-border text-foreground text-[11px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10">
-        {provider.provider_name}
+        {label}
       </span>
     </div>
   )
@@ -84,10 +88,10 @@ export default function WatchProviders({ flatrate, rent, inTheaters, loading }: 
       ) : hasProviders ? (
         <div className="flex flex-wrap gap-3">
           {flatrate.map((p) => (
-            <ProviderLogo key={p.provider_id} provider={p} paidSource={null} />
+            <ProviderLogo key={p.provider_id} provider={p} paidSource={null} t={t} />
           ))}
           {rent.map((p) => (
-            <ProviderLogo key={p.provider_id} provider={p} paidSource={p.source} />
+            <ProviderLogo key={p.provider_id} provider={p} paidSource={p.source} t={t} />
           ))}
         </div>
       ) : null}

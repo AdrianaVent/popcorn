@@ -23,7 +23,15 @@
     "clearFilters": "Clear filters",
     "minuteUnit": "m",
     "trailer": "Trailer",
-    "search": "Search..."
+    "search": "Search...",
+    "watched": "Watched",
+    "rent": "Rent",
+    "buy": "Buy",
+    "units": {
+      "d": "d",
+      "h": "h",
+      "min": "min"
+    }
   },
   "languageSwitcher": {
     "label": "Current language: {{language}}"
@@ -80,7 +88,7 @@
       "panel": "Filters",
       "title": "Title",
       "ratingGte": "Rating ≥",
-      "runtimeGte": "Runtime (min) ≥",
+      "runtimeGte": "Runtime ≥",
       "year": "Year",
       "watched": "Seen",
       "platform": "Platform",
@@ -89,6 +97,7 @@
     "columns": {
       "poster": "Poster",
       "title": "Title",
+      "genres": "Genres",
       "releaseDate": "Release",
       "runtime": "Runtime",
       "rating": "Rating",
@@ -120,7 +129,7 @@
       "panel": "Filters",
       "title": "Title",
       "ratingGte": "Rating ≥",
-      "runtimeGte": "Runtime (min) ≥",
+      "runtimeGte": "Runtime ≥",
       "year": "Year",
       "status": "Status",
       "watched": "Seen",
@@ -130,6 +139,7 @@
     "columns": {
       "poster": "Poster",
       "title": "Title",
+      "genres": "Genres",
       "firstAirDate": "First aired",
       "runtime": "Runtime",
       "rating": "Rating",

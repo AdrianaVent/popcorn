@@ -1,14 +1,65 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import DatePicker from '@/components/ui/DatePicker'
 import StarRating from '@/components/ui/StarRating'
 import MultiSelectChips from '@/components/ui/MultiSelectChips'
 import SearchableSelect from '@/components/ui/SearchableSelect'
 import YearRangePicker from '@/components/ui/YearRangePicker'
-import type { FilterField } from '@/types/table'
+import type { FilterField, FilterUnit } from '@/types/table'
 import { updateFilterValue } from '@/utils/updateFilterValue'
 import { tmdbToStarRating } from '@/utils/formatNumber'
+
+const INPUT_CLS = 'px-2 py-1 text-xs border border-border rounded-md bg-background text-foreground outline-none focus:border-primary/50 transition-colors'
+const NO_SPIN = '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+
+function NumberWithUnitsInput<T extends Record<string, unknown>>({
+  field, value, filters, onChange, t,
+}: {
+  field: FilterField<T>
+  value: T[keyof T]
+  filters: T
+  onChange: (next: T) => void
+  t: (k: string) => string
+}) {
+  const units = field.units as FilterUnit[]
+  const defaultUnit = units.find((u) => u.value === 'h') ?? units[units.length - 1]
+  const [unit, setUnit] = useState<FilterUnit>(defaultUnit)
+
+  const storedMinutes = typeof value === 'number' && value > 0 ? value : null
+  const displayValue = storedMinutes !== null ? storedMinutes / unit.multiplier : ''
+
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        type="number"
+        value={displayValue}
+        min={field.min ?? 1}
+        step={unit.multiplier === 1 ? 1 : 0.5}
+        onChange={(e) => {
+          const raw = e.target.value ? Number(e.target.value) : ''
+          const minutes = raw !== '' ? Math.round((raw as number) * unit.multiplier) : ''
+          onChange(updateFilterValue(filters, field.key, minutes as T[keyof T]))
+        }}
+        className={`w-16 ${INPUT_CLS} ${NO_SPIN}`}
+      />
+      <select
+        value={unit.value}
+        onChange={(e) => {
+          const next = units.find((u) => u.value === e.target.value) ?? defaultUnit
+          setUnit(next)
+          onChange(updateFilterValue(filters, field.key, '' as T[keyof T]))
+        }}
+        className={`${INPUT_CLS} cursor-pointer`}
+      >
+        {units.map((u) => (
+          <option key={u.value} value={u.value}>{t(u.label)}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
 
 type Props<T extends Record<string, unknown>> = {
   field: FilterField<T>
@@ -32,6 +83,9 @@ export default function FilterFieldInput<T extends Record<string, unknown>>({ fi
       )
 
     case 'number':
+      if (field.units?.length) {
+        return <NumberWithUnitsInput field={field} value={value} filters={filters} onChange={onChange} t={t} />
+      }
       return (
         <input
           type="number"
@@ -41,7 +95,7 @@ export default function FilterFieldInput<T extends Record<string, unknown>>({ fi
           onChange={(e) =>
             onChange(updateFilterValue(filters, field.key, (e.target.value ? Number(e.target.value) : '') as T[keyof T]))
           }
-          className="w-16 px-2 py-1 text-xs border border-border rounded-md bg-background text-foreground outline-none focus:border-primary/50 transition-colors"
+          className={`w-16 ${INPUT_CLS} ${NO_SPIN}`}
         />
       )
 
