@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 
-export function useTruncated(dep: string) {
-  const ref = useRef<HTMLParagraphElement>(null)
+export function useTruncated<T extends HTMLElement = HTMLParagraphElement>(dep: string) {
+  const ref = useRef<T>(null)
   const [isTruncated, setIsTruncated] = useState(false)
 
   useEffect(() => {

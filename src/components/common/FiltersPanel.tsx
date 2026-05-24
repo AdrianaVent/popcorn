@@ -45,10 +45,18 @@ function renderSummary<T extends Record<string, unknown>>(
     }
     case 'number': {
       if (typeof value !== 'number' || value === 0) return null
-      const unit = field.unit ? ` ${t(field.unit)}` : ''
+      let display: string
+      if (field.units?.length) {
+        const best = [...field.units].sort((a, b) => b.multiplier - a.multiplier).find((u) => value >= u.multiplier && value % u.multiplier === 0)
+        const u = best ?? field.units[field.units.length - 1]
+        display = `${value / u.multiplier} ${t(u.label)}`
+      } else {
+        const unit = field.unit ? ` ${t(field.unit)}` : ''
+        display = `${value}${unit}`
+      }
       return (
-        <Tooltip content={`${label}: ${value}`} placement="bottom">
-          <SummaryPill>{value}{unit}</SummaryPill>
+        <Tooltip content={`${label}: ${display}`} placement="bottom">
+          <SummaryPill>{display}</SummaryPill>
         </Tooltip>
       )
     }

@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.11.1-6B2737)
+![Version](https://img.shields.io/badge/version-0.12.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -247,6 +247,7 @@ Use the filters to narrow the list:
 |---|---|
 | Title | Searches TMDB in real time. Sorting is disabled while a search is active. |
 | Rating ≥ | Drag or click a star value. Only titles rated at or above the threshold are shown. |
+| Runtime ≥ | Enter a value and choose the unit (d / h / min). The filter converts automatically to minutes. |
 | Year | Shows titles released in that calendar year. |
 | Language | Filters by original language (English or Spanish). |
 | Genres | Multi-select genre picker. Select one or more genres to filter by. |
@@ -259,7 +260,7 @@ Click a column header to sort by that field. Click again to reverse the order. S
 
 **Marking a movie as watched** *(guest only)*
 
-The first column shows an eye icon for each row. Click it to toggle the movie between watched and unwatched. The icon fills in to indicate watched status. You can also mark movies from the detail modal (see below).
+Movies you have marked as watched show a diagonal **Watched** ribbon on their poster thumbnail. Mark or unmark them from the detail modal (see below).
 
 **Opening the detail modal**
 
@@ -289,9 +290,9 @@ Movies released in Spanish cinemas within the last 90 days show an **In theaters
 
 ### Series (`/series`)
 
-Works the same way as the Movies section — same filters, sorting, eye icon column and export button — with one addition: episode-level tracking.
+Works the same way as the Movies section — same filters, sorting, watched ribbon on the poster and export button — with one addition: episode-level tracking.
 
-The **Watched** filter and the eye icon column are available to guest accounts only. The **Export** button is available to admin accounts only.
+The **Watched** filter and the watched ribbon are available to guest accounts only. The **Export** button is available to admin accounts only.
 
 **Browsing and filtering**
 

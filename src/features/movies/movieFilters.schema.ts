@@ -50,6 +50,10 @@ export const staticMovieFiltersSchema: FiltersSchema<MovieFilters> = [
     label: 'movies.filters.runtimeGte',
     type: 'number',
     min: 1,
-    unit: 'common.minuteUnit',
+    units: [
+      { value: 'd', label: 'common.units.d', multiplier: 1440 },
+      { value: 'h', label: 'common.units.h', multiplier: 60 },
+      { value: 'min', label: 'common.units.min', multiplier: 1 },
+    ],
   },
 ]

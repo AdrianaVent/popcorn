@@ -36,8 +36,8 @@ src/
 │   │   ├── layout.tsx          # server layout — decodes JWT cookie, passes role to client layout
 │   │   ├── DashboardGroupLayoutClient.tsx  # 'use client' — pathname → activeNav, logout, provides DashboardRoleContext
 │   │   ├── DashboardRoleContext.tsx        # React context exposing serverRole to client subtree (loading skeletons)
-│   │   ├── movies/             # page.tsx + loading.tsx (role-aware skeleton cols)
-│   │   ├── series/             # page.tsx + loading.tsx (role-aware skeleton cols)
+│   │   ├── movies/             # page.tsx + loading.tsx (6 skeleton cols — poster, title, genres, rating, release, runtime)
+│   │   ├── series/             # page.tsx + loading.tsx (7 skeleton cols — poster, title, status, genres, rating, first_air_date, runtime)
 │   │   ├── my-list/            # page.tsx + loading.tsx (guest only)
 │   │   ├── users/              # page.tsx + loading.tsx (admin only)
 │   │   └── home/               # page.tsx + loading.tsx — genre dashboard
@@ -60,7 +60,8 @@ src/
 │                               # MultiSelectChips (portal-based genre multi-select dropdown),
 │                               # SearchableSelect (portal-based single-select with search input),
 │                               # YearRangePicker (two SearchableSelects cross-filtering each other),
-│                               # FilterFieldInput (generic field renderer — dispatches on FilterFieldType),
+│                               # FilterFieldInput (generic field renderer — dispatches on FilterFieldType;
+│                               #   NumberWithUnitsInput sub-component handles d/h/min conversion for runtime fields),
 │                               # ToggleSwitch, PageSkeleton,
 │                               # StarRating (5-star, half-star; value: 0.5–5 | null),
 │                               # Tooltip (portal-based, 150ms delay, placement: top/right/bottom/left),
@@ -120,7 +121,7 @@ src/
 ├── hooks/
 │   ├── useFilters.ts
 │   ├── useMounted.ts           # returns false on server / during hydration, true after mount
-│   ├── useTruncated.ts         # ResizeObserver-based truncation detection; returns { ref, isTruncated }
+│   ├── useTruncated.ts         # ResizeObserver-based truncation detection; generic `<T extends HTMLElement>`; returns { ref, isTruncated }
 │   ├── useTrailer.ts           # picks best YouTube trailer (language preference → fallback); staleTime 24h; exports pickYouTubeTrailer
 │   └── useWatchProviders.ts    # generic hook — fetches + deduplicates flatrate/rent/buy per region (TanStack Query)
 ├── locales/                    # en.json, es.json
@@ -143,7 +144,8 @@ src/
 │   ├── theme/                  # resolveTheme.ts (auto = time-of-day), types.ts
 │   └── globals.css             # Tailwind @theme tokens + semantic light/dark CSS vars
 │                               # palette: gray, red, yellow, green, burgundy, cream, blue
-├── types/                      # tmdb.ts, movie.ts, series.ts, table.ts, languageTypes.ts
+├── types/                      # tmdb.ts, movie.ts, series.ts (genre_ids explicit to avoid unknown from index sig),
+│                               # table.ts (FilterUnit: { value, label, multiplier } for d/h/min fields), languageTypes.ts
 └── utils/
     ├── exportData.ts           # toCSV, exportAsJSON, exportAsCSV
     ├── formatDate.ts           # formatShortDate(dateStr, language) → "dd mon yyyy"
@@ -191,14 +193,14 @@ data/
 | Persistent dashboard layout + SSR-safe hydration | Done |
 | Home release calendar (monthly EN/ES releases, dots per day, movie/series tabs) | Done |
 | My list (guest-only: watched movies/series, saga grouping, 5-star ratings) | Done |
-| Eye icon watched column in movies/series tables (toggle from list, guest only) | Done |
+| Watched ribbon on poster in movies/series tables (diagonal "Visto" banner, guest only) | Done |
 | Clear-all-filters button in FiltersPanel header | Done |
 | Horizontal table scroll on narrow viewports | Done |
 | Primary color for all watched indicators (replaces green throughout) | Done |
 | Bulk-mark saga/series: date-gated (only past/today releases) + unmark when all done | Done |
 | CSV export — UTF-8 BOM for correct accent rendering in Excel/LibreOffice | Done |
 | Collection backfill on modal open (enrichMovie) — fixes saga grouping for table-marked movies | Done |
-| Role-aware loading skeleton (movies/series cols via DashboardRoleContext) | Done |
+| Loading skeleton (movies: 6 cols, series: 7 cols — fixed, no longer role-dependent) | Done |
 | Genre multi-select filter (chips dropdown, portal-based) for movies and series | Done |
 | Genre deduplication in detail modals (GenreGrid — deduplicates by resolved name + icon) | Done |
 | Home Top10 cards (ranked list with year, genre icons, star rating; movies + series tabs) | Done |
@@ -210,13 +212,17 @@ data/
 | Sticky table header — per-`<th>` sticky (fixes poster bleed-through caused by GPU compositing conflict) | Done |
 | Component extraction — FilterFieldInput (from FiltersPanel), CalendarReleaseItem (from ReleaseCalendar), seasons/ subfolder (from SeasonsAccordion) | Done |
 | Hook extraction — useMovieRuntimeEnrichment (from MoviesFeature), useSeriesEnrichment (from SeriesFeature) | Done |
+| Genres column in movies/series tables (icon-only with Tooltip per genre; deduped by icon) | Done |
+| Duration filter with d/h/min unit selector (value stored in minutes; pill auto-converts back) | Done |
+| Tooltip on truncated titles in movies/series tables (ResizeObserver via useTruncated) | Done |
+| Watch provider tooltip clarifies rent (€) and buy (🛒) icons with label | Done |
 
 ---
 
 ## Architecture Decisions
 
 **Persistent dashboard layout**
-All dashboard pages live inside the `(dashboard)` route group. `layout.tsx` is a Server Component that decodes the JWT cookie to read the role, then passes it to `DashboardGroupLayoutClient` (`'use client'`) which renders `DashboardLayout` (Sidebar only — Topbar removed) and provides `DashboardRoleContext`. The layout is mounted once and never unmounts across client-side navigations. `activeNav` is derived from `usePathname()`. Each page has a `loading.tsx` (client component) that reads the role from `DashboardRoleContext` to show the correct number of skeleton columns. The Sidebar contains: bucket icon (collapsed) / Popcorn logo (expanded) at the top; a separator with a half-hanging circular toggle button (`ChevronLeft/Right`, `bg-primary`); nav items; Logout button pinned at the bottom.
+All dashboard pages live inside the `(dashboard)` route group. `layout.tsx` is a Server Component that decodes the JWT cookie to read the role, then passes it to `DashboardGroupLayoutClient` (`'use client'`) which renders `DashboardLayout` (Sidebar only — Topbar removed) and provides `DashboardRoleContext`. The layout is mounted once and never unmounts across client-side navigations. `activeNav` is derived from `usePathname()`. Each page has a `loading.tsx` (client component) that renders an immediate skeleton; movies uses 6 cols and series 7 — both roles see the same columns now that the watched-eye column was replaced by a poster ribbon. The Sidebar contains: bucket icon (collapsed) / Popcorn logo (expanded) at the top; a separator with a half-hanging circular toggle button (`ChevronLeft/Right`, `bg-primary`); nav items; Logout button pinned at the bottom.
 
 **SSR-safe hydration**
 Features that depend on Zustand `persist` stores (localStorage) are loaded with `dynamic(..., { ssr: false })` — they only render on the client, so store values are already rehydrated when the component mounts. No `useMounted` guard needed inside these components. The layout (`Sidebar`) is SSR'd and gates role-dependent nav items behind its own `mounted` state to avoid hydration mismatches. `DatePicker` uses `suppressHydrationWarning` on its placeholder span since the locale-specific placeholder text is non-critical and corrects itself after mount. Sidebar nav labels and the Sidebar logout button also carry `suppressHydrationWarning` — they are SSR'd in the persistent layout and contain translated text that diverges between server (always `'en'`, no localStorage) and client (user's stored language).

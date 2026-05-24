@@ -22,6 +22,8 @@ export type FilterOption = {
   icon?: ComponentType<{ size?: number; strokeWidth?: number; color?: string; style?: CSSProperties }>
 }
 
+export type FilterUnit = { value: string; label: string; multiplier: number }
+
 export type FilterField<T> = {
   key: keyof T
   keyTo?: keyof T
@@ -31,6 +33,7 @@ export type FilterField<T> = {
   min?: number
   max?: number
   unit?: string
+  units?: FilterUnit[]
 }
 
 export type FiltersSchema<T> = FilterField<T>[]
