@@ -431,9 +431,9 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-The project has two test layers: **545 unit/integration tests** (Jest) and **101 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+The project has two test layers: **586 unit/integration tests** (Jest) and **124 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 545 tests · 50 suites
+### Unit & integration tests (Jest) — 586 tests · 56 suites
 
 ```bash
 npm test           # run once
@@ -445,12 +445,12 @@ npm run test:watch # watch mode
 | Pure functions | `getMovieUI`, `getSeriesUI`, `formatDate`, `formatVoteCount`, `deduplicateProviders`, `buildGenreCounts`, `toCSV` |
 | Business logic | Client-side filters (movies + series), TMDB fetch error mapping, export utilities |
 | Stores | `watchedStore` (toggle movie/episode, season counts), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
-| Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases`, `useTrailer` (language preference, YouTube filtering, fallback), `useSeriesEnrichment` (status/totals/runtimes/genreIds backfill, stable-reference pattern) |
-| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button), `SearchableSelect` (open/close, search, selection, clear), `YearRangePicker` (cross-filtering, null callbacks), `FilterFieldInput` (all field types, null guards) |
+| Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases`, `useTrailer` (language preference, YouTube filtering, fallback), `useSeriesEnrichment` (status/totals/runtimes/genreIds backfill, stable-reference pattern), `useMovieRuntimeEnrichment` (Promise.allSettled backfill, null on fail), `useFilters` (initial state, setFilters, reference identity) |
+| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button), `SearchableSelect` (open/close, search, selection, clear), `YearRangePicker` (cross-filtering, null callbacks), `FilterFieldInput` (all field types, null guards), `ToggleSwitch` (active style, onChange, role="group"), `MediaTableCells` (TitleCell tooltip guard, GenresCell deduplication by icon), `StatusBadge` (all status variants) |
 | Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
 | API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date) |
 
-### End-to-end tests (Cypress) — 113 tests · 7 suites
+### End-to-end tests (Cypress) — 124 tests · 7 suites
 
 In CI, Cypress runs against the production build automatically. Locally, run against the dev server:
 
@@ -469,8 +469,8 @@ npm run cypress:run
 |---|---|---|
 | `auth.cy.ts` | 6 | Redirect when unauthenticated, invalid credentials, login, logout, session expiry |
 | `home.cy.ts` | 24 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar, Top 10 year display, calendar trailer button, Top 10 genre filter dropdown |
-| `movies.cy.ts` | 29 | Movie list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, access control, trailer (show, open, close, X button) |
-| `series.cy.ts` | 24 | Series list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, episode runtime guard, trailer (show, open, close, X button) |
+| `movies.cy.ts` | 33 | Movie list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, access control, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter (2h → 120min, 90min) |
+| `series.cy.ts` | 28 | Series list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, episode runtime guard, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter client-side (filters below total duration threshold, not sent to TMDB) |
 | `users.cy.ts` | 15 | Create, edit, delete (single + bulk), toasts, import JSON/CSV, partial failures |
 | `my-list.cy.ts` | 12 | Tabs, empty state, watched movies/series, saga grouping, nav access control, star rating |
 | `settings.cy.ts` | 3 | Theme switching (light / dark), language switching (EN / ES) |

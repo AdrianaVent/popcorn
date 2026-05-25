@@ -135,14 +135,17 @@ describe('Series', () => {
     })
 
     it('appears on the poster after marking all episodes as watched', () => {
+      // Register specific intercepts BEFORE visiting so enrichment uses mockDetail
+      // (totals.get(1396) = 2 required for the ribbon condition: total > 0 && watched >= total)
       cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'series.json' }).as('tmdb-guest')
-      cy.visitAsGuest('/series')
-      cy.wait('@tmdb-guest')
       cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetail).as('detail')
       cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} }).as('providers')
       cy.intercept('GET', /\/tv\/1396\/season\/1/, mockSeason).as('season')
+      cy.visitAsGuest('/series')
+      cy.wait('@tmdb-guest')
+      cy.wait('@detail') // enrichment call — populates totals with number_of_episodes: 2
       cy.contains('tr', 'Breaking Bad').click()
-      cy.wait('@detail')
+      cy.wait('@detail') // modal open call
       cy.get('[role="dialog"]').contains('Mark as watched').click()
       cy.get('body').type('{esc}')
       cy.contains('tr', 'Breaking Bad').find('[data-cy="watched-ribbon"]').should('exist')
@@ -408,6 +411,78 @@ describe('Series', () => {
     cy.get('[data-cy="filter-provider_id"]').select('8')
     cy.wait('@filtered')
     cy.contains('Breaking Bad').should('be.visible')
+  })
+
+  // ─── Column sort ─────────────────────────────────────────────
+
+  describe('Column sort', () => {
+    it('sends sort_by=vote_average.asc when the rating header is clicked', () => {
+      cy.intercept('GET', /\/discover\/tv.*sort_by=vote_average\.asc/, { fixture: 'series.json' }).as('sorted-asc')
+      cy.wait('@tmdb')
+      cy.contains('th', 'Rating').click()
+      cy.wait('@sorted-asc')
+    })
+
+    it('sends sort_by=vote_average.desc on second click', () => {
+      cy.intercept('GET', /\/discover\/tv.*sort_by=vote_average\.asc/, { fixture: 'series.json' }).as('sorted-asc')
+      cy.intercept('GET', /\/discover\/tv.*sort_by=vote_average\.desc/, { fixture: 'series.json' }).as('sorted-desc')
+      cy.wait('@tmdb')
+      cy.contains('th', 'Rating').click()
+      cy.wait('@sorted-asc')
+      cy.contains('th', 'Rating').click()
+      cy.wait('@sorted-desc')
+    })
+  })
+
+  // ─── Runtime filter (client-side) ────────────────────────────
+
+  describe('Runtime filter', () => {
+    // BB: 47min × 62ep = 2914min. GoT: 57min × 73ep = 4161min.
+    // Filter at 60h (3600min) → BB filtered out, GoT remains.
+    const detailBB = {
+      id: 1396, name: 'Breaking Bad', original_name: 'Breaking Bad',
+      first_air_date: '2008-01-20', vote_average: 9.5, vote_count: 12000,
+      poster_path: null, original_language: 'en', overview: '',
+      episode_run_time: [47], number_of_episodes: 62, number_of_seasons: 5,
+      seasons: [{ id: 1, name: 'Season 1', season_number: 1, episode_count: 62, poster_path: null, air_date: '2008-01-20', overview: '' }],
+      status: 'Ended', genres: [], tagline: '',
+    }
+    const detailGoT = {
+      id: 1399, name: 'Game of Thrones', original_name: 'Game of Thrones',
+      first_air_date: '2011-04-17', vote_average: 8.4, vote_count: 22000,
+      poster_path: null, original_language: 'en', overview: '',
+      episode_run_time: [57], number_of_episodes: 73, number_of_seasons: 8,
+      seasons: [{ id: 2, name: 'Season 1', season_number: 1, episode_count: 73, poster_path: null, air_date: '2011-04-17', overview: '' }],
+      status: 'Ended', genres: [], tagline: '',
+    }
+
+    beforeEach(() => {
+      cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'series.json' }).as('tmdb-rt')
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, detailBB).as('detail-bb')
+      cy.intercept('GET', /\/tv\/1399(\?|$)/, detailGoT).as('detail-got')
+      cy.visitAsAdmin('/series')
+    })
+
+    it('filters out series below the total runtime threshold', () => {
+      cy.wait('@tmdb-rt')
+      cy.wait('@detail-bb')
+      cy.wait('@detail-got')
+      cy.contains('tr', 'Breaking Bad').should('be.visible')
+      cy.contains('tr', 'Game of Thrones').should('be.visible')
+      cy.get('[data-cy="filter-runtime_gte"] input[type="number"]').type('60')
+      cy.contains('tr', 'Breaking Bad').should('not.exist')
+      cy.contains('tr', 'Game of Thrones').should('be.visible')
+    })
+
+    it('does not send with_runtime.gte to TMDB', () => {
+      const spy = cy.spy().as('runtimeReq')
+      cy.intercept('GET', /with_runtime\.gte/, spy)
+      cy.wait('@tmdb-rt')
+      cy.wait('@detail-bb')
+      cy.wait('@detail-got')
+      cy.get('[data-cy="filter-runtime_gte"] input[type="number"]').type('60')
+      cy.get('@runtimeReq').should('not.have.been.called')
+    })
   })
 
   // ─── Genre deduplication ──────────────────────────────────────

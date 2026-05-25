@@ -36,6 +36,7 @@ import type { WatchProvider } from '@/types/tmdb'
 import PageLayout from '@/components/layouts/PageLayout'
 import { TvIcon } from '@/components/icons'
 import { TitleCell, GenresCell } from '@/components/common/MediaTableCells'
+import { applyRuntimeFilter } from './hooks/applyRuntimeFilter'
 
 type SeriesExportRow = SeriesRow & { status: string }
 
@@ -156,14 +157,6 @@ export default function SeriesFeature() {
   }, [filters.watched, watchedSeriesData, seriesEpisodes])
 
   const filteredSeries = useMemo(() => {
-    const applyRuntimeFilter = (items: SeriesRow[]) => {
-      if (!filters.runtime_gte || runtimes.size === 0) return items
-      return items.filter((s) => {
-        const rt = runtimes.get(s.id)
-        return rt == null || rt >= (filters.runtime_gte ?? 0)
-      })
-    }
-
     if (isNameSort) {
       // visibleSeries already has the sorted+paginated name-sort slice; apply watched filter on top
       let base = filters.watched === 'unwatched'
@@ -173,7 +166,7 @@ export default function SeriesFeature() {
             return !(total > 0 && watched >= total)
           })
         : visibleSeries
-      base = applyRuntimeFilter(base)
+      base = applyRuntimeFilter(base, runtimes, filters.runtime_gte)
       if (sort?.key !== 'runtime') return base
       const unset = sort.dir === 'asc' ? Infinity : -Infinity
       return [...base].sort((a, b) => {
@@ -195,7 +188,7 @@ export default function SeriesFeature() {
     } else {
       result = series
     }
-    result = applyRuntimeFilter(result)
+    result = applyRuntimeFilter(result, runtimes, filters.runtime_gte)
     if (sort?.key === 'runtime') {
       const unset = sort.dir === 'asc' ? Infinity : -Infinity
       result = [...result].sort((a, b) => {
