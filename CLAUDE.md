@@ -386,4 +386,6 @@ Branch flow: `feature → dev → main`
 - Before a PR: `npm test` + `npx tsc --noEmit` + `npm run lint` must all pass
 - Merge feature PR into `dev` → run build-check → only then merge `dev` into `main`
 - `main` is always stable and production-ready
+- **`dev` and `main` are permanent protected branches — NEVER delete them**
+- Only feature branches are deleted after merging (step 4 of the PR workflow)
 - **All merges and branch deletions require explicit user authorization**
