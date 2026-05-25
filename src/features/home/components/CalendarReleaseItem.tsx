@@ -25,6 +25,7 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
   const { t } = useTranslation()
   const [showTrailer, setShowTrailer] = useState(false)
   const trailerRef = useRef<HTMLDivElement>(null)
+  const itemRef = useRef<HTMLDivElement>(null)
 
   const isSeries = release.season_number != null
 
@@ -63,7 +64,7 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
   const statusConfig = release.series_status ? getStatusConfig(release.series_status) : null
 
   return (
-    <div className={clsx('rounded-lg -mx-1 transition-colors', showTrailer && 'bg-cream-300 dark:bg-gray-700/60')}>
+    <div ref={itemRef} className={clsx('rounded-lg -mx-1 transition-colors', showTrailer && 'bg-cream-300 dark:bg-gray-700/60')}>
       <div
         onClick={() => onEntryClick?.(release.id)}
         className="flex items-center gap-3 py-2.5 w-full text-left px-1 cursor-pointer hover:bg-cream-400 dark:hover:bg-gray-700/60 rounded-lg transition-colors"
@@ -130,7 +131,16 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
       </div>
       {showTrailer && trailer && (
         <div ref={trailerRef} className="px-4 py-3 border-t border-border/30 flex justify-center">
-          <TrailerPlayer trailerKey={trailer.key} className="w-full max-w-xs aspect-video border border-border rounded-lg overflow-hidden" onClose={() => setShowTrailer(false)} />
+          <TrailerPlayer
+            trailerKey={trailer.key}
+            className="w-full max-w-xs aspect-video border border-border rounded-lg overflow-hidden"
+            onClose={() => {
+              setShowTrailer(false)
+              requestAnimationFrame(() => {
+                itemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+              })
+            }}
+          />
         </div>
       )}
     </div>

@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Table from '@/components/ui/Table/Table'
-import MediaPoster from '@/components/common/MediaPoster'
 import FiltersPanel from '@/components/common/FiltersPanel'
 import ExportButton from '@/components/common/ExportButton'
 import LoadingOverlay from '@/components/ui/LoadingOverlay'
@@ -35,33 +34,8 @@ import type { SeriesRow, SeriesFilters } from '@/types/series'
 import type { WatchProvider } from '@/types/tmdb'
 import PageLayout from '@/components/layouts/PageLayout'
 import { TvIcon } from '@/components/icons'
-import { useTruncated } from '@/hooks/useTruncated'
-function TitleCell({ title }: { title: string }) {
-  const { ref, isTruncated } = useTruncated<HTMLSpanElement>(title)
-  return (
-    <Tooltip content={title} disabled={!isTruncated} placement="top">
-      <span ref={ref} className="block truncate font-medium text-foreground">{title}</span>
-    </Tooltip>
-  )
-}
-
-function GenresCell({ genreIds, language }: { genreIds?: number[]; language: string }) {
-  const genres = Array.from(
-    new Map(
-      (genreIds ?? []).map((gid) => [getGenreIcon(gid), gid] as const).filter(([Icon]) => Icon !== null)
-    ).entries()
-  )
-  if (genres.length === 0) return null
-  return (
-    <span className="flex flex-wrap items-center gap-1.5">
-      {genres.map(([Icon, gid]) => (
-        <Tooltip key={gid} content={resolveGenreName(gid, language)} placement="top">
-          {Icon && <Icon size={13} className="text-muted-foreground shrink-0" />}
-        </Tooltip>
-      ))}
-    </span>
-  )
-}
+import { TitleCell, GenresCell, PosterCell } from '@/components/common/MediaTableCells'
+import { applyRuntimeFilter } from './hooks/applyRuntimeFilter'
 
 type SeriesExportRow = SeriesRow & { status: string }
 
@@ -150,7 +124,7 @@ export default function SeriesFeature() {
     return series
   }, [isNameSort, nameSortData, page, sort, series])
 
-  const { statuses, totals, runtimes } = useSeriesEnrichment(visibleSeries, language)
+  const { statuses, totals, runtimes, genreIds } = useSeriesEnrichment(visibleSeries, language)
 
   const userId = useUserStore((s) => s.userId)
   const role = useUserStore((s) => s.role)
@@ -184,13 +158,14 @@ export default function SeriesFeature() {
   const filteredSeries = useMemo(() => {
     if (isNameSort) {
       // visibleSeries already has the sorted+paginated name-sort slice; apply watched filter on top
-      const base = filters.watched === 'unwatched'
+      let base = filters.watched === 'unwatched'
         ? visibleSeries.filter((s) => {
             const total = totals.get(s.id) ?? 0
             const watched = Object.keys(seriesEpisodes?.[s.id] ?? {}).length
             return !(total > 0 && watched >= total)
           })
         : visibleSeries
+      base = applyRuntimeFilter(base, runtimes, filters.runtime_gte)
       if (sort?.key !== 'runtime') return base
       const unset = sort.dir === 'asc' ? Infinity : -Infinity
       return [...base].sort((a, b) => {
@@ -212,6 +187,7 @@ export default function SeriesFeature() {
     } else {
       result = series
     }
+    result = applyRuntimeFilter(result, runtimes, filters.runtime_gte)
     if (sort?.key === 'runtime') {
       const unset = sort.dir === 'asc' ? Infinity : -Infinity
       result = [...result].sort((a, b) => {
@@ -221,23 +197,24 @@ export default function SeriesFeature() {
       })
     }
     return result
-  }, [visibleSeries, series, filters.watched, seriesEpisodes, totals, watchedModeItems, page, sort, isNameSort, runtimes])
+  }, [visibleSeries, series, filters.watched, filters.runtime_gte, seriesEpisodes, totals, watchedModeItems, page, sort, isNameSort, runtimes])
 
   const displayTotalPages = useMemo(() => {
     if (filters.watched === 'watched') return Math.max(1, Math.ceil(watchedModeItems.length / PAGE_SIZE))
     if (isNameSort) {
       const all = nameSortData ?? []
-      const filtered = filters.watched === 'unwatched'
+      let filtered = filters.watched === 'unwatched'
         ? all.filter((s) => {
             const total = totals.get(s.id) ?? 0
             const watched = Object.keys(seriesEpisodes?.[s.id] ?? {}).length
             return !(total > 0 && watched >= total)
           })
         : all
+      filtered = applyRuntimeFilter(filtered, runtimes, filters.runtime_gte)
       return Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
     }
     return totalPages
-  }, [filters.watched, watchedModeItems, isNameSort, nameSortData, totals, seriesEpisodes, totalPages])
+  }, [filters.watched, filters.runtime_gte, watchedModeItems, isNameSort, nameSortData, totals, seriesEpisodes, totalPages, runtimes])
 
   const combinedLoading = isNameSort ? nameSortLoading : loading
 
@@ -323,16 +300,12 @@ export default function SeriesFeature() {
       render: (row) => {
         const total = totals.get(row.id) ?? 0
         const watched = Object.keys(seriesEpisodes?.[row.id] ?? {}).length
-        const isWatched = role !== 'admin' && total > 0 && watched >= total
         return (
-          <div className="relative w-9 h-14 overflow-hidden rounded">
-            <MediaPoster posterPath={row.poster_path} title={row.name} />
-            {isWatched && (
-              <div className="absolute top-1 -left-4 w-12 py-px pl-2 rotate-[-35deg] bg-primary text-primary-foreground text-[6px] font-semibold uppercase tracking-wider text-center shadow-sm pointer-events-none">
-                {t('common.watched')}
-              </div>
-            )}
-          </div>
+          <PosterCell
+            posterPath={row.poster_path}
+            title={row.name}
+            isWatched={role !== 'admin' && total > 0 && watched >= total}
+          />
         )
       },
       width: 'xs',
@@ -356,7 +329,7 @@ export default function SeriesFeature() {
     {
       key: 'genre_ids',
       header: t('series.columns.genres'),
-      render: (row) => <GenresCell genreIds={row.genre_ids} language={language} />,
+      render: (row) => <GenresCell genreIds={genreIds.get(row.id) ?? row.genre_ids} language={language} />,
       width: 'md',
       align: 'left',
     },
@@ -422,7 +395,11 @@ export default function SeriesFeature() {
           onRowClick={(row) => setSelectedId(row.id)}
           sort={sort}
           onSort={handleSort}
-          rowClassName={() => ''}
+          rowClassName={(row) => {
+            const total = totals.get(row.id) ?? 0
+            const watched = Object.keys(seriesEpisodes?.[row.id] ?? {}).length
+            return (role !== 'admin' && total > 0 && watched >= total) ? '!bg-primary/15 dark:!bg-primary/20' : ''
+          }}
           footer={{
             page,
             totalPages: displayTotalPages,
