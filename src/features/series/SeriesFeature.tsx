@@ -395,7 +395,11 @@ export default function SeriesFeature() {
           onRowClick={(row) => setSelectedId(row.id)}
           sort={sort}
           onSort={handleSort}
-          rowClassName={() => ''}
+          rowClassName={(row) => {
+            const total = totals.get(row.id) ?? 0
+            const watched = Object.keys(seriesEpisodes?.[row.id] ?? {}).length
+            return (role !== 'admin' && total > 0 && watched >= total) ? '!bg-primary/15 dark:!bg-primary/20' : ''
+          }}
           footer={{
             page,
             totalPages: displayTotalPages,

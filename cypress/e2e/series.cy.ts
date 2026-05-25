@@ -538,7 +538,10 @@ describe('Series', () => {
     }
 
     const mockVideos = {
-      results: [{ id: 'v1', key: 'testSeriesKey', name: 'Official Trailer', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en' }],
+      results: [
+        { id: 'v1', key: 'testSeriesKey', name: 'Official Trailer', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en' },
+        { id: 'v2', key: 'testS1Key', name: 'Season 1 Official Trailer', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en' },
+      ],
     }
 
     beforeEach(() => {

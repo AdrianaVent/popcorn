@@ -1,8 +1,17 @@
 import { render, screen } from '@testing-library/react'
-import { TitleCell, GenresCell } from './MediaTableCells'
+import { TitleCell, GenresCell, PosterCell } from './MediaTableCells'
 
 jest.mock('@/hooks/useTruncated', () => ({
   useTruncated: () => ({ ref: { current: null }, isTruncated: false }),
+}))
+
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}))
+
+jest.mock('@/components/common/MediaPoster', () => ({
+  __esModule: true,
+  default: ({ title }: { title: string }) => <div data-testid="media-poster">{title}</div>,
 }))
 
 const DramaIcon  = () => <svg data-testid="drama-icon" />
@@ -22,6 +31,31 @@ jest.mock('@/config/genreIcons', () => ({
     return null
   },
 }))
+
+describe('PosterCell', () => {
+  it('renders the poster with the given title', () => {
+    render(<PosterCell posterPath="/img.jpg" title="Inception" isWatched={false} />)
+    expect(screen.getByTestId('media-poster')).toBeInTheDocument()
+    expect(screen.getByText('Inception')).toBeInTheDocument()
+  })
+
+  it('shows the watched ribbon when isWatched is true', () => {
+    render(<PosterCell posterPath="/img.jpg" title="Inception" isWatched={true} />)
+    expect(screen.getByTestId('media-poster')).toBeInTheDocument()
+    const ribbon = document.querySelector('[data-cy="watched-ribbon"]')
+    expect(ribbon).toBeInTheDocument()
+  })
+
+  it('does not show the ribbon when isWatched is false', () => {
+    render(<PosterCell posterPath="/img.jpg" title="Inception" isWatched={false} />)
+    expect(document.querySelector('[data-cy="watched-ribbon"]')).not.toBeInTheDocument()
+  })
+
+  it('renders the ribbon with the translated label', () => {
+    render(<PosterCell posterPath={null} title="Inception" isWatched={true} />)
+    expect(screen.getByText('common.watched')).toBeInTheDocument()
+  })
+})
 
 describe('TitleCell', () => {
   it('renders the title text', () => {

@@ -5,18 +5,20 @@ import { useTranslation } from 'react-i18next'
 import AccordionList from '@/components/ui/AccordionList'
 import Text from '@/components/ui/Text'
 import SeasonItem from './seasons/SeasonItem'
+import { resolveSeasonFallback } from '@/hooks/useTrailer'
 import { useUserStore } from '@/store/userStore'
 import type { StoredSeries } from '@/store/watchedStore'
-import type { TMDBSeason } from '@/types/tmdb'
+import type { TMDBSeason, TMDBVideo } from '@/types/tmdb'
 
 type Props = {
   seasons: TMDBSeason[]
   seriesName: string
   seriesId: number
   seriesSnapshot?: StoredSeries
+  seriesAllTrailers?: TMDBVideo[]
 }
 
-export default function SeasonsAccordion({ seasons, seriesName, seriesId, seriesSnapshot }: Props) {
+export default function SeasonsAccordion({ seasons, seriesName, seriesId, seriesSnapshot, seriesAllTrailers = [] }: Props) {
   const { t } = useTranslation()
   const [openSeasonId, setOpenSeasonId] = useState<number | null>(null)
   const userId = useUserStore((s) => s.userId)
@@ -52,6 +54,7 @@ export default function SeasonsAccordion({ seasons, seriesName, seriesId, series
             userId={userKey}
             seriesSnapshot={seriesSnapshot}
             canWatch={canWatch}
+            seriesTrailerFallback={resolveSeasonFallback(seriesAllTrailers, season.season_number)}
           />
         </div>
       )}

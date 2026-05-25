@@ -320,7 +320,7 @@ export default function MoviesFeature() {
           columns={columns}
           getRowKey={(row) => row.id}
           onRowClick={(row) => setSelectedId(row.id)}
-          rowClassName={() => ''}
+          rowClassName={(row) => (role !== 'admin' && !!watchedMovies?.[row.id]) ? '!bg-primary/15 dark:!bg-primary/20' : ''}
           sort={sort}
           onSort={handleSort}
           footer={{

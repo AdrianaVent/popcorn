@@ -23,7 +23,7 @@ export function PosterCell({ posterPath, title, isWatched }: { posterPath: strin
     <div className="relative w-9 h-14 overflow-hidden rounded">
       <MediaPoster posterPath={posterPath} title={title} />
       {isWatched && (
-        <div data-cy="watched-ribbon" className="absolute top-1 -left-4 w-12 py-px pl-2 rotate-[-35deg] bg-primary text-primary-foreground text-[6px] font-semibold uppercase tracking-wider text-center shadow-sm pointer-events-none">
+        <div data-cy="watched-ribbon" className="absolute top-1.5 -left-5 w-14 py-0.5 pl-2 rotate-[-35deg] bg-primary text-primary-foreground text-[7px] font-semibold uppercase tracking-wider text-center shadow-sm pointer-events-none">
           {t('common.watched')}
         </div>
       )}

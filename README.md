@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.12.1-6B2737)
+![Version](https://img.shields.io/badge/version-0.12.3-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -220,6 +220,8 @@ A donut chart showing which genres appear most — either in the TMDB catalogue 
 
 ![Home — release calendar with day selected](docs/screenshots/home-calendar.png)
 
+![Home — release calendar with trailer open](docs/screenshots/home-calendar-trailer.png)
+
 A monthly calendar showing upcoming movie and series releases from TMDB (English and Spanish titles).
 
 - Days with at least one release are marked with a coloured dot.
@@ -306,7 +308,9 @@ Click anywhere on a row to open a panel with full information about the series.
 
 ![Series detail — overview and watch providers](docs/screenshots/series-detail-overview.png)
 
-The modal shows the **synopsis**, **genres**, **episode runtime**, **status**, total number of **seasons and episodes**, and **watch providers**. Mark the series as watched with the button next to the title *(guest only)*. Click the play button next to the title to watch the official trailer inline.
+![Series detail — trailer open](docs/screenshots/series-detail-overview-trailer.png)
+
+The modal shows the **synopsis**, **genres**, **episode runtime**, **status**, total number of **seasons and episodes**, and **watch providers**. Mark the series as watched with the button next to the title *(guest only)*. Click the play button next to the title to watch the official trailer inline. Click it again or use the **×** button on the player to close it.
 
 **Episode tracking** *(guest only)*
 
@@ -317,7 +321,7 @@ Expand the **Seasons** accordion to see the full episode list broken down by sea
 - Click the eye icon next to an episode to mark it as watched individually.
 - Click the eye icon next to the season header to mark all available episodes in that season at once (future air dates are excluded).
 - Click the season eye icon again to unmark the entire season.
-- Click the play button in the season header to watch the season trailer inline (falls back to the series trailer if no season-specific trailer exists). Specials (Season 0) are hidden.
+- Click the play button in the season header to watch the season trailer inline. The app first looks for a dedicated season video; if none exists, it falls back to any series-level trailer whose YouTube title contains "Season X" or "Temporada X". Specials (Season 0) are hidden.
 
 ---
 
@@ -431,9 +435,9 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-The project has two test layers: **586 unit/integration tests** (Jest) and **124 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+The project has two test layers: **618 unit/integration tests** (Jest) and **124 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 586 tests · 56 suites
+### Unit & integration tests (Jest) — 618 tests · 56 suites
 
 ```bash
 npm test           # run once
@@ -442,10 +446,10 @@ npm run test:watch # watch mode
 
 | Area | What's covered |
 |---|---|
-| Pure functions | `getMovieUI`, `getSeriesUI`, `formatDate`, `formatVoteCount`, `deduplicateProviders`, `buildGenreCounts`, `toCSV` |
+| Pure functions | `getMovieUI`, `getSeriesUI`, `formatDate`, `formatVoteCount`, `deduplicateProviders`, `buildGenreCounts`, `toCSV`, `pickYouTubeTrailer`, `findSeasonTrailerInList`, `filterNonSeasonTrailers`, `resolveSeasonFallback`, `resolveHeaderTrailer` |
 | Business logic | Client-side filters (movies + series), TMDB fetch error mapping, export utilities |
 | Stores | `watchedStore` (toggle movie/episode, season counts), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
-| Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases`, `useTrailer` (language preference, YouTube filtering, fallback), `useSeriesEnrichment` (status/totals/runtimes/genreIds backfill, stable-reference pattern), `useMovieRuntimeEnrichment` (Promise.allSettled backfill, null on fail), `useFilters` (initial state, setFilters, reference identity) |
+| Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases`, `useTrailer` (language preference, YouTube filtering, allTrailers list), `useEnrichedTrailers` (YouTube oEmbed title enrichment, 24h cache), `useSeriesEnrichment` (status/totals/runtimes/genreIds backfill, stable-reference pattern), `useMovieRuntimeEnrichment` (Promise.allSettled backfill, null on fail), `useFilters` (initial state, setFilters, reference identity) |
 | Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button), `SearchableSelect` (open/close, search, selection, clear), `YearRangePicker` (cross-filtering, null callbacks), `FilterFieldInput` (all field types, null guards), `ToggleSwitch` (active style, onChange, role="group"), `MediaTableCells` (TitleCell tooltip guard, GenresCell deduplication by icon), `StatusBadge` (all status variants) |
 | Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
 | API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date) |
@@ -573,7 +577,7 @@ src/
 │   ├── myList/         # MyListFeature · MovieCard · SeriesCard (tabs, saga grouping, ratings)
 │   ├── series/         # SeriesFeature · hooks · components · service
 │   └── users/          # UsersFeature · UserFormModal · ImportUsersModal · users.service.ts
-├── hooks/              # useFilters · useWatchProviders · useTruncated
+├── hooks/              # useFilters · useWatchProviders · useTruncated · useTrailer · useEnrichedTrailers
 ├── locales/            # en.json · es.json
 ├── middleware.ts        # JWT verification + route protection
 ├── providers/          # GlobalProvider · ThemeProvider · LanguageProvider
