@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import Table from '@/components/ui/Table/Table'
-import MediaPoster from '@/components/common/MediaPoster'
 import FiltersPanel from '@/components/common/FiltersPanel'
 import ExportButton from '@/components/common/ExportButton'
 import LoadingOverlay from '@/components/ui/LoadingOverlay'
@@ -35,7 +34,7 @@ import type { SeriesRow, SeriesFilters } from '@/types/series'
 import type { WatchProvider } from '@/types/tmdb'
 import PageLayout from '@/components/layouts/PageLayout'
 import { TvIcon } from '@/components/icons'
-import { TitleCell, GenresCell } from '@/components/common/MediaTableCells'
+import { TitleCell, GenresCell, PosterCell } from '@/components/common/MediaTableCells'
 import { applyRuntimeFilter } from './hooks/applyRuntimeFilter'
 
 type SeriesExportRow = SeriesRow & { status: string }
@@ -204,17 +203,18 @@ export default function SeriesFeature() {
     if (filters.watched === 'watched') return Math.max(1, Math.ceil(watchedModeItems.length / PAGE_SIZE))
     if (isNameSort) {
       const all = nameSortData ?? []
-      const filtered = filters.watched === 'unwatched'
+      let filtered = filters.watched === 'unwatched'
         ? all.filter((s) => {
             const total = totals.get(s.id) ?? 0
             const watched = Object.keys(seriesEpisodes?.[s.id] ?? {}).length
             return !(total > 0 && watched >= total)
           })
         : all
+      filtered = applyRuntimeFilter(filtered, runtimes, filters.runtime_gte)
       return Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
     }
     return totalPages
-  }, [filters.watched, watchedModeItems, isNameSort, nameSortData, totals, seriesEpisodes, totalPages])
+  }, [filters.watched, filters.runtime_gte, watchedModeItems, isNameSort, nameSortData, totals, seriesEpisodes, totalPages, runtimes])
 
   const combinedLoading = isNameSort ? nameSortLoading : loading
 
@@ -300,16 +300,12 @@ export default function SeriesFeature() {
       render: (row) => {
         const total = totals.get(row.id) ?? 0
         const watched = Object.keys(seriesEpisodes?.[row.id] ?? {}).length
-        const isWatched = role !== 'admin' && total > 0 && watched >= total
         return (
-          <div className="relative w-9 h-14 overflow-hidden rounded">
-            <MediaPoster posterPath={row.poster_path} title={row.name} />
-            {isWatched && (
-              <div data-cy="watched-ribbon" className="absolute top-1 -left-4 w-12 py-px pl-2 rotate-[-35deg] bg-primary text-primary-foreground text-[6px] font-semibold uppercase tracking-wider text-center shadow-sm pointer-events-none">
-                {t('common.watched')}
-              </div>
-            )}
-          </div>
+          <PosterCell
+            posterPath={row.poster_path}
+            title={row.name}
+            isWatched={role !== 'admin' && total > 0 && watched >= total}
+          />
         )
       },
       width: 'xs',

@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next'
 
 import Table from '@/components/ui/Table/Table'
 import MovieDetailModal from './components/MovieDetailModal'
-import MediaPoster from '@/components/common/MediaPoster'
 import FiltersPanel from '@/components/common/FiltersPanel'
 import ExportButton from '@/components/common/ExportButton'
 import LoadingOverlay from '@/components/ui/LoadingOverlay'
@@ -34,7 +33,7 @@ import Tooltip from '@/components/ui/Tooltip'
 import { formatShortDate } from '@/utils/formatDate'
 import PageLayout from '@/components/layouts/PageLayout'
 import { FilmIcon } from '@/components/icons'
-import { TitleCell, GenresCell } from '@/components/common/MediaTableCells'
+import { TitleCell, GenresCell, PosterCell } from '@/components/common/MediaTableCells'
 
 type MovieCSVRow = {
   title: string
@@ -237,19 +236,13 @@ export default function MoviesFeature() {
     {
       key: 'poster_path',
       header: t('movies.columns.poster'),
-      render: (row) => {
-        const isWatched = role !== 'admin' && !!watchedMovies?.[row.id]
-        return (
-          <div className="relative w-9 h-14 overflow-hidden rounded">
-            <MediaPoster posterPath={row.poster_path} title={row.title} />
-            {isWatched && (
-              <div data-cy="watched-ribbon" className="absolute top-1 -left-4 w-12 py-px pl-2 rotate-[-35deg] bg-primary text-primary-foreground text-[6px] font-semibold uppercase tracking-wider text-center shadow-sm pointer-events-none">
-                {t('common.watched')}
-              </div>
-            )}
-          </div>
-        )
-      },
+      render: (row) => (
+        <PosterCell
+          posterPath={row.poster_path}
+          title={row.title}
+          isWatched={role !== 'admin' && !!watchedMovies?.[row.id]}
+        />
+      ),
       width: 'xs',
       align: 'center',
     },

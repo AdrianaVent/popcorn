@@ -12,10 +12,12 @@ type EnrichmentResult = {
 }
 
 export function useSeriesEnrichment(visibleSeries: SeriesRow[], language: string): EnrichmentResult {
-  const [statuses, setStatuses] = useState<Map<number, string>>(new Map())
-  const [totals, setTotals] = useState<Map<number, number>>(new Map())
-  const [runtimes, setRuntimes] = useState<Map<number, number | null>>(new Map())
-  const [genreIds, setGenreIds] = useState<Map<number, number[]>>(new Map())
+  const [maps, setMaps] = useState<EnrichmentResult>({
+    statuses: new Map(),
+    totals: new Map(),
+    runtimes: new Map(),
+    genreIds: new Map(),
+  })
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -59,14 +61,11 @@ export function useSeriesEnrichment(visibleSeries: SeriesRow[], language: string
           if (detail.genres?.length) nextGenreIds.set(id, detail.genres.map((g) => g.id))
         }
       })
-      setStatuses(nextStatuses)
-      setTotals(nextTotals)
-      setRuntimes(nextRuntimes)
-      setGenreIds(nextGenreIds)
+      setMaps({ statuses: nextStatuses, totals: nextTotals, runtimes: nextRuntimes, genreIds: nextGenreIds })
     })
 
     return () => { controller.abort() }
   }, [visibleSeries, language])
 
-  return { statuses, totals, runtimes, genreIds }
+  return maps
 }
