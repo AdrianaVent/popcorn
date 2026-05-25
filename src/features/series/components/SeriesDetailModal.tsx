@@ -17,7 +17,7 @@ import type { StoredSeries } from '@/store/watchedStore'
 import WatchedToggleButton from '@/components/ui/WatchedToggleButton'
 import TrailerPlayer from '@/components/ui/TrailerPlayer'
 import Tooltip from '@/components/ui/Tooltip'
-import { useTrailer } from '@/hooks/useTrailer'
+import { useTrailer, useEnrichedTrailers, resolveHeaderTrailer } from '@/hooks/useTrailer'
 import { useLanguageStore } from '@/store/languageStore'
 
 import SeriesMetaGrid from './SeriesMetaGrid'
@@ -45,12 +45,14 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
 
   const [markLoading, setMarkLoading] = useState(false)
   const [showTrailer, setShowTrailer] = useState(false)
-  const { trailer } = useTrailer(
+  const { allTrailers: rawSeriesTrailers } = useTrailer(
     ['series-trailer', seriesId],
     () => fetchSeriesVideos(seriesId),
     true,
     language,
   )
+  const seriesAllTrailers = useEnrichedTrailers(rawSeriesTrailers)
+  const trailer = resolveHeaderTrailer(seriesAllTrailers, language)
 
   const ui = getSeriesUI(detail)
 
@@ -199,6 +201,7 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
               seriesName={detail.name}
               seriesId={seriesId}
               seriesSnapshot={seriesSnapshot}
+              seriesAllTrailers={seriesAllTrailers}
             />
           )}
 

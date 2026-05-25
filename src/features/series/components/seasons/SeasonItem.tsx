@@ -13,7 +13,7 @@ import { useTrailer } from '@/hooks/useTrailer'
 import { useLanguageStore } from '@/store/languageStore'
 import { useWatchedStore } from '@/store/watchedStore'
 import type { StoredSeries } from '@/store/watchedStore'
-import type { TMDBSeason, TMDBEpisode } from '@/types/tmdb'
+import type { TMDBSeason, TMDBEpisode, TMDBVideo } from '@/types/tmdb'
 import { EyeIcon, EyeSlashIcon } from '@/components/icons'
 
 export type SeasonItemProps = {
@@ -24,9 +24,10 @@ export type SeasonItemProps = {
   userId: string
   seriesSnapshot?: StoredSeries
   canWatch: boolean
+  seriesTrailerFallback?: TMDBVideo | null
 }
 
-export default function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot, canWatch }: SeasonItemProps) {
+export default function SeasonItem({ season, seriesId, isOpen, onToggle, userId, seriesSnapshot, canWatch, seriesTrailerFallback }: SeasonItemProps) {
   const { t } = useTranslation()
   const { language } = useLanguageStore()
   const [episodes, setEpisodes] = useState<TMDBEpisode[] | null>(null)
@@ -35,12 +36,13 @@ export default function SeasonItem({ season, seriesId, isOpen, onToggle, userId,
   const [showTrailer, setShowTrailer] = useState(false)
   const trailerRef = useRef<HTMLDivElement>(null)
 
-  const { trailer } = useTrailer(
+  const { trailer: seasonTrailer } = useTrailer(
     ['season-trailer', seriesId, season.season_number],
     () => fetchSeasonVideos(seriesId, season.season_number),
     true,
     language,
   )
+  const trailer = seasonTrailer ?? seriesTrailerFallback ?? null
 
   useEffect(() => {
     if (showTrailer && trailerRef.current) {

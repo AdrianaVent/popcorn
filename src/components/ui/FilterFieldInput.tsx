@@ -31,7 +31,7 @@ function NumberWithUnitsInput<T extends Record<string, unknown>>({
   const displayValue = storedMinutes !== null ? storedMinutes / unit.multiplier : ''
 
   return (
-    <div className="flex items-center gap-1">
+    <div data-cy={`filter-${String(field.key)}`} className="flex items-center gap-1">
       <input
         type="number"
         value={displayValue}

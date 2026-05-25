@@ -105,7 +105,7 @@ src/
 │   │   │                       # seasons/EpisodeRow (episode with watched state + WatchedEpisodeButton),
 │   │   │                       # seasons/WatchedEpisodeButton (toggle episode watched)
 │   │   ├── hooks/              # useSeries, useSeriesDetail,
-│   │   │                       # useSeriesEnrichment (Promise.allSettled status/totals/runtimes backfill)
+│   │   │                       # useSeriesEnrichment (Promise.allSettled status/totals/runtimes/genreIds backfill)
 │   │   ├── SeriesFeature.tsx
 │   │   ├── series.service.ts   # fetchSeries, fetchSeriesDetail, fetchSeasonDetail,
 │   │   │                       # fetchSeriesWatchProviders, fetchSeriesWatchProviderOptions,
@@ -122,7 +122,7 @@ src/
 │   ├── useFilters.ts
 │   ├── useMounted.ts           # returns false on server / during hydration, true after mount
 │   ├── useTruncated.ts         # ResizeObserver-based truncation detection; generic `<T extends HTMLElement>`; returns { ref, isTruncated }
-│   ├── useTrailer.ts           # picks best YouTube trailer (language preference → fallback); staleTime 24h; exports pickYouTubeTrailer
+│   ├── useTrailer.ts           # picks best YouTube trailer (language preference → fallback); staleTime 24h; exports pickYouTubeTrailer, useEnrichedTrailers (YouTube oEmbed title fetch), resolveHeaderTrailer, resolveSeasonFallback, findSeasonTrailerInList, filterNonSeasonTrailers
 │   └── useWatchProviders.ts    # generic hook — fetches + deduplicates flatrate/rent/buy per region (TanStack Query)
 ├── locales/                    # en.json, es.json
 ├── middleware.ts               # JWT verification + route protection (Edge Runtime)
@@ -207,6 +207,7 @@ data/
 | Top10 genre enrichment for user mode (backfills missing genre_ids via TanStack Query) | Done |
 | buildGenreCounts per-entry deduplication (one count per genre name per movie/series) | Done |
 | YouTube trailers (movie modal, series modal, seasons accordion, saga accordion, release calendar) | Done |
+| Smart season trailer matching — YouTube oEmbed title enrichment; season-specific fallback via "Season X"/"Temporada X" regex; generic trailers filter to series header only | Done |
 | UI transition animations (Modal fade+scale, Toast slide-in, dropdowns fade-in, AccordionList height, MyList tab crossfade) | Done |
 | Top10 genre dropdown — portal-based (fixes overflow clipping in scrollable containers) | Done |
 | Sticky table header — per-`<th>` sticky (fixes poster bleed-through caused by GPU compositing conflict) | Done |
@@ -216,6 +217,11 @@ data/
 | Duration filter with d/h/min unit selector (value stored in minutes; pill auto-converts back) | Done |
 | Tooltip on truncated titles in movies/series tables (ResizeObserver via useTruncated) | Done |
 | Watch provider tooltip clarifies rent (€) and buy (🛒) icons with label | Done |
+| TitleCell + GenresCell extracted to MediaTableCells (shared by movies and series) | Done |
+| Series genre_ids backfill via enrichment (useSeriesEnrichment now returns genreIds map) | Done |
+| Series runtime filter applied client-side on total duration (not TMDB per-episode) | Done |
+| Cypress E2E — watched ribbon tests for movies and series (admin/guest/mark/unmark) | Done |
+| useSeriesEnrichment unit tests (8 cases; stable-reference pattern for renderHook) | Done |
 
 ---
 
@@ -328,11 +334,11 @@ npm run test:watch  # watch mode
 
 | Area | What's covered |
 |---|---|
-| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `tmdbToStarRating` (TMDB 0–10 → Rating 0.5–5), `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10; per-entry name dedup) |
+| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `tmdbToStarRating` (TMDB 0–10 → Rating 0.5–5), `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10; per-entry name dedup), `applyRuntimeFilter` (undefined/0 threshold → passthrough, empty runtimes map → passthrough, filters by total duration, exact threshold kept, null rt passes through, missing from map passes through) |
 | Business logic | `applyClientFilters` (movies + series + language filter), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
 | Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber), per-season count derivation; `toastStore` — addToast, timers, removeToast; `ratingsStore` — setRating, removeRating, per-user isolation |
-| Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window), `useMovieReleases` (service call args), `useSeriesReleases` (disabled when no providers, enabled with providers), `useUserMovieTop10` / `useUserSeriesTop10` (genre_ids backfill via detail fetch, staleTime 5min), `useTrailer` (language preference via iso_639_1, YouTube filter, fallback to first; disabled/enabled; `pickYouTubeTrailer` pure function) — all wrapped in `QueryClientProvider` with `retry: false` |
-| Components | `Button`, `Modal`, `FiltersPanel` (collapse/expand, badge count, text/number/star/boolean/date/select types), `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, fluid variant, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states), `StarRating` (5 stars, readonly mode, onChange, hover, half-star gradient), `GenreGrid` (renders badges; deduplicates by resolved name + icon — Avatar case: Action+Adventure share icon → one badge), `TrailerPlayer` (iframe with correct src, no close button without onClose, close button present and calls onClose, custom className), `SearchableSelect` (trigger label, X clear, open/close, search filtering, case-insensitive, empty state, option highlight, outside-click close), `YearRangePicker` (fromOptions capped at valueTo, toOptions floored at valueFrom, null callbacks), `FilterFieldInput` (all 8 field types: text/number/boolean/select/date/star/searchable-select/year-range/genre-multi; null guard for missing options/keyTo) |
+| Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window), `useMovieReleases` (service call args), `useSeriesReleases` (disabled when no providers, enabled with providers), `useUserMovieTop10` / `useUserSeriesTop10` (genre_ids backfill via detail fetch, staleTime 5min), `useTrailer` (language preference via iso_639_1, YouTube filter, allTrailers list; disabled/enabled), `useEnrichedTrailers` (YouTube oEmbed batch fetch, replaces TMDB names with real YouTube titles, 24h cache), `useMovieRuntimeEnrichment` (empty map, populates runtime, null when no runtime, null on fetch fail, multiple movies, mixed success/failure), `useFilters` (initial state, setFilters, replaces entire object, preserves initial reference, exposes function) — all wrapped in `QueryClientProvider` with `retry: false` |
+| Components | `Button`, `Modal`, `FiltersPanel` (collapse/expand, badge count, text/number/star/boolean/date/select types), `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, fluid variant, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states), `StarRating` (5 stars, readonly mode, onChange, hover, half-star gradient), `GenreGrid` (renders badges; deduplicates by resolved name + icon — Avatar case: Action+Adventure share icon → one badge), `TrailerPlayer` (iframe with correct src, no close button without onClose, close button present and calls onClose, custom className), `SearchableSelect` (trigger label, X clear, open/close, search filtering, case-insensitive, empty state, option highlight, outside-click close), `YearRangePicker` (fromOptions capped at valueTo, toOptions floored at valueFrom, null callbacks), `FilterFieldInput` (all 8 field types: text/number/boolean/select/date/star/searchable-select/year-range/genre-multi; null guard for missing options/keyTo), `ToggleSwitch` (renders both labels, active has bg-primary, inactive does not, onChange with value, onChange on active option, role="group", reflects rerender), `MediaTableCells` — TitleCell (renders title, tooltip disabled when not truncated), GenresCell (null for undefined/empty, renders icons, multiple genres, deduplication by icon, filters null icons), PosterCell (renders poster, ribbon present when isWatched, ribbon absent when not watched, translated label), `StatusBadge` (undefined → animate-pulse, Ended, unknown status, Returning Series, In Production) |
 | Services | `apiFetch` (401 auto-refresh, redirect on session expiry) |
 | API routes | `/api/users/import` (per-row validation: missing fields, invalid role/password, intra-file duplicate, DB duplicate, invalid creator, invalid date) |
 
@@ -351,8 +357,8 @@ Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test user
 | Suite | What's covered |
 |---|---|
 | `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, successful login, logout, guest redirect from /users |
-| `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, access control (guest), watched controls (admin/guest), trailer (button visible, open iframe, close via button, close via × in player) |
-| `series.cy.ts` | Series list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, watched controls (admin/guest), trailer (button visible, open iframe, close via button, close via × in player) |
+| `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, access control (guest), watched controls (admin/guest), trailer (button visible, open iframe, close via button, close via × in player), column sort (rating asc/desc — verifies sort_by param sent to TMDB), runtime filter (2h → 120min, 90min — verifies with_runtime.gte param) |
+| `series.cy.ts` | Series list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, watched controls (admin/guest), trailer (button visible, open iframe, close via button, close via × in player), column sort (rating asc/desc — verifies sort_by param sent to TMDB), runtime filter client-side (filters out series below total duration threshold; verifies with_runtime.gte NOT sent to TMDB) |
 | `users.cy.ts` | List, create + toast, edit + toast, delete + toast, bulk delete + toast, self-protection, filters, import JSON + CSV, partial import failures, post-import cleanup |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
 | `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation, Top10 card title + year visible, calendar trailer button, Top10 genre dropdown (open, close, genre-filtered fetch, label update) |
@@ -381,4 +387,6 @@ Branch flow: `feature → dev → main`
 - Before a PR: `npm test` + `npx tsc --noEmit` + `npm run lint` must all pass
 - Merge feature PR into `dev` → run build-check → only then merge `dev` into `main`
 - `main` is always stable and production-ready
+- **`dev` and `main` are permanent protected branches — NEVER delete them**
+- Only feature branches are deleted after merging (step 4 of the PR workflow)
 - **All merges and branch deletions require explicit user authorization**

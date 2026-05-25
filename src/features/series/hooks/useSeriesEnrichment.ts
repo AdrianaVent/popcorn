@@ -8,12 +8,16 @@ type EnrichmentResult = {
   statuses: Map<number, string>
   totals: Map<number, number>
   runtimes: Map<number, number | null>
+  genreIds: Map<number, number[]>
 }
 
 export function useSeriesEnrichment(visibleSeries: SeriesRow[], language: string): EnrichmentResult {
-  const [statuses, setStatuses] = useState<Map<number, string>>(new Map())
-  const [totals, setTotals] = useState<Map<number, number>>(new Map())
-  const [runtimes, setRuntimes] = useState<Map<number, number | null>>(new Map())
+  const [maps, setMaps] = useState<EnrichmentResult>({
+    statuses: new Map(),
+    totals: new Map(),
+    runtimes: new Map(),
+    genreIds: new Map(),
+  })
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -47,21 +51,21 @@ export function useSeriesEnrichment(visibleSeries: SeriesRow[], language: string
       const nextStatuses = new Map<number, string>()
       const nextTotals = new Map<number, number>()
       const nextRuntimes = new Map<number, number | null>()
+      const nextGenreIds = new Map<number, number[]>()
       results.forEach((result) => {
         if (result.status === 'fulfilled') {
           const { id, detail, numEps, epRt } = result.value
           if (detail.status) nextStatuses.set(id, detail.status)
           if (numEps) nextTotals.set(id, numEps)
           nextRuntimes.set(id, epRt != null && numEps > 0 ? epRt * numEps : null)
+          if (detail.genres?.length) nextGenreIds.set(id, detail.genres.map((g) => g.id))
         }
       })
-      setStatuses(nextStatuses)
-      setTotals(nextTotals)
-      setRuntimes(nextRuntimes)
+      setMaps({ statuses: nextStatuses, totals: nextTotals, runtimes: nextRuntimes, genreIds: nextGenreIds })
     })
 
     return () => { controller.abort() }
   }, [visibleSeries, language])
 
-  return { statuses, totals, runtimes }
+  return maps
 }

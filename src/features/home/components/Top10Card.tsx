@@ -315,7 +315,7 @@ export default function Top10Card({
                   <button
                     type="button"
                     onClick={() => onItemClick(isMovies ? 'movie' : 'series', item.id)}
-                    className="w-full flex items-center gap-2.5 py-1 rounded-lg px-1 hover:bg-muted/60 transition-colors group text-left"
+                    className="w-full flex items-center gap-2.5 py-1 rounded-lg px-1 hover:bg-muted/60 transition-colors group text-left cursor-pointer"
                   >
                     <span className="w-5 text-center text-xs font-semibold text-muted-foreground shrink-0 tabular-nums">
                       {i + 1}
