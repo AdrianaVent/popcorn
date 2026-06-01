@@ -112,7 +112,7 @@
       "minutes": "min",
       "year": "Year",
       "genres": "Genres",
-      "collection": "Collection",
+      "collection": "Saga",
       "current": "Watching",
       "release": "Release",
       "watched": "Watched",
@@ -276,7 +276,13 @@
     "watching": "Watching",
     "rate": "Rate it",
     "finishToRate": "Finish to rate",
-    "noSaga": "Standalone films"
+    "noSaga": "Standalone films",
+    "recommendations": {
+      "title": "Recommendations",
+      "because": "Because you liked {{name}}",
+      "similar": "Recommendations",
+      "rateFirst": "Rate ≥ 3.5★ to see recommendations"
+    }
   },
   "dashboard": {
     "recentlyAdded": "Recently added",

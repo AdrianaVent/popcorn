@@ -136,14 +136,10 @@ export default function CollectionAccordion({ collection, movieId, onMovieSelect
   const watchedMovies = useWatchedStore((s) => s.movies[userKey])
   const toggleMovie   = useWatchedStore((s) => s.toggleMovie)
 
-  const parts =
-    detail?.parts
-      ?.filter((p) => !!p.release_date)
-      .slice()
-      .sort((a, b) => a.release_date.localeCompare(b.release_date)) ?? []
-
   const today = new Date().toISOString().slice(0, 10)
-  const releasedParts = parts.filter((p) => p.release_date && p.release_date <= today)
+  const releasedParts = (detail?.parts ?? [])
+    .filter((p) => p.release_date && p.release_date <= today)
+    .sort((a, b) => a.release_date.localeCompare(b.release_date))
   const allReleasedWatched = releasedParts.length > 0 && releasedParts.every((p) => !!watchedMovies?.[p.id])
 
   const handleMarkSaga = () => {
@@ -182,7 +178,7 @@ export default function CollectionAccordion({ collection, movieId, onMovieSelect
           onClick={handleMarkSaga}
         />
       ) : undefined}
-      items={parts}
+      items={releasedParts}
       loading={loading}
       renderItem={(part, i) => (
         <SagaMovieItem

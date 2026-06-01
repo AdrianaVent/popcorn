@@ -19,6 +19,7 @@ type MoviePosterProps = {
   variant?: keyof typeof variants
   className?: string
   loading?: 'eager' | 'lazy'
+  priority?: boolean
 }
 
 export default function MoviePoster({
@@ -27,6 +28,7 @@ export default function MoviePoster({
   variant = 'sm',
   className = '',
   loading = 'lazy',
+  priority = false,
 }: MoviePosterProps) {
   const { container, imageSize, w, h } = variants[variant]
   const url = getTMDBImageUrl(posterPath, imageSize)
@@ -49,7 +51,8 @@ export default function MoviePoster({
         width={w}
         height={h}
         className="object-cover w-full h-full"
-        loading={loading}
+        loading={priority ? 'eager' : loading}
+        priority={priority}
         onError={() => setErroredUrl(url)}
       />
     </div>

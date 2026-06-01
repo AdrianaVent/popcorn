@@ -39,4 +39,7 @@ export const seriesService = {
 
   seasonVideos: (seriesId: number, seasonNumber: number) =>
     tmdbFetch<TMDBVideosResult>(`/tv/${seriesId}/season/${seasonNumber}/videos`, { include_video_language: 'es,en,null' }),
+
+  recommendations: (id: number, language = DEFAULT_LANGUAGE) =>
+    tmdbFetch<TMDBPagedResponse<TMDBSeries>>(`/tv/${id}/recommendations`, { language }),
 }

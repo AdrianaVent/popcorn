@@ -15,6 +15,7 @@ export type StoredMovie = {
   collection_id?: number
   collection_name?: string
   genre_ids?: number[]
+  watchedAt?: number
 }
 
 export type StoredSeries = {
@@ -27,6 +28,7 @@ export type StoredSeries = {
   original_language: string
   number_of_episodes: number
   genre_ids?: number[]
+  watchedAt?: number
 }
 
 // seasonNumber is stored per episode so per-season watched counts can be derived
@@ -60,7 +62,7 @@ export const useWatchedStore = create<WatchedState>()(
           if (userMovies[movie.id]) {
             delete userMovies[movie.id]
           } else {
-            userMovies[movie.id] = movie
+            userMovies[movie.id] = { ...movie, watchedAt: Date.now() }
           }
           return { movies: { ...s.movies, [userId]: userMovies } }
         }),
@@ -92,7 +94,7 @@ export const useWatchedStore = create<WatchedState>()(
           if (series && !userSeries[seriesId]) {
             // Series snapshot is only written on the first episode mark to avoid
             // overwriting with stale data if the series details change later.
-            userSeries[seriesId] = series
+            userSeries[seriesId] = { ...series, watchedAt: Date.now() }
           } else if (Object.keys(seriesEps).length === 0) {
             delete userSeries[seriesId]
           }
@@ -118,7 +120,7 @@ export const useWatchedStore = create<WatchedState>()(
 
           const userSeries = { ...s.seriesData[userId] }
           if (series && !userSeries[seriesId] && !allWatched) {
-            userSeries[seriesId] = series
+            userSeries[seriesId] = { ...series, watchedAt: Date.now() }
           } else if (allWatched && Object.keys(seriesEps).length === 0) {
             delete userSeries[seriesId]
           }
