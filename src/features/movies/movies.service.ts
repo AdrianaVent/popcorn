@@ -100,3 +100,7 @@ export function fetchMovieWatchProviderOptions(): Promise<WatchProvider[]> {
 export function fetchMovieVideos(id: number): Promise<TMDBVideosResult> {
   return moviesService.videos(id)
 }
+
+export function fetchMovieRecommendations(id: number, language = 'es'): Promise<TMDBPagedResponse<TMDBMovie>> {
+  return moviesService.recommendations(id, TMDB_LANGUAGE[language] ?? 'es-ES')
+}

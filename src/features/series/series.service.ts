@@ -97,3 +97,7 @@ export function fetchSeriesVideos(id: number): Promise<TMDBVideosResult> {
 export function fetchSeasonVideos(seriesId: number, seasonNumber: number): Promise<TMDBVideosResult> {
   return seriesService.seasonVideos(seriesId, seasonNumber)
 }
+
+export function fetchSeriesRecommendations(id: number, language = 'es'): Promise<TMDBPagedResponse<TMDBSeries>> {
+  return seriesService.recommendations(id, TMDB_LANGUAGE[language] ?? 'es-ES')
+}

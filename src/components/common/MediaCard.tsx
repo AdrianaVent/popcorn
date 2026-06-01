@@ -12,21 +12,30 @@ type Props = {
   eager?: boolean
   overlay?: ReactNode
   children?: ReactNode
+  isSelected?: boolean
+  variant?: 'fluid' | 'md' | 'sm' | 'list'
 }
 
-export default function MediaCard({ posterPath, title, onClick, eager = false, overlay, children }: Props) {
+const FIXED_WIDTH: Partial<Record<'fluid' | 'md' | 'sm' | 'list', string>> = {
+  sm: 'w-9',
+  list: 'w-14',
+  md: 'w-24',
+}
+
+export default function MediaCard({ posterPath, title, onClick, eager = false, overlay, children, isSelected = false, variant = 'fluid' }: Props) {
   const { ref: titleRef, isTruncated } = useTruncated(title)
+  const widthClass = FIXED_WIDTH[variant] ?? ''
 
   return (
-    <div className="flex flex-col gap-2 group">
+    <div className={`flex flex-col gap-2 group ${widthClass}`}>
       <button
         onClick={onClick}
-        className="relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className={`relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${variant === 'fluid' ? 'w-full' : 'w-fit'} ${isSelected ? 'ring-2 ring-primary' : ''}`}
       >
         <MediaPoster
           posterPath={posterPath}
           title={title}
-          variant="fluid"
+          variant={variant}
           loading={eager ? 'eager' : 'lazy'}
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />

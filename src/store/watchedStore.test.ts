@@ -29,7 +29,22 @@ beforeEach(() => {
 describe('toggleMovie', () => {
   it('adds a movie snapshot when not watched', () => {
     useWatchedStore.getState().toggleMovie('user1', mockMovie)
-    expect(useWatchedStore.getState().movies['user1'][1]).toEqual(mockMovie)
+    expect(useWatchedStore.getState().movies['user1'][1]).toEqual(expect.objectContaining(mockMovie))
+  })
+
+  it('sets watchedAt timestamp when adding a movie', () => {
+    const before = Date.now()
+    useWatchedStore.getState().toggleMovie('user1', mockMovie)
+    const after = Date.now()
+    const stored = useWatchedStore.getState().movies['user1'][1]
+    expect(stored.watchedAt).toBeGreaterThanOrEqual(before)
+    expect(stored.watchedAt).toBeLessThanOrEqual(after)
+  })
+
+  it('does not set watchedAt when removing a movie', () => {
+    useWatchedStore.getState().toggleMovie('user1', mockMovie)
+    useWatchedStore.getState().toggleMovie('user1', mockMovie)
+    expect(useWatchedStore.getState().movies['user1']?.[1]).toBeUndefined()
   })
 
   it('removes the movie on second toggle', () => {
@@ -58,7 +73,23 @@ describe('toggleEpisode', () => {
 
   it('stores the series snapshot on the first episode mark', () => {
     useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1, mockSeries)
-    expect(useWatchedStore.getState().seriesData['user1'][10]).toEqual(mockSeries)
+    expect(useWatchedStore.getState().seriesData['user1'][10]).toEqual(expect.objectContaining(mockSeries))
+  })
+
+  it('sets watchedAt on first episode mark', () => {
+    const before = Date.now()
+    useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1, mockSeries)
+    const after = Date.now()
+    const stored = useWatchedStore.getState().seriesData['user1'][10]
+    expect(stored.watchedAt).toBeGreaterThanOrEqual(before)
+    expect(stored.watchedAt).toBeLessThanOrEqual(after)
+  })
+
+  it('does not overwrite watchedAt on subsequent episode marks', () => {
+    useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1, mockSeries)
+    const firstWatchedAt = useWatchedStore.getState().seriesData['user1'][10].watchedAt
+    useWatchedStore.getState().toggleEpisode('user1', 10, 102, 1, mockSeries)
+    expect(useWatchedStore.getState().seriesData['user1'][10].watchedAt).toBe(firstWatchedAt)
   })
 
   it('does not overwrite an existing series snapshot on subsequent marks', () => {
@@ -78,7 +109,7 @@ describe('toggleEpisode', () => {
     useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1, mockSeries)
     useWatchedStore.getState().toggleEpisode('user1', 10, 102, 1)
     useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1)
-    expect(useWatchedStore.getState().seriesData['user1'][10]).toEqual(mockSeries)
+    expect(useWatchedStore.getState().seriesData['user1'][10]).toEqual(expect.objectContaining(mockSeries))
   })
 
   it('marks multiple episodes for the same series independently', () => {
@@ -126,7 +157,16 @@ describe('markSeason', () => {
 
   it('stores the series snapshot on first mark', () => {
     useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds, mockSeries)
-    expect(useWatchedStore.getState().seriesData['user1'][10]).toEqual(mockSeries)
+    expect(useWatchedStore.getState().seriesData['user1'][10]).toEqual(expect.objectContaining(mockSeries))
+  })
+
+  it('sets watchedAt on first markSeason', () => {
+    const before = Date.now()
+    useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds, mockSeries)
+    const after = Date.now()
+    const stored = useWatchedStore.getState().seriesData['user1'][10]
+    expect(stored.watchedAt).toBeGreaterThanOrEqual(before)
+    expect(stored.watchedAt).toBeLessThanOrEqual(after)
   })
 
   it('does not overwrite an existing series snapshot', () => {
@@ -146,7 +186,7 @@ describe('markSeason', () => {
     useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds, mockSeries)
     useWatchedStore.getState().toggleEpisode('user1', 10, 201, 2)
     useWatchedStore.getState().markSeason('user1', 10, 1, episodeIds)
-    expect(useWatchedStore.getState().seriesData['user1'][10]).toEqual(mockSeries)
+    expect(useWatchedStore.getState().seriesData['user1'][10]).toEqual(expect.objectContaining(mockSeries))
   })
 
   it('does not affect episodes in other seasons', () => {
