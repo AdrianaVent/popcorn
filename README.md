@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.12.3-6B2737)
+![Version](https://img.shields.io/badge/version-0.13.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -55,7 +55,7 @@ Popcorn is a full-stack personal dashboard built to demonstrate modern web devel
 
 **Testing strategy** — unit and integration tests with Jest + Testing Library cover pure functions, stores, hooks and components. End-to-end tests with Cypress cover full user flows (auth, movies, series, user management, settings) against a live dev server with a real SQLite database.
 
-**CI pipeline** — GitHub Actions runs TypeScript check, ESLint, Jest and a Next.js production build on every push.
+**CI pipeline** — GitHub Actions runs TypeScript check, ESLint, Jest and a Next.js production build on every push, followed by a full Cypress E2E run against the production build. Merges to `main` additionally push a Docker image to ghcr.io and create a versioned GitHub Release with auto-generated changelog.
 
 **Local-first by design** — the app runs entirely on your machine. User data is stored in a local SQLite database, watched history and preferences in localStorage. There is no cloud deployment or external backend — this keeps the setup self-contained and the focus on the front-end and full-stack architecture rather than infrastructure.
 
@@ -280,7 +280,7 @@ The modal shows the **synopsis**, **genres**, **runtime**, **release year**, **v
 
 ![Movie detail — saga accordion expanded](docs/screenshots/movie-detail-saga.png)
 
-If the movie belongs to a collection, a **Saga** accordion lists all films in the series. Click any title to navigate to that film without closing the modal. The accordion also shows which films you have already marked as watched. Each film has a play button to watch its trailer inline.
+If the movie belongs to a collection, a **Saga** accordion lists all released films in the series (future or undated instalments are omitted). Click any title to navigate to that film without closing the modal. The accordion marks which films you have already watched and lets you mark the entire saga as watched in one click. Each film has a play button to watch its trailer inline.
 
 **Movies currently in cinemas**
 
@@ -333,19 +333,27 @@ A personal overview of everything you have marked as watched. Admin accounts do 
 
 ![My list — movies grouped by saga](docs/screenshots/my-list-movies.png)
 
-Displays your watched movies as a card grid (poster, title, year and star rating).
+Displays your watched movies as cards (poster, year, star rating and a Recommendations button). The layout adapts dynamically:
 
-- Click the stars to rate a movie from 0.5 to 5.
-- Enable **Group by saga** to reorganise the grid: movies that belong to the same collection are grouped under a shared header, in release order. Movies without a saga appear under a separate "Standalone" section.
+- Movies that belong to the same collection are automatically grouped under a shared **Saga** card (e.g. "Harry Potter - Saga"), with films sorted in release order inside.
+- Saga cards show **all released films** in the collection — not just the ones you have watched. Films you have not yet watched appear as dimmed placeholder slots, sorted in release order. Clicking a placeholder opens the detail modal so you can learn more or mark it as watched. Future or undated instalments are omitted.
+- Standalone films appear under a separate "Standalone films" label.
+- The section order (sagas first vs. standalone first) is driven by the most recent addition — whichever you marked last appears at the top.
+- Click the stars on any card to rate it from 0.5 to 5.
 
 **Series tab**
 
 ![My list — series tab](docs/screenshots/my-list-series.png)
 
-Displays your watched series using the same card layout.
+Displays your watched series as cards. Each card shows an episode progress badge (e.g. `1/62 ep.`), a star rating and a Recommendations button.
 
-- Series where you have not yet finished all episodes show a diagonal **Watching** ribbon and cannot be rated yet.
-- Completed series display a badge with the total episode count and allow you to leave a star rating.
+- The star rating is always visible but non-interactive until the series is complete.
+- The Recommendations button is disabled while a series is in progress or when complete but not yet rated at ≥ 3.5★. Hovering the button shows the reason.
+- Once a series is complete and rated at ≥ 3.5★, the button becomes active.
+
+**Recommendations**
+
+Each standalone movie card has a **Recommendations** button; saga cards share one button for the whole group. When you have rated the title (or the best-rated film in a saga) at 3.5 stars or above, clicking the button opens a right-side drawer showing up to 5 TMDB recommendations. Already-watched titles are excluded from the results. Click any recommendation to open its detail modal. The Series tab works the same way.
 
 Ratings are stored locally per user — they are not sent to TMDB.
 
@@ -435,9 +443,9 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-The project has two test layers: **618 unit/integration tests** (Jest) and **124 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+The project has two test layers: **646 unit/integration tests** (Jest) and **127 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 618 tests · 56 suites
+### Unit & integration tests (Jest) — 646 tests · 57 suites
 
 ```bash
 npm test           # run once
@@ -454,7 +462,7 @@ npm run test:watch # watch mode
 | Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
 | API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date) |
 
-### End-to-end tests (Cypress) — 124 tests · 7 suites
+### End-to-end tests (Cypress) — 127 tests · 7 suites
 
 In CI, Cypress runs against the production build automatically. Locally, run against the dev server:
 
@@ -476,7 +484,7 @@ npm run cypress:run
 | `movies.cy.ts` | 33 | Movie list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, access control, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter (2h → 120min, 90min) |
 | `series.cy.ts` | 28 | Series list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, episode runtime guard, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter client-side (filters below total duration threshold, not sent to TMDB) |
 | `users.cy.ts` | 15 | Create, edit, delete (single + bulk), toasts, import JSON/CSV, partial failures |
-| `my-list.cy.ts` | 12 | Tabs, empty state, watched movies/series, saga grouping, nav access control, star rating |
+| `my-list.cy.ts` | 18 | Tabs, empty state, nav access control, watched movie, Recommendations button (disabled/enabled), saga name formatting, section ordering (standalone-first/saga-first), series tab + episode progress, "Finish to rate", recommendations drawer, unwatched saga placeholders, future-date filter regression, click placeholder opens modal |
 | `settings.cy.ts` | 3 | Theme switching (light / dark), language switching (EN / ES) |
 
 Cypress creates and cleans up its own test users in the local database automatically. TMDB calls are intercepted — no real API key needed to run the E2E suite.
@@ -574,7 +582,7 @@ src/
 │   ├── auth/login/     # LoginFeature · useLogin · login.service.ts
 │   ├── home/           # HomeFeature · useMovieGenres · useSeriesGenres · ReleaseCalendar · CalendarReleaseItem
 │   ├── movies/         # MoviesFeature · hooks · components · service
-│   ├── myList/         # MyListFeature · MovieCard · SeriesCard (tabs, saga grouping, ratings)
+│   ├── myList/         # MyListFeature · MovieCard · SeriesCard · RecommendationsDrawer (tabs, saga grouping, watchedAt ordering, ratings)
 │   ├── series/         # SeriesFeature · hooks · components · service
 │   └── users/          # UsersFeature · UserFormModal · ImportUsersModal · users.service.ts
 ├── hooks/              # useFilters · useWatchProviders · useTruncated · useTrailer · useEnrichedTrailers
@@ -588,7 +596,7 @@ src/
 ├── store/              # themeStore · languageStore · userStore · watchedStore · ratingsStore · toastStore
 └── utils/              # formatDate · formatNumber · exportData · getTMDBImageUrl · ...
 cypress/
-├── e2e/                # auth · movies · users test suites
+├── e2e/                # auth · home · movies · series · my-list · users · settings
 ├── fixtures/           # mocked TMDB responses
 └── support/            # commands.ts (cy.login) · e2e.ts (global hooks)
 scripts/
@@ -617,7 +625,7 @@ docker-entrypoint.sh    # Seeds DB if absent, then starts the app
 | Unit tests | Jest 30 + Testing Library |
 | E2E tests | Cypress 15 |
 | Linting | ESLint 9 + Prettier |
-| CI | GitHub Actions — tsc, lint, jest, build + Cypress E2E on every push |
+| CI/CD | GitHub Actions — tsc, lint, jest, build + Cypress E2E on every push; Docker publish + GitHub Release on `main` |
 | Docker | Multi-stage image (Node 20 Alpine, ~200 MB via standalone output) — non-root user, healthcheck, auto-seeds DB on first run; published to ghcr.io on `main` |
 
 ---

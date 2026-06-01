@@ -276,7 +276,13 @@
     "watching": "Viendo",
     "rate": "Valórala",
     "finishToRate": "Termínala para valorarla",
-    "noSaga": "Películas independientes"
+    "noSaga": "Películas independientes",
+    "recommendations": {
+      "title": "Recomendaciones",
+      "because": "Porque te gustó {{name}}",
+      "similar": "Recomendaciones",
+      "rateFirst": "Valora ≥ 3.5★ para ver recomendaciones"
+    }
   },
   "dashboard": {
     "recentlyAdded": "Añadido recientemente",

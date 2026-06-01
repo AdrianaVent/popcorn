@@ -39,4 +39,7 @@ export const moviesService = {
 
   videos: (id: number) =>
     tmdbFetch<TMDBVideosResult>(`/movie/${id}/videos`, { include_video_language: 'es,en,null' }),
+
+  recommendations: (id: number, language = DEFAULT_LANGUAGE) =>
+    tmdbFetch<TMDBPagedResponse<TMDBMovie>>(`/movie/${id}/recommendations`, { language }),
 }

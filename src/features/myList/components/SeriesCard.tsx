@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import MediaCard from '@/components/common/MediaCard'
 import StarRating from '@/components/ui/StarRating'
+import Tooltip from '@/components/ui/Tooltip'
 import type { StoredSeries } from '@/store/watchedStore'
 import type { Rating } from '@/store/ratingsStore'
 
@@ -14,51 +15,49 @@ type Props = {
   onRate: (rating: Rating) => void
   onClick: () => void
   eager?: boolean
+  onShowRecommendations?: () => void
+  isRecommendationSource?: boolean
 }
 
-export default function SeriesCard({ series, watchedEpisodes, rating, onRate, onClick, eager = false }: Props) {
+export default function SeriesCard({ series, watchedEpisodes, rating, onRate, onClick, eager = false, onShowRecommendations, isRecommendationSource = false }: Props) {
   const { t } = useTranslation()
-  const year = series.first_air_date ? new Date(series.first_air_date).getFullYear() : null
   const total = series.number_of_episodes
   const completed = total > 0 && watchedEpisodes >= total
 
-  const ribbon = !completed ? (
-    <div className="absolute top-3 -left-6 w-24 py-0.5 rotate-[-35deg] bg-primary text-primary-foreground text-[9px] font-semibold uppercase tracking-wider text-center shadow-sm">
-      {t('myList.watching')}
-    </div>
-  ) : undefined
-
   return (
-    <MediaCard posterPath={series.poster_path} title={series.name} onClick={onClick} eager={eager} overlay={ribbon}>
-      <div className="flex items-center gap-2">
-        {year && (
-          <p className="text-[11px] text-muted-foreground">{year}</p>
-        )}
-        {total > 0 && (
-          <span className={clsx(
-            'text-[10px] px-1.5 py-0.5 rounded border whitespace-nowrap',
-            completed
-              ? 'bg-primary/10 border-primary/30 text-primary'
-              : 'bg-muted border-border/50 text-muted-foreground'
-          )}>
-            {watchedEpisodes}/{total} ep.
-          </span>
-        )}
-      </div>
-      {completed ? (
-        <>
-          <StarRating value={rating} onChange={onRate} size={15} />
-          {!rating && (
-            <p className="text-[10px] text-muted-foreground/60 italic">
-              {t('myList.rate')}
-            </p>
-          )}
-        </>
-      ) : (
-        <p className="text-[10px] text-muted-foreground/60 italic">
-          {t('myList.finishToRate')}
-        </p>
+    <MediaCard posterPath={series.poster_path} title={series.name} onClick={onClick} eager={eager} isSelected={isRecommendationSource} variant="md">
+      {total > 0 && (
+        <span className={clsx(
+          'text-[10px] px-1.5 py-0 rounded border whitespace-nowrap',
+          completed
+            ? 'bg-primary/10 border-primary/30 text-primary'
+            : 'bg-muted border-border/50 text-muted-foreground'
+        )}>
+          {watchedEpisodes}/{total} ep.
+        </span>
       )}
+
+      <StarRating value={rating} onChange={completed ? onRate : undefined} readonly={!completed} size={14} />
+
+      <Tooltip
+        content={completed ? t('myList.recommendations.rateFirst') : t('myList.finishToRate')}
+        disabled={!!onShowRecommendations}
+        placement="top"
+      >
+        <button
+          onClick={onShowRecommendations ? (e) => { e.stopPropagation(); onShowRecommendations() } : undefined}
+          disabled={!onShowRecommendations}
+          className={`text-[10px] px-1.5 py-0.5 rounded-md border transition-colors cursor-pointer disabled:cursor-not-allowed ${
+            isRecommendationSource
+              ? 'border-primary/50 text-primary bg-primary/5'
+              : onShowRecommendations
+                ? 'border-primary/40 text-primary/80 hover:border-primary hover:text-primary'
+                : 'border-border/40 text-muted-foreground/30'
+          }`}
+        >
+          {t('myList.recommendations.similar')}
+        </button>
+      </Tooltip>
     </MediaCard>
   )
 }
