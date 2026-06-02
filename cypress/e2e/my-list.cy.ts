@@ -167,6 +167,45 @@ describe('My List', () => {
     cy.contains('Avatar Collection').should('not.exist')
   })
 
+  it('shows a collection with only one released part as a standalone card, not a saga group', () => {
+    cy.intercept('GET', '**/collection/131296**', {
+      body: {
+        id: 131296,
+        name: 'Avatar Collection',
+        parts: [
+          { id: 19995, title: 'Avatar', poster_path: null, release_date: '2009-12-17', vote_average: 7.5, vote_count: 30000 },
+        ],
+      },
+    }).as('collection')
+
+    loginAndVisitMyList((win, userId) => {
+      win.localStorage.setItem(
+        'popcorn-watched-v3',
+        JSON.stringify({
+          state: {
+            movies: {
+              [userId]: {
+                19995: {
+                  id: 19995, title: 'Avatar', poster_path: null,
+                  release_date: '2009-12-17', vote_average: 7.5, vote_count: 30000,
+                  original_language: 'en', collection_id: 131296, collection_name: 'Avatar Collection',
+                  watchedAt: NOW,
+                },
+              },
+            },
+            episodes: {},
+            seriesData: {},
+          },
+          version: 0,
+        })
+      )
+    })
+
+    cy.wait('@collection')
+    cy.contains('Avatar - Saga').should('not.exist')
+    cy.contains('Avatar').should('be.visible')
+  })
+
   // ─── Section ordering ─────────────────────────────────────────────────────
 
   it('shows standalone movies before sagas when a standalone was added more recently', () => {
@@ -459,5 +498,85 @@ describe('My List', () => {
     })
     cy.contains('button', 'Recommendations').click()
     cy.get('[data-cy="recommendations-drawer"]').contains('Avatar - Saga').should('be.visible')
+  })
+
+  // ─── Por ver (watchlist) tab ──────────────────────────────────────────────
+
+  const seedWatchlist = (win: Window, userId: string) => {
+    win.localStorage.setItem(
+      'popcorn-watchlist-v1',
+      JSON.stringify({
+        state: {
+          movies: {
+            [userId]: {
+              550: {
+                id: 550,
+                title: 'Fight Club',
+                release_date: '1999-10-15',
+                poster_path: null,
+                vote_average: 8.4,
+                vote_count: 26000,
+                original_language: 'en',
+                addedAt: Date.now(),
+              },
+            },
+          },
+          series: {
+            [userId]: {
+              1396: {
+                id: 1396,
+                name: 'Breaking Bad',
+                first_air_date: '2008-01-20',
+                poster_path: null,
+                vote_average: 9.5,
+                vote_count: 200000,
+                original_language: 'en',
+                addedAt: Date.now(),
+              },
+            },
+          },
+        },
+        version: 0,
+      })
+    )
+  }
+
+  it('shows the Por ver tab', () => {
+    cy.visitAsGuest('/my-list')
+    cy.contains('button', 'To watch').should('be.visible')
+  })
+
+  it('shows empty state when watchlist is empty', () => {
+    cy.visitAsGuest('/my-list')
+    cy.contains('button', 'To watch').click()
+    cy.contains('No movies in your watchlist yet').should('be.visible')
+    cy.contains('No series in your watchlist yet').should('be.visible')
+  })
+
+  it('shows watchlisted movie in Por ver tab', () => {
+    loginAndVisitMyList((win, userId) => seedWatchlist(win, userId))
+    cy.contains('button', 'To watch').click()
+    cy.contains('Fight Club').should('be.visible')
+  })
+
+  it('shows watchlisted series in Por ver tab', () => {
+    loginAndVisitMyList((win, userId) => seedWatchlist(win, userId))
+    cy.contains('button', 'To watch').click()
+    cy.contains('Breaking Bad').should('be.visible')
+  })
+
+  it('shows count badge on Por ver tab', () => {
+    loginAndVisitMyList((win, userId) => seedWatchlist(win, userId))
+    cy.contains('button', 'To watch').within(() => {
+      cy.contains('2').should('be.visible')
+    })
+  })
+
+  it('removes movie from Por ver when the heart button is clicked', () => {
+    loginAndVisitMyList((win, userId) => seedWatchlist(win, userId))
+    cy.contains('button', 'To watch').click()
+    cy.contains('Fight Club').should('be.visible')
+    cy.get('[data-cy="watchlist-remove"]').first().click()
+    cy.contains('Fight Club').should('not.exist')
   })
 })

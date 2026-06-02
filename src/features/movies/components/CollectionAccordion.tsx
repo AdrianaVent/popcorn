@@ -142,6 +142,8 @@ export default function CollectionAccordion({ collection, movieId, onMovieSelect
     .sort((a, b) => a.release_date.localeCompare(b.release_date))
   const allReleasedWatched = releasedParts.length > 0 && releasedParts.every((p) => !!watchedMovies?.[p.id])
 
+  if (!loading && releasedParts.length <= 1) return null
+
   const handleMarkSaga = () => {
     const toToggle = allReleasedWatched
       ? releasedParts

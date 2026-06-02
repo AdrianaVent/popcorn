@@ -7,11 +7,16 @@ import MoviePoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 import Tooltip from '@/components/ui/Tooltip'
 import TrailerPlayer from '@/components/ui/TrailerPlayer'
+import IconToggleButton from '@/components/ui/IconToggleButton'
 import { getStatusConfig } from '@/features/series/getSeriesUI'
 import { getGenreIcon } from '@/config/genreIcons'
 import { fetchMovieVideos } from '@/features/movies/movies.service'
 import { fetchSeriesVideos, fetchSeasonVideos } from '@/features/series/series.service'
 import { useTrailer } from '@/hooks/useTrailer'
+import { useWatchlistStore } from '@/store/watchlistStore'
+import { useWatchedStore } from '@/store/watchedStore'
+import { useUserStore } from '@/store/userStore'
+import { HeartIcon } from '@/components/icons'
 import type { ReleaseEntry } from '@/services/tmdb/releases'
 
 type Props = {
@@ -28,6 +33,46 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
   const itemRef = useRef<HTMLDivElement>(null)
 
   const isSeries = release.season_number != null
+
+  const role    = useUserStore((s) => s.role)
+  const userId  = useUserStore((s) => s.userId)
+  const userKey = String(userId ?? 'guest')
+
+  const isWatched = useWatchedStore((s) =>
+    isSeries ? !!s.seriesData[userKey]?.[release.id] : !!s.movies[userKey]?.[release.id]
+  )
+  const isInWatchlist = useWatchlistStore((s) =>
+    isSeries ? !!s.series[userKey]?.[release.id] : !!s.movies[userKey]?.[release.id]
+  )
+  const toggleWatchlistMovie  = useWatchlistStore((s) => s.toggleMovie)
+  const toggleWatchlistSeries = useWatchlistStore((s) => s.toggleSeries)
+
+  const handleToggleWatchlist = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isSeries) {
+      toggleWatchlistSeries(userKey, {
+        id: release.id,
+        name: release.title,
+        first_air_date: release.date,
+        poster_path: release.poster_path,
+        vote_average: 0,
+        vote_count: 0,
+        original_language: '',
+        addedAt: Date.now(),
+      })
+    } else {
+      toggleWatchlistMovie(userKey, {
+        id: release.id,
+        title: release.title,
+        release_date: release.date,
+        poster_path: release.poster_path,
+        vote_average: 0,
+        vote_count: 0,
+        original_language: '',
+        addedAt: Date.now(),
+      })
+    }
+  }
 
   const { trailer: seasonTrailer } = useTrailer(
     ['season-trailer', release.id, release.season_number ?? 0],
@@ -73,7 +118,7 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
         <div className="flex flex-col gap-1.5 min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="text-caption font-semibold uppercase tracking-[0.14em] text-primary leading-snug line-clamp-2">
+              <span className="text-caption font-semibold uppercase tracking-[0.14em] text-primary leading-snug truncate">
                 {release.title}
               </span>
               {release.season_number != null && (
@@ -92,34 +137,44 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
               {genres.length > 0 && (
-                <div className="flex flex-wrap gap-1 justify-end">
+                <div className="flex items-center gap-1">
                   {genres.map(({ id, name }) => {
                     const Icon = getGenreIcon(id)
+                    if (!Icon) return null
                     return (
-                      <span key={id} className="text-[11px] px-2 py-0.5 rounded-md bg-muted text-foreground border border-border/50 whitespace-nowrap flex items-center gap-1">
-                        {Icon && <Icon size={11} strokeWidth={1.5} />}
-                        {name}
-                      </span>
+                      <Tooltip key={id} content={name} placement="top">
+                        <span className="text-muted-foreground">
+                          <Icon size={12} strokeWidth={1.5} />
+                        </span>
+                      </Tooltip>
                     )
                   })}
                 </div>
               )}
               {trailer && (
                 <Tooltip content={t('common.trailer')} placement="top">
-                  <button
+                  <IconToggleButton
                     data-cy="trailer-button"
+                    active={showTrailer}
                     onClick={(e) => { e.stopPropagation(); setShowTrailer((v) => !v) }}
-                    className={clsx(
-                      'shrink-0 w-7 h-7 flex items-center justify-center rounded border transition-colors cursor-pointer',
-                      showTrailer
-                        ? 'border-primary text-primary bg-primary/10'
-                        : 'border-border text-muted-foreground hover:border-primary/60 hover:text-primary hover:bg-primary/5',
-                    )}
+                    className="shrink-0"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                       <path d="M3 2l7 4-7 4V2z" />
                     </svg>
-                  </button>
+                  </IconToggleButton>
+                </Tooltip>
+              )}
+              {role !== 'admin' && !isWatched && (
+                <Tooltip content={isInWatchlist ? t('myList.watchlist.remove') : t('myList.watchlist.add')} placement="top">
+                  <IconToggleButton
+                    data-cy="calendar-watchlist-toggle"
+                    active={isInWatchlist}
+                    onClick={handleToggleWatchlist}
+                    className="shrink-0"
+                  >
+                    <HeartIcon size={13} filled={isInWatchlist} />
+                  </IconToggleButton>
                 </Tooltip>
               )}
             </div>

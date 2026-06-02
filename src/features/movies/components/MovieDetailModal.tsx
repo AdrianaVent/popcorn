@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import clsx from 'clsx'
-
 import Modal from '@/components/ui/Modal'
+import IconToggleButton from '@/components/ui/IconToggleButton'
 import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 
@@ -24,7 +23,9 @@ import WatchedToggleButton from '@/components/ui/WatchedToggleButton'
 import { useLanguageStore } from '@/store/languageStore'
 import { formatMonthYear } from '@/utils/formatDate'
 import { useWatchedStore } from '@/store/watchedStore'
+import { useWatchlistStore } from '@/store/watchlistStore'
 import { useUserStore } from '@/store/userStore'
+import { HeartIcon } from '@/components/icons'
 
 type Props = {
   movieId: number
@@ -49,10 +50,14 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
   const userId = useUserStore((s) => s.userId)
   const role   = useUserStore((s) => s.role)
   const userKey = String(userId ?? 'guest')
-  const watchedMovies = useWatchedStore((s) => s.movies[userKey])
-  const toggleMovie  = useWatchedStore((s) => s.toggleMovie)
-  const enrichMovie  = useWatchedStore((s) => s.enrichMovie)
+  const watchedMovies  = useWatchedStore((s) => s.movies[userKey])
+  const toggleMovie    = useWatchedStore((s) => s.toggleMovie)
+  const enrichMovie    = useWatchedStore((s) => s.enrichMovie)
   const isWatched = !!watchedMovies?.[currentId]
+
+  const watchlistMovies  = useWatchlistStore((s) => s.movies[userKey])
+  const toggleWatchlist  = useWatchlistStore((s) => s.toggleMovie)
+  const isInWatchlist    = !!watchlistMovies?.[currentId]
 
   // Backfill collection info if the movie was marked watched from the table
   // (list endpoint doesn't include belongs_to_collection).
@@ -108,23 +113,40 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
                 <div className="flex items-center gap-2 shrink-0">
                   {trailer && (
                     <Tooltip content={t('common.trailer')} placement="top">
-                      <button
+                      <IconToggleButton
                         data-cy="trailer-button"
+                        active={showTrailer}
                         onClick={() => setShowTrailer((v) => !v)}
-                        className={clsx(
-                          'w-7 h-7 flex items-center justify-center rounded border transition-colors cursor-pointer',
-                          showTrailer
-                            ? 'border-primary text-primary bg-primary/10'
-                            : 'border-border text-muted-foreground hover:border-primary/60 hover:text-primary hover:bg-primary/5',
-                        )}
                       >
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                           <path d="M3 2l7 4-7 4V2z" />
                         </svg>
-                      </button>
+                      </IconToggleButton>
                     </Tooltip>
                   )}
-                  {role !== 'admin' && (
+                  {role !== 'admin' && !isWatched && (
+                    <Tooltip content={isInWatchlist ? t('myList.watchlist.remove') : t('myList.watchlist.add')} placement="top">
+                      <IconToggleButton
+                        data-cy="watchlist-toggle"
+                        active={isInWatchlist}
+                        onClick={() => detail && toggleWatchlist(userKey, {
+                          id: detail.id,
+                          title: detail.title,
+                          release_date: detail.release_date,
+                          poster_path: detail.poster_path,
+                          vote_average: detail.vote_average,
+                          vote_count: detail.vote_count,
+                          original_language: detail.original_language,
+                          collection_id: detail.belongs_to_collection?.id,
+                          collection_name: detail.belongs_to_collection?.name,
+                          addedAt: Date.now(),
+                        })}
+                      >
+                        <HeartIcon size={13} filled={isInWatchlist} />
+                      </IconToggleButton>
+                    </Tooltip>
+                  )}
+                  {role !== 'admin' && (!ui.isUpcoming || isWatched) && (
                     <WatchedToggleButton
                       isWatched={isWatched}
                       label={isWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
@@ -163,7 +185,7 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
                     <span className="h-3 w-px bg-green-300/60 dark:bg-green-700/50" />
 
                     <span className="text-sm font-semibold text-green-700 dark:text-green-300">
-                      {detail.release_date ? formatMonthYear(detail.release_date, language) : '—'}
+                      {ui.resolvedDate ? formatMonthYear(ui.resolvedDate, language) : '—'}
                     </span>
 
                   </div>
