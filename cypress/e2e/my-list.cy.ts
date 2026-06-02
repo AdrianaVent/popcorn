@@ -135,6 +135,16 @@ describe('My List', () => {
   })
 
   it('shows saga card with formatted name (no "Collection")', () => {
+    cy.intercept('GET', '**/collection/131296**', {
+      body: {
+        id: 131296,
+        name: 'Avatar Collection',
+        parts: [
+          { id: 19995, title: 'Avatar',                   poster_path: null, release_date: '2009-12-17', vote_average: 7.5, vote_count: 30000 },
+          { id: 76600, title: 'Avatar: The Way of Water', poster_path: null, release_date: '2022-12-16', vote_average: 7.6, vote_count: 15000 },
+        ],
+      },
+    }).as('collectionAvatar')
     loginAndVisitMyList((win, userId) => {
       win.localStorage.setItem(
         'popcorn-watched-v3',
@@ -209,6 +219,16 @@ describe('My List', () => {
   // ─── Section ordering ─────────────────────────────────────────────────────
 
   it('shows standalone movies before sagas when a standalone was added more recently', () => {
+    cy.intercept('GET', '**/collection/131296**', {
+      body: {
+        id: 131296,
+        name: 'Avatar Collection',
+        parts: [
+          { id: 19995, title: 'Avatar',                   poster_path: null, release_date: '2009-12-17', vote_average: 7.5, vote_count: 30000 },
+          { id: 76600, title: 'Avatar: The Way of Water', poster_path: null, release_date: '2022-12-16', vote_average: 7.6, vote_count: 15000 },
+        ],
+      },
+    }).as('collectionAvatar')
     const AVATAR = { id: 19995, title: 'Avatar', watchedAt: NOW - 10000, release_date: '2009-12-17', collection: { id: 131296, name: 'Avatar Collection' } }
     const INCEPTION = { id: 1, title: 'Inception', watchedAt: NOW, release_date: '2010-07-16' }
     loginAndVisitMyList((win, userId) => seedMovies(win, userId, [AVATAR, INCEPTION]))
@@ -222,6 +242,16 @@ describe('My List', () => {
   })
 
   it('shows sagas before standalone movies when a saga was added more recently', () => {
+    cy.intercept('GET', '**/collection/131296**', {
+      body: {
+        id: 131296,
+        name: 'Avatar Collection',
+        parts: [
+          { id: 19995, title: 'Avatar',                   poster_path: null, release_date: '2009-12-17', vote_average: 7.5, vote_count: 30000 },
+          { id: 76600, title: 'Avatar: The Way of Water', poster_path: null, release_date: '2022-12-16', vote_average: 7.6, vote_count: 15000 },
+        ],
+      },
+    }).as('collectionAvatar')
     const INCEPTION = { id: 1, title: 'Inception', watchedAt: NOW - 10000, release_date: '2010-07-16' }
     const AVATAR = { id: 19995, title: 'Avatar', watchedAt: NOW, release_date: '2009-12-17', collection: { id: 131296, name: 'Avatar Collection' } }
     loginAndVisitMyList((win, userId) => seedMovies(win, userId, [INCEPTION, AVATAR]))
@@ -330,17 +360,17 @@ describe('My List', () => {
     })
 
     it('opens when clicking an enabled Recommendations button', () => {
-      cy.contains('button', 'Recommendations').click()
+      cy.contains('button', 'Recommendations').should('not.be.disabled').click()
       cy.get('[data-cy="recommendations-drawer"]').should('be.visible')
     })
 
     it('shows the movie title in the header for a standalone movie', () => {
-      cy.contains('button', 'Recommendations').click()
+      cy.contains('button', 'Recommendations').should('not.be.disabled').click()
       cy.get('[data-cy="recommendations-drawer"]').contains('Inception').should('be.visible')
     })
 
     it('closes when clicking the X button', () => {
-      cy.contains('button', 'Recommendations').click()
+      cy.contains('button', 'Recommendations').should('not.be.disabled').click()
       cy.get('[data-cy="recommendations-drawer"]').should('be.visible')
       cy.get('[data-cy="drawer-close"]').click()
       cy.get('[data-cy="recommendations-drawer"]').should('not.exist')
@@ -471,6 +501,16 @@ describe('My List', () => {
   })
 
   it('shows the saga name in the drawer header when triggered from a saga', () => {
+    cy.intercept('GET', '**/collection/131296**', {
+      body: {
+        id: 131296,
+        name: 'Avatar Collection',
+        parts: [
+          { id: 19995, title: 'Avatar',                   poster_path: null, release_date: '2009-12-17', vote_average: 7.5, vote_count: 30000 },
+          { id: 76600, title: 'Avatar: The Way of Water', poster_path: null, release_date: '2022-12-16', vote_average: 7.6, vote_count: 15000 },
+        ],
+      },
+    }).as('collectionAvatar')
     loginAndVisitMyList((win, userId) => {
       win.localStorage.setItem('popcorn-ratings-v1', JSON.stringify({
         state: { ratings: { [userId]: { movies: { 19995: 4 }, series: {} } } }, version: 0,
@@ -496,7 +536,7 @@ describe('My List', () => {
         })
       )
     })
-    cy.contains('button', 'Recommendations').click()
+    cy.contains('button', 'Recommendations').should('not.be.disabled').click()
     cy.get('[data-cy="recommendations-drawer"]').contains('Avatar - Saga').should('be.visible')
   })
 
