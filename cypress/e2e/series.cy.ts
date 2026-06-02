@@ -1,3 +1,31 @@
+const BREAKING_BAD_DETAIL = {
+  id: 1396,
+  name: 'Breaking Bad',
+  first_air_date: '2008-01-20',
+  vote_average: 9.5,
+  vote_count: 12000,
+  overview: 'A chemistry teacher turns to manufacturing meth.',
+  genres: [{ id: 18, name: 'Drama' }],
+  original_language: 'en',
+  poster_path: null,
+  number_of_seasons: 5,
+  number_of_episodes: 62,
+  episode_run_time: [47],
+  status: 'Ended',
+  seasons: [],
+}
+
+const BREAKING_BAD_WITH_SEASON = {
+  ...BREAKING_BAD_DETAIL,
+  poster_path: '/poster.jpg',
+  number_of_seasons: 1,
+  number_of_episodes: 2,
+  tagline: '',
+  seasons: [
+    { id: 3739, name: 'Season 1', season_number: 1, episode_count: 2, poster_path: null, air_date: '2008-01-20' },
+  ],
+}
+
 describe('Series', () => {
   beforeEach(() => {
     cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'series.json' }).as('tmdb')
@@ -38,23 +66,7 @@ describe('Series', () => {
   // ─── Watch providers ──────────────────────────────────────────
 
   describe('Watch providers in detail modal', () => {
-    const mockDetail = {
-      id: 1396,
-      name: 'Breaking Bad',
-      first_air_date: '2008-01-20',
-      vote_average: 9.5,
-      vote_count: 12000,
-      overview: 'A chemistry teacher turns to manufacturing meth.',
-      genres: [{ id: 18, name: 'Drama' }],
-      original_language: 'en',
-      poster_path: '/ggFHVNu6YYI5L9pCfOacjizRGt.jpg',
-      number_of_seasons: 5,
-      number_of_episodes: 62,
-      episode_run_time: [47],
-      status: 'Ended',
-      tagline: '',
-      seasons: [],
-    }
+    const mockDetail = BREAKING_BAD_DETAIL
 
     const mockProviders = {
       results: {
@@ -95,25 +107,7 @@ describe('Series', () => {
   // ─── Watched ribbon on poster ─────────────────────────────────
 
   describe('Watched ribbon on poster', () => {
-    const mockDetail = {
-      id: 1396,
-      name: 'Breaking Bad',
-      first_air_date: '2008-01-20',
-      vote_average: 9.5,
-      vote_count: 12000,
-      overview: 'A chemistry teacher turns to manufacturing meth.',
-      genres: [{ id: 18, name: 'Drama' }],
-      original_language: 'en',
-      poster_path: '/poster.jpg',
-      number_of_seasons: 1,
-      number_of_episodes: 2,
-      episode_run_time: [47],
-      status: 'Ended',
-      tagline: '',
-      seasons: [
-        { id: 3739, name: 'Season 1', season_number: 1, episode_count: 2, poster_path: null, air_date: '2008-01-20' },
-      ],
-    }
+    const mockDetail = BREAKING_BAD_WITH_SEASON
 
     const mockSeason = {
       episodes: [
@@ -155,25 +149,7 @@ describe('Series', () => {
   // ─── Watched — admin ──────────────────────────────────────────
 
   describe('Watched controls (admin)', () => {
-    const mockDetailWithSeason = {
-      id: 1396,
-      name: 'Breaking Bad',
-      first_air_date: '2008-01-20',
-      vote_average: 9.5,
-      vote_count: 12000,
-      overview: 'A chemistry teacher turns to manufacturing meth.',
-      genres: [{ id: 18, name: 'Drama' }],
-      original_language: 'en',
-      poster_path: '/poster.jpg',
-      number_of_seasons: 1,
-      number_of_episodes: 2,
-      episode_run_time: [47],
-      status: 'Ended',
-      tagline: '',
-      seasons: [
-        { id: 3739, name: 'Season 1', season_number: 1, episode_count: 2, poster_path: null, air_date: '2008-01-20' },
-      ],
-    }
+    const mockDetailWithSeason = BREAKING_BAD_WITH_SEASON
 
     const mockSeason = {
       episodes: [
@@ -221,25 +197,7 @@ describe('Series', () => {
   // ─── Watched — guest ──────────────────────────────────────────
 
   describe('Watched controls (guest)', () => {
-    const mockDetailWithSeason = {
-      id: 1396,
-      name: 'Breaking Bad',
-      first_air_date: '2008-01-20',
-      vote_average: 9.5,
-      vote_count: 12000,
-      overview: 'A chemistry teacher turns to manufacturing meth.',
-      genres: [{ id: 18, name: 'Drama' }],
-      original_language: 'en',
-      poster_path: '/poster.jpg',
-      number_of_seasons: 1,
-      number_of_episodes: 2,
-      episode_run_time: [47],
-      status: 'Ended',
-      tagline: '',
-      seasons: [
-        { id: 3739, name: 'Season 1', season_number: 1, episode_count: 2, poster_path: null, air_date: '2008-01-20' },
-      ],
-    }
+    const mockDetailWithSeason = BREAKING_BAD_WITH_SEASON
 
     const mockSeason = {
       episodes: [
@@ -520,22 +478,7 @@ describe('Series', () => {
   // ─── Trailer ──────────────────────────────────────────────────
 
   describe('Trailer', () => {
-    const mockDetail = {
-      id: 1396,
-      name: 'Breaking Bad',
-      first_air_date: '2008-01-20',
-      vote_average: 9.5,
-      vote_count: 12000,
-      overview: 'A chemistry teacher turns to manufacturing meth.',
-      genres: [{ id: 18, name: 'Drama' }],
-      original_language: 'en',
-      poster_path: null,
-      number_of_seasons: 5,
-      number_of_episodes: 62,
-      episode_run_time: [47],
-      status: 'Ended',
-      seasons: [],
-    }
+    const mockDetail = BREAKING_BAD_DETAIL
 
     const mockVideos = {
       results: [
@@ -596,6 +539,54 @@ describe('Series', () => {
       cy.wait('@detail')
       cy.wait('@noVideos')
       cy.get('[data-cy="trailer-button"]').should('not.exist')
+    })
+  })
+
+  // ─── Watchlist heart button ────────────────────────────────────
+
+  describe('Watchlist heart button in detail modal', () => {
+    const mockDetail = BREAKING_BAD_DETAIL
+
+    const openBreakingBadModal = () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} })
+      cy.intercept('GET', /\/tv\/1396\/videos/, { results: [] })
+      cy.wait('@tmdb-watchlist')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+    }
+
+    describe('as guest', () => {
+      beforeEach(() => {
+        cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'series.json' }).as('tmdb-watchlist')
+        cy.visitAsGuest('/series')
+      })
+
+      it('shows the heart button for a guest user', () => {
+        openBreakingBadModal()
+        cy.get('[data-cy="watchlist-toggle"]').should('be.visible')
+      })
+
+      it('gains active style after clicking the heart button', () => {
+        openBreakingBadModal()
+        cy.get('[data-cy="watchlist-toggle"]').click()
+        cy.get('[data-cy="watchlist-toggle"]').should('have.class', 'border-primary')
+      })
+    })
+
+    describe('as admin', () => {
+      beforeEach(() => {
+        cy.intercept('GET', /\/tv\/1396(\?|$)/, mockDetail).as('detail')
+        cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} })
+        cy.intercept('GET', /\/tv\/1396\/videos/, { results: [] })
+      })
+
+      it('does not show the heart button for an admin user', () => {
+        cy.wait('@tmdb')
+        cy.contains('tr', 'Breaking Bad').click()
+        cy.wait('@detail')
+        cy.get('[data-cy="watchlist-toggle"]').should('not.exist')
+      })
     })
   })
 })

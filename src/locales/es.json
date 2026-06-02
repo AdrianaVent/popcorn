@@ -282,6 +282,13 @@
       "because": "Porque te gustó {{name}}",
       "similar": "Recomendaciones",
       "rateFirst": "Valora ≥ 3.5★ para ver recomendaciones"
+    },
+    "watchlist": {
+      "add": "Añadir a mi lista",
+      "remove": "Quitar de mi lista",
+      "emptyMovies": "Aún no hay películas en tu lista",
+      "emptySeries": "Aún no hay series en tu lista",
+      "tab": "Por ver"
     }
   },
   "dashboard": {

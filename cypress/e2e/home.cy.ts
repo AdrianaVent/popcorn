@@ -301,4 +301,26 @@ describe('Release calendar interaction', () => {
     cy.wait('@noVideos')
     cy.get('[data-cy="trailer-button"]').should('not.exist')
   })
+
+  it('does not show the heart button for admin users', () => {
+    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
+      cy.contains('button', '15').click()
+      cy.contains('Calendar Test Movie').should('exist')
+    })
+    cy.get('[data-cy="calendar-watchlist-toggle"]').should('not.exist')
+  })
+
+  it('shows the heart button for guest users', () => {
+    cy.intercept('GET', /\/genre\/movie\/list/, movieGenres)
+    cy.intercept('GET', /\/discover\/movie/, calendarMovies).as('discoverMovies2')
+    cy.intercept('GET', /\/genre\/tv\/list/, tvGenres)
+    cy.intercept('GET', /\/discover\/tv/, discoverTV)
+    cy.intercept('GET', /\/watch\/providers\/tv/, { results: [] })
+    cy.visitAsGuest('/home')
+    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
+      cy.contains('button', '15').click()
+      cy.contains('Calendar Test Movie').should('exist')
+    })
+    cy.get('[data-cy="calendar-watchlist-toggle"]').should('be.visible')
+  })
 })

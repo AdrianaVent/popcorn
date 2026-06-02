@@ -1,5 +1,7 @@
 import { useWatchedStore } from './watchedStore'
+import { useWatchlistStore } from './watchlistStore'
 import type { StoredMovie, StoredSeries } from './watchedStore'
+import type { WatchlistMovie, WatchlistSeries } from './watchlistStore'
 
 const mockMovie: StoredMovie = {
   id: 1,
@@ -22,8 +24,19 @@ const mockSeries: StoredSeries = {
   number_of_episodes: 10,
 }
 
+const watchlistMovie: WatchlistMovie = {
+  id: 1, title: 'Test Movie', release_date: '2023-01-01',
+  poster_path: null, vote_average: 0, vote_count: 0, original_language: 'en', addedAt: 0,
+}
+
+const watchlistSeries: WatchlistSeries = {
+  id: 10, name: 'Test Series', first_air_date: '2022-01-01',
+  poster_path: null, vote_average: 0, vote_count: 0, original_language: 'en', addedAt: 0,
+}
+
 beforeEach(() => {
   useWatchedStore.setState({ movies: {}, episodes: {}, seriesData: {} })
+  useWatchlistStore.setState({ movies: {}, series: {} })
 })
 
 describe('toggleMovie', () => {
@@ -250,5 +263,49 @@ describe('per-season watched count derivation', () => {
     const eps = useWatchedStore.getState().episodes['user1'][10]
     const season2Count = Object.values(eps).filter((ep) => ep.seasonNumber === 2).length
     expect(season2Count).toBe(0)
+  })
+})
+
+describe('auto-remove from watchlist', () => {
+  it('removes movie from watchlist when marked as watched', () => {
+    useWatchlistStore.getState().toggleMovie('user1', watchlistMovie)
+    expect(useWatchlistStore.getState().movies['user1'][1]).toBeDefined()
+    useWatchedStore.getState().toggleMovie('user1', mockMovie)
+    expect(useWatchlistStore.getState().movies['user1']?.[1]).toBeUndefined()
+  })
+
+  it('does not remove movie from watchlist when unmarking watched', () => {
+    useWatchedStore.getState().toggleMovie('user1', mockMovie)
+    useWatchlistStore.getState().toggleMovie('user1', watchlistMovie)
+    useWatchedStore.getState().toggleMovie('user1', mockMovie)
+    expect(useWatchlistStore.getState().movies['user1'][1]).toBeDefined()
+  })
+
+  it('removes series from watchlist on first episode mark', () => {
+    useWatchlistStore.getState().toggleSeries('user1', watchlistSeries)
+    expect(useWatchlistStore.getState().series['user1'][10]).toBeDefined()
+    useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1, mockSeries)
+    expect(useWatchlistStore.getState().series['user1']?.[10]).toBeUndefined()
+  })
+
+  it('does not remove series from watchlist on subsequent episode marks', () => {
+    useWatchedStore.getState().toggleEpisode('user1', 10, 101, 1, mockSeries)
+    useWatchlistStore.getState().toggleSeries('user1', watchlistSeries)
+    useWatchedStore.getState().toggleEpisode('user1', 10, 102, 1, mockSeries)
+    expect(useWatchlistStore.getState().series['user1'][10]).toBeDefined()
+  })
+
+  it('removes series from watchlist on first markSeason', () => {
+    useWatchlistStore.getState().toggleSeries('user1', watchlistSeries)
+    expect(useWatchlistStore.getState().series['user1'][10]).toBeDefined()
+    useWatchedStore.getState().markSeason('user1', 10, 1, [101, 102], mockSeries)
+    expect(useWatchlistStore.getState().series['user1']?.[10]).toBeUndefined()
+  })
+
+  it('does not remove series from watchlist when unmarking a season', () => {
+    useWatchedStore.getState().markSeason('user1', 10, 1, [101, 102], mockSeries)
+    useWatchlistStore.getState().toggleSeries('user1', watchlistSeries)
+    useWatchedStore.getState().markSeason('user1', 10, 1, [101, 102], mockSeries)
+    expect(useWatchlistStore.getState().series['user1'][10]).toBeDefined()
   })
 })

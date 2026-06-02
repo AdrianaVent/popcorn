@@ -1,3 +1,19 @@
+const FIGHT_CLUB_DETAIL = {
+  id: 550,
+  title: 'Fight Club',
+  release_date: '1999-10-15',
+  vote_average: 8.4,
+  vote_count: 26000,
+  runtime: 139,
+  overview: 'A depressed man forms an underground fight club.',
+  genres: [{ id: 18, name: 'Drama' }],
+  original_language: 'en',
+  poster_path: '/poster.jpg',
+  belongs_to_collection: null,
+  status: 'Released',
+  tagline: '',
+}
+
 describe('Movies', () => {
   beforeEach(() => {
     cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'movies.json' }).as('tmdb')
@@ -115,21 +131,7 @@ describe('Movies', () => {
   // ─── Watched ribbon on poster ─────────────────────────────────
 
   describe('Watched ribbon on poster', () => {
-    const mockDetail = {
-      id: 550,
-      title: 'Fight Club',
-      release_date: '1999-10-15',
-      vote_average: 8.4,
-      vote_count: 26000,
-      runtime: 139,
-      overview: 'A depressed man forms an underground fight club.',
-      genres: [{ id: 18, name: 'Drama' }],
-      original_language: 'en',
-      poster_path: '/poster.jpg',
-      belongs_to_collection: null,
-      status: 'Released',
-      tagline: '',
-    }
+    const mockDetail = FIGHT_CLUB_DETAIL
 
     it('is never shown for admin users', () => {
       cy.wait('@tmdb')
@@ -176,21 +178,7 @@ describe('Movies', () => {
   // ─── Watched — admin ──────────────────────────────────────────
 
   describe('Watched controls (admin)', () => {
-    const mockDetail = {
-      id: 550,
-      title: 'Fight Club',
-      release_date: '1999-10-15',
-      vote_average: 8.4,
-      vote_count: 26000,
-      runtime: 139,
-      overview: 'A depressed man forms an underground fight club.',
-      genres: [{ id: 18, name: 'Drama' }],
-      original_language: 'en',
-      poster_path: '/poster.jpg',
-      belongs_to_collection: null,
-      status: 'Released',
-      tagline: '',
-    }
+    const mockDetail = FIGHT_CLUB_DETAIL
 
     it('does not show the Watched filter', () => {
       cy.wait('@tmdb')
@@ -212,21 +200,7 @@ describe('Movies', () => {
   // ─── Watched — guest ──────────────────────────────────────────
 
   describe('Watched controls (guest)', () => {
-    const mockDetail = {
-      id: 550,
-      title: 'Fight Club',
-      release_date: '1999-10-15',
-      vote_average: 8.4,
-      vote_count: 26000,
-      runtime: 139,
-      overview: 'A depressed man forms an underground fight club.',
-      genres: [{ id: 18, name: 'Drama' }],
-      original_language: 'en',
-      poster_path: '/poster.jpg',
-      belongs_to_collection: null,
-      status: 'Released',
-      tagline: '',
-    }
+    const mockDetail = FIGHT_CLUB_DETAIL
 
     beforeEach(() => {
       cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'movies.json' }).as('tmdb-guest')
@@ -276,26 +250,61 @@ describe('Movies', () => {
     })
   })
 
+  // ─── Watchlist heart button ───────────────────────────────────
+
+  describe('Watchlist heart button in detail modal', () => {
+    const mockDetail = FIGHT_CLUB_DETAIL
+
+    const openFightClubModal = () => {
+      // Specific intercepts must be registered after the general one to take precedence
+      cy.intercept('GET', /\/movie\/550(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/movie\/550\/watch\/providers/, { results: {} })
+      cy.intercept('GET', /\/movie\/550\/release_dates/, { results: [] })
+      cy.wait('@tmdb-watchlist')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+    }
+
+    describe('as guest', () => {
+      beforeEach(() => {
+        cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'movies.json' }).as('tmdb-watchlist')
+        cy.visitAsGuest('/movies')
+      })
+
+      it('shows the heart button', () => {
+        openFightClubModal()
+        cy.get('[data-cy="watchlist-toggle"]').should('be.visible')
+      })
+
+      it('gains active style after clicking', () => {
+        openFightClubModal()
+        cy.get('[data-cy="watchlist-toggle"]').click()
+        cy.get('[data-cy="watchlist-toggle"]').should('have.class', 'border-primary')
+      })
+    })
+
+    describe('as admin', () => {
+      beforeEach(() => {
+        cy.intercept('GET', /\/movie\/550(\?|$)/, mockDetail).as('detail')
+        cy.intercept('GET', /\/movie\/550\/watch\/providers/, { results: {} })
+        cy.intercept('GET', /\/movie\/550\/release_dates/, { results: [] })
+      })
+
+      it('does not show the heart button', () => {
+        cy.wait('@tmdb')
+        cy.contains('tr', 'Fight Club').click()
+        cy.wait('@detail')
+        cy.get('[data-cy="watchlist-toggle"]').should('not.exist')
+      })
+    })
+  })
+
   // ─── Watch providers ──────────────────────────────────────────
 
   describe('Watch providers in detail modal', () => {
     const recentDate = new Date(Date.now() - 20 * 86_400_000).toISOString()
 
-    const mockDetail = {
-      id: 550,
-      title: 'Fight Club',
-      release_date: '1999-10-15',
-      vote_average: 8.4,
-      vote_count: 26000,
-      runtime: 139,
-      overview: 'A depressed man forms an underground fight club.',
-      genres: [{ id: 18, name: 'Drama' }],
-      original_language: 'en',
-      poster_path: '/poster.jpg',
-      belongs_to_collection: null,
-      status: 'Released',
-      tagline: '',
-    }
+    const mockDetail = FIGHT_CLUB_DETAIL
 
     const mockProviders = {
       results: {
@@ -429,19 +438,7 @@ describe('Movies', () => {
   })
 
   describe('Trailer', () => {
-    const mockDetail = {
-      id: 550,
-      title: 'Fight Club',
-      release_date: '1999-10-15',
-      vote_average: 8.4,
-      vote_count: 26000,
-      runtime: 139,
-      overview: 'A depressed man forms an underground fight club.',
-      genres: [{ id: 18, name: 'Drama' }],
-      original_language: 'en',
-      poster_path: null,
-      belongs_to_collection: null,
-    }
+    const mockDetail = FIGHT_CLUB_DETAIL
 
     const mockVideos = {
       results: [{ id: 'v1', key: 'testTrailerKey', name: 'Official Trailer', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en' }],

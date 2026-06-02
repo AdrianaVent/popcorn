@@ -65,7 +65,8 @@ src/
 │                               # ToggleSwitch, PageSkeleton,
 │                               # StarRating (5-star, half-star; value: 0.5–5 | null),
 │                               # Tooltip (portal-based, 150ms delay, placement: top/right/bottom/left),
-│                               # TrailerPlayer (YouTube iframe embed; optional onClose × button)
+│                               # TrailerPlayer (YouTube iframe embed; optional onClose × button),
+│                               # IconToggleButton (28×28px icon button with active/inactive toggle state — used for trailer + watchlist buttons)
 ├── config/
 │   ├── auth.ts                 # TOKEN_MAX_TIME, REFRESH_TOKEN_MAX_TIME, JWT_SECRET
 │   ├── constants.ts            # DEFAULT_LANGUAGE, ALLOWED_ORIGINAL_LANGUAGES
@@ -96,7 +97,7 @@ src/
 │   │   │                       # fetchMovieWatchProviders, fetchMovieWatchProviderOptions,
 │   │   │                       # fetchMovieVideos
 │   │   ├── movieFilters.schema.ts
-│   │   ├── getMovieUI.ts       # isUpcoming + releaseYear helpers
+│   │   ├── getMovieUI.ts       # isUpcoming + releaseYear + resolvedDate helpers; resolveSpanishDate picks ES theatrical date (type 2|3) from append_to_response=release_dates
 │   │   └── index.ts
 │   ├── series/
 │   │   ├── components/         # SeriesDetailModal, SeriesMetaGrid,
@@ -113,10 +114,11 @@ src/
 │   │   ├── seriesFilters.schema.ts
 │   │   ├── getSeriesUI.ts      # status badge config; resolveSeriesGenreName — static ES translation map (TV genre IDs)
 │   │   └── index.ts
-│   ├── myList/                 # MyListFeature — Movies/Series tabs, saga grouping, watchedAt ordering, recommendations drawer, UnwatchedMoviePlaceholder
+│   ├── myList/                 # MyListFeature — Movies/Series/Por ver tabs, saga grouping (bin-packing layout), watchedAt ordering, recommendations drawer, UnwatchedMoviePlaceholder
 │   │   ├── components/         # MovieCard (poster, year, StarRating, always-visible Recommendations button + Tooltip),
 │   │   │                       # SeriesCard (ribbon, episode progress, StarRating, always-visible Recommendations button + Tooltip),
-│   │   │                       # RecommendationsDrawer (right-side panel, max 5 items, saga/movie/series source header)
+│   │   │                       # RecommendationsDrawer (right-side panel, max 5 items, saga/movie/series source header),
+│   │   │                       # WatchlistCard (poster, year, remove heart button — used in Por ver tab)
 │   │   └── hooks/              # useMovieRecommendations, useSeriesRecommendations (useQueries per source, ≥3.5★ filter, excludes watched)
 │   └── users/                  # UsersFeature, UserFormModal, ImportUsersModal,
 │                               # users.service.ts (fetchUsers — server-side paginated + filtered),
@@ -140,7 +142,8 @@ src/
 │   ├── themeStore.ts           # light / dark / auto
 │   ├── languageStore.ts        # en / es
 │   ├── userStore.ts            # userId (string) + role ('admin' | 'guest')
-│   ├── watchedStore.ts         # per-user movies Map, episodes Map, seriesData Map (v3); StoredMovie includes collection_id/name
+│   ├── watchedStore.ts         # per-user movies Map, episodes Map, seriesData Map (v3); StoredMovie includes collection_id/name; auto-removes from watchlist on mark
+│   ├── watchlistStore.ts       # per-user watchlist (movies + series); toggleMovie/toggleSeries; removeMovie/removeSeries; persisted as 'popcorn-watchlist-v1'
 │   ├── ratingsStore.ts         # per-user movie/series ratings (Rating: 0.5–5); persisted as 'popcorn-ratings-v1'
 │   └── toastStore.ts           # transient toast queue — addToast(type, message) / removeToast(id)
 ├── styles/
@@ -198,6 +201,9 @@ data/
 | My list (guest-only: watched movies/series, saga grouping, watchedAt-based section ordering, 5-star ratings) | Done |
 | My list recommendations — right-side drawer, max 5 items, ≥ 3.5★ filter, saga name in header, excludes watched | Done |
 | My list saga — UnwatchedMoviePlaceholder (dimmed poster + dashed border) for unreleased-eligible saga movies; future/undated parts filtered out everywhere (SagaCard + CollectionAccordion) | Done |
+| My list saga layout — bin-packing algorithm fills horizontal space across rows; single-released-movie collections demoted to standalone; CollectionAccordion hidden when ≤ 1 released part | Done |
+| My list scroll-to-card — opening the recommendations drawer centers the selected movie/saga/series card in the scroll container | Done |
+| Watchlist (Por ver) — per-user watchlist store; heart button in tables, detail modals, calendar; Por ver tab in My list with two-column layout (movies + series), saga grouping with 3 states (watched/watchlisted/placeholder); count badges on all 3 tabs (circle, 99+ cap, exact tooltip); auto-remove from watchlist on mark watched | Done |
 | Watched ribbon on poster in movies/series tables (diagonal "Visto" banner, guest only) | Done |
 | Clear-all-filters button in FiltersPanel header | Done |
 | Horizontal table scroll on narrow viewports | Done |
@@ -298,6 +304,9 @@ Per-user state keyed by `userId`. Movies stored as `StoredMovie` snapshots. Epis
 **Series background enrichment**
 `SeriesFeature` runs `Promise.allSettled` after the list loads to fetch `status` and `number_of_episodes` per series. Cancelled via `AbortController` on cleanup. Results stored in `Map<id, value>` component state — not in Zustand.
 
+**Movie release dates (regional)**
+`fetchMovieDetail` passes `append_to_response: 'release_dates'` so the modal gets per-country release data. `getMovieUI` reads the ES theatrical date (type 2 or 3) via `resolveSpanishDate` and uses it as the authoritative `isUpcoming` / `resolvedDate` source — a movie released globally may still be upcoming in Spain. `moviesService.detail` accepts an optional `extra` params object so callers that only need basic data (runtime enrichment, Top10 genre backfill) don't fetch the release_dates payload unnecessarily.
+
 **Watch providers**
 Region hardcoded to `ES` (`WATCH_PROVIDERS_REGION` constant). `useWatchProviders(id, fetcher, type)` is a generic hook called directly from `MovieDetailModal` and `SeriesDetailModal` — the old `useMovieWatchProviders` / `useSeriesWatchProviders` wrappers have been removed. `fetchWatchProviderOptions` in `utils/watchProviders.ts` is the shared function for fetching + deduplicating provider options; both `movies.service.ts` and `series.service.ts` call it. Flatrate providers are sorted by `display_priority` and name-deduplicated via `deduplicateProviders` (generic, preserves subtypes). Rent and buy are merged into a single paid list tagged with `source: 'rent' | 'buy'`; rent takes precedence when a provider appears in both. Paid list is also deduplicated by `provider_id` first, then by name, and capped at 3. "In theaters" is detected via `/movie/{id}/release_dates` for ES — only type 3 (Theatrical) releases within the last 90 days qualify. Badge color uses `bg-primary` (burgundy in light, yellow in dark). Future: multi-country support via user preference.
 
@@ -339,11 +348,11 @@ npm run test:watch  # watch mode
 
 | Area | What's covered |
 |---|---|
-| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `tmdbToStarRating` (TMDB 0–10 → Rating 0.5–5), `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10; per-entry name dedup), `applyRuntimeFilter` (undefined/0 threshold → passthrough, empty runtimes map → passthrough, filters by total duration, exact threshold kept, null rt passes through, missing from map passes through) |
+| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `tmdbToStarRating` (TMDB 0–10 → Rating 0.5–5), `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10; per-entry name dedup), `applyRuntimeFilter` (undefined/0 threshold → passthrough, empty runtimes map → passthrough, filters by total duration, exact threshold kept, null rt passes through, missing from map passes through), `binPackSagas` (empty input, single row, two groups fitting/not fitting, gap-filling before new row, displayedCounts used for width) |
 | Business logic | `applyClientFilters` (movies + series + language filter), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
-| Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber, watchedAt), `markSeason` (watchedAt), per-season count derivation; `toastStore` — addToast, timers, removeToast; `ratingsStore` — setRating, removeRating, per-user isolation |
+| Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber, watchedAt), `markSeason` (watchedAt), per-season count derivation, auto-remove from watchlist on mark (movie/episode/season); `watchlistStore` — `toggleMovie` (add, addedAt, remove, per-user isolation), `toggleSeries` (add, addedAt, remove, per-user isolation), `removeMovie`/`removeSeries` (no-op safety); `toastStore` — addToast, timers, removeToast; `ratingsStore` — setRating, removeRating, per-user isolation |
 | Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window), `useMovieReleases` (service call args), `useSeriesReleases` (disabled when no providers, enabled with providers), `useUserMovieTop10` / `useUserSeriesTop10` (genre_ids backfill via detail fetch, staleTime 5min), `useTrailer` (language preference via iso_639_1, YouTube filter, allTrailers list; disabled/enabled), `useEnrichedTrailers` (YouTube oEmbed batch fetch, replaces TMDB names with real YouTube titles, 24h cache), `useMovieRuntimeEnrichment` (empty map, populates runtime, null when no runtime, null on fetch fail, multiple movies, mixed success/failure), `useFilters` (initial state, setFilters, replaces entire object, preserves initial reference, exposes function) — all wrapped in `QueryClientProvider` with `retry: false` |
-| Components | `Button`, `Modal`, `FiltersPanel` (collapse/expand, badge count, text/number/star/boolean/date/select types), `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, fluid variant, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states), `StarRating` (5 stars, readonly mode, onChange, hover, half-star gradient), `GenreGrid` (renders badges; deduplicates by resolved name + icon — Avatar case: Action+Adventure share icon → one badge), `TrailerPlayer` (iframe with correct src, no close button without onClose, close button present and calls onClose, custom className), `SearchableSelect` (trigger label, X clear, open/close, search filtering, case-insensitive, empty state, option highlight, outside-click close), `YearRangePicker` (fromOptions capped at valueTo, toOptions floored at valueFrom, null callbacks), `FilterFieldInput` (all 8 field types: text/number/boolean/select/date/star/searchable-select/year-range/genre-multi; null guard for missing options/keyTo), `ToggleSwitch` (renders both labels, active has bg-primary, inactive does not, onChange with value, onChange on active option, role="group", reflects rerender), `MediaTableCells` — TitleCell (renders title, tooltip disabled when not truncated), GenresCell (null for undefined/empty, renders icons, multiple genres, deduplication by icon, filters null icons), PosterCell (renders poster, ribbon present when isWatched, ribbon absent when not watched, translated label), `StatusBadge` (undefined → animate-pulse, Ended, unknown status, Returning Series, In Production) |
+| Components | `Button`, `Modal`, `FiltersPanel` (collapse/expand, badge count, text/number/star/boolean/date/select types), `SeriesMetaGrid`, `ExportButton`, `ConfirmModal`, `UserFormModal`, `ToastItem`, `WatchProviders` (loading skeleton, badges, inTheaters chip), `ErrorBoundary` (children render, fallback on error, retry reset), `MediaPoster` (image render, null fallback, error fallback, loading prop, fluid variant, error recovery on URL change), `ReleaseCalendar` (header, Today button visibility, day selection, releases panel, X close, onEntryClick, no-overview state, loading/error states), `CalendarReleaseItem` (heart visible for guest, hidden for admin, hidden when already watched), `StarRating` (5 stars, readonly mode, onChange, hover, half-star gradient), `GenreGrid` (renders badges; deduplicates by resolved name + icon — Avatar case: Action+Adventure share icon → one badge), `TrailerPlayer` (iframe with correct src, no close button without onClose, close button present and calls onClose, custom className), `SearchableSelect` (trigger label, X clear, open/close, search filtering, case-insensitive, empty state, option highlight, outside-click close), `YearRangePicker` (fromOptions capped at valueTo, toOptions floored at valueFrom, null callbacks), `FilterFieldInput` (all 8 field types: text/number/boolean/select/date/star/searchable-select/year-range/genre-multi; null guard for missing options/keyTo), `ToggleSwitch` (renders both labels, active has bg-primary, inactive does not, onChange with value, onChange on active option, role="group", reflects rerender), `MediaTableCells` — TitleCell (renders title, tooltip disabled when not truncated), GenresCell (null for undefined/empty, renders icons, multiple genres, deduplication by icon, filters null icons), PosterCell (renders poster, ribbon present when isWatched, ribbon absent when not watched, translated label), `StatusBadge` (undefined → animate-pulse, Ended, unknown status, Returning Series, In Production) |
 | Services | `apiFetch` (401 auto-refresh, redirect on session expiry) |
 | API routes | `/api/users/import` (per-row validation: missing fields, invalid role/password, intra-file duplicate, DB duplicate, invalid creator, invalid date) |
 
@@ -362,12 +371,12 @@ Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test user
 | Suite | What's covered |
 |---|---|
 | `auth.cy.ts` | Redirect when unauthenticated, invalid credentials error, successful login, logout, guest redirect from /users |
-| `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, access control (guest), watched controls (admin/guest), trailer (button visible, open iframe, close via button, close via × in player), column sort (rating asc/desc — verifies sort_by param sent to TMDB), runtime filter (2h → 120min, 90min — verifies with_runtime.gte param) |
-| `series.cy.ts` | Series list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, watched controls (admin/guest), trailer (button visible, open iframe, close via button, close via × in player), column sort (rating asc/desc — verifies sort_by param sent to TMDB), runtime filter client-side (filters out series below total duration threshold; verifies with_runtime.gte NOT sent to TMDB) |
+| `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, access control (guest), watched controls (admin/guest), trailer (button visible, open iframe, close via button, close via × in player), column sort (rating asc/desc — verifies sort_by param sent to TMDB), runtime filter (2h → 120min, 90min — verifies with_runtime.gte param), watchlist heart button (guest: visible + gains active style on click; admin: hidden) |
+| `series.cy.ts` | Series list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, watched controls (admin/guest), trailer (button visible, open iframe, close via button, close via × in player), column sort (rating asc/desc — verifies sort_by param sent to TMDB), runtime filter client-side (filters out series below total duration threshold; verifies with_runtime.gte NOT sent to TMDB), watchlist heart button (guest: visible + gains active style on click; admin: hidden) |
 | `users.cy.ts` | List, create + toast, edit + toast, delete + toast, bulk delete + toast, self-protection, filters, import JSON + CSV, partial import failures, post-import cleanup |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
-| `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation, Top10 card title + year visible, calendar trailer button, Top10 genre dropdown (open, close, genre-filtered fetch, label update) |
-| `my-list.cy.ts` | Page header + tabs, empty state (movies/series), nav item hidden for admin / visible for guest, watched movie visible, Recommendations button disabled without rating / enabled after ≥ 3.5★, saga name formatted (no "Collection"), section ordering (standalone-first / saga-first by watchedAt), series tab + episode progress badge + "Finish to rate", recommendations drawer opens, unwatched saga placeholders visible, clicking placeholder opens detail modal |
+| `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation, Top10 card title + year visible, calendar trailer button, Top10 genre dropdown (open, close, genre-filtered fetch, label update), calendar watchlist button (admin: hidden; guest: visible) |
+| `my-list.cy.ts` | Page header + tabs, empty state (movies/series), nav item hidden for admin / visible for guest, watched movie visible, Recommendations button disabled without rating / enabled after ≥ 3.5★, saga name formatted (no "Collection"), section ordering (standalone-first / saga-first by watchedAt), series tab + episode progress badge + "Finish to rate", recommendations drawer opens, unwatched saga placeholders visible, clicking placeholder opens detail modal, Por ver tab (visible, empty state, movie/series visible, count badge, remove on heart click), single-released-movie collection shown as standalone (not saga group) |
 
 ---
 

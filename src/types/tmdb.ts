@@ -72,6 +72,7 @@ export type TMDBMovieDetail = TMDBMovie & {
   budget: number
   revenue: number
   homepage: string | null
+  release_dates?: ReleaseDatesResult
 }
 
 export type TMDBCreator = {

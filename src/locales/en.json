@@ -282,6 +282,13 @@
       "because": "Because you liked {{name}}",
       "similar": "Recommendations",
       "rateFirst": "Rate ≥ 3.5★ to see recommendations"
+    },
+    "watchlist": {
+      "add": "Add to watchlist",
+      "remove": "Remove from watchlist",
+      "emptyMovies": "No movies in your watchlist yet",
+      "emptySeries": "No series in your watchlist yet",
+      "tab": "To watch"
     }
   },
   "dashboard": {

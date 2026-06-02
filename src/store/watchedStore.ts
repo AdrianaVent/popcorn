@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { ssrStorage } from './storage'
+import { useWatchlistStore } from './watchlistStore'
 
 // Minimal snapshots stored at mark-time so the "watched" filter can render rows
 // without any TMDB call. Only the fields needed for the table/modal are kept.
@@ -56,7 +57,8 @@ export const useWatchedStore = create<WatchedState>()(
       movies:     {},
       seriesData: {},
 
-      toggleMovie: (userId, movie) =>
+      toggleMovie: (userId, movie) => {
+        const adding = !useWatchedStore.getState().movies[userId]?.[movie.id]
         set((s) => {
           const userMovies = { ...s.movies[userId] }
           if (userMovies[movie.id]) {
@@ -65,7 +67,9 @@ export const useWatchedStore = create<WatchedState>()(
             userMovies[movie.id] = { ...movie, watchedAt: Date.now() }
           }
           return { movies: { ...s.movies, [userId]: userMovies } }
-        }),
+        })
+        if (adding) useWatchlistStore.getState().removeMovie(userId, movie.id)
+      },
 
       enrichMovie: (userId, movieId, patch) =>
         set((s) => {
@@ -79,7 +83,10 @@ export const useWatchedStore = create<WatchedState>()(
           }
         }),
 
-      toggleEpisode: (userId, seriesId, episodeId, seasonNumber, series) =>
+      toggleEpisode: (userId, seriesId, episodeId, seasonNumber, series) => {
+        const prevEps = useWatchedStore.getState().episodes[userId]?.[seriesId] ?? {}
+        const adding = !prevEps[episodeId]
+        const isFirstForSeries = adding && Object.keys(prevEps).length === 0
         set((s) => {
           const userEps    = { ...s.episodes[userId] }
           const seriesEps  = { ...userEps[seriesId] }
@@ -103,14 +110,19 @@ export const useWatchedStore = create<WatchedState>()(
             episodes:   { ...s.episodes,   [userId]: userEps },
             seriesData: { ...s.seriesData, [userId]: userSeries },
           }
-        }),
+        })
+        if (isFirstForSeries) useWatchlistStore.getState().removeSeries(userId, seriesId)
+      },
 
-      markSeason: (userId, seriesId, seasonNumber, episodeIds, series) =>
+      markSeason: (userId, seriesId, seasonNumber, episodeIds, series) => {
+        const st = useWatchedStore.getState()
+        const prevSeriesEps = st.episodes[userId]?.[seriesId] ?? {}
+        const allWatched = episodeIds.length > 0 && episodeIds.every((id) => !!prevSeriesEps[id])
+        const hasSeriesData = !!st.seriesData[userId]?.[seriesId]
         set((s) => {
           const userEps   = { ...s.episodes[userId] }
           const seriesEps = { ...userEps[seriesId] }
 
-          const allWatched = episodeIds.length > 0 && episodeIds.every((id) => !!seriesEps[id])
           if (allWatched) {
             episodeIds.forEach((id) => { delete seriesEps[id] })
           } else {
@@ -129,7 +141,9 @@ export const useWatchedStore = create<WatchedState>()(
             episodes:   { ...s.episodes,   [userId]: userEps },
             seriesData: { ...s.seriesData, [userId]: userSeries },
           }
-        }),
+        })
+        if (!allWatched && !hasSeriesData) useWatchlistStore.getState().removeSeries(userId, seriesId)
+      },
     }),
     { name: 'popcorn-watched-v3', storage: ssrStorage }
   )

@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import clsx from 'clsx'
 import Modal from '@/components/ui/Modal'
+import IconToggleButton from '@/components/ui/IconToggleButton'
 import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 import { useSeriesDetail } from '@/features/series/hooks/useSeriesDetail'
@@ -12,9 +12,11 @@ import { fetchSeriesWatchProviders, fetchSeasonDetail, fetchSeriesVideos } from 
 import { getSeriesUI } from '@/features/series/getSeriesUI'
 import WatchProviders from '@/components/common/WatchProviders'
 import { useWatchedStore } from '@/store/watchedStore'
+import { useWatchlistStore } from '@/store/watchlistStore'
 import { useUserStore } from '@/store/userStore'
 import type { StoredSeries } from '@/store/watchedStore'
 import WatchedToggleButton from '@/components/ui/WatchedToggleButton'
+import { HeartIcon } from '@/components/icons'
 import TrailerPlayer from '@/components/ui/TrailerPlayer'
 import Tooltip from '@/components/ui/Tooltip'
 import { useTrailer, useEnrichedTrailers, resolveHeaderTrailer } from '@/hooks/useTrailer'
@@ -42,6 +44,10 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
   const userKey = String(userId ?? 'guest')
   const markSeason = useWatchedStore((s) => s.markSeason)
   const watchedCount = useWatchedStore((s) => Object.keys(s.episodes[userKey]?.[seriesId] ?? {}).length)
+
+  const watchlistSeries = useWatchlistStore((s) => s.series[userKey])
+  const toggleWatchlist = useWatchlistStore((s) => s.toggleSeries)
+  const isInWatchlist   = !!watchlistSeries?.[seriesId]
 
   const [markLoading, setMarkLoading] = useState(false)
   const [showTrailer, setShowTrailer] = useState(false)
@@ -149,20 +155,35 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
                 <div className="flex items-center gap-2 shrink-0">
                   {trailer && (
                     <Tooltip content={t('common.trailer')} placement="top">
-                      <button
+                      <IconToggleButton
                         data-cy="trailer-button"
+                        active={showTrailer}
                         onClick={() => setShowTrailer((v) => !v)}
-                        className={clsx(
-                          'w-7 h-7 flex items-center justify-center rounded border transition-colors cursor-pointer',
-                          showTrailer
-                            ? 'border-primary text-primary bg-primary/10'
-                            : 'border-border text-muted-foreground hover:border-primary/60 hover:text-primary hover:bg-primary/5',
-                        )}
                       >
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                           <path d="M3 2l7 4-7 4V2z" />
                         </svg>
-                      </button>
+                      </IconToggleButton>
+                    </Tooltip>
+                  )}
+                  {role !== 'admin' && !allWatched && (
+                    <Tooltip content={isInWatchlist ? t('myList.watchlist.remove') : t('myList.watchlist.add')} placement="top">
+                      <IconToggleButton
+                        data-cy="watchlist-toggle"
+                        active={isInWatchlist}
+                        onClick={() => detail && toggleWatchlist(userKey, {
+                          id: detail.id,
+                          name: detail.name,
+                          first_air_date: detail.first_air_date,
+                          poster_path: detail.poster_path,
+                          vote_average: detail.vote_average,
+                          vote_count: detail.vote_count,
+                          original_language: detail.original_language,
+                          addedAt: Date.now(),
+                        })}
+                      >
+                        <HeartIcon size={13} filled={isInWatchlist} />
+                      </IconToggleButton>
                     </Tooltip>
                   )}
                   {role !== 'admin' && (
