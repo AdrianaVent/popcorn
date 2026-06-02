@@ -1,5 +1,6 @@
-import { formatSagaName, groupAndSortMovies, computeSagasFirst } from './MyListFeature'
+import { formatSagaName, groupAndSortMovies, computeSagasFirst, binPackSagas } from './MyListFeature'
 import type { StoredMovie } from '@/store/watchedStore'
+import type { SagaGroup } from './MyListFeature'
 
 const makeMovie = (overrides: Partial<StoredMovie> & { id: number }): StoredMovie => ({
   title: `Movie ${overrides.id}`,
@@ -133,6 +134,79 @@ describe('groupAndSortMovies', () => {
     const { sagaGroups, standaloneMovies } = groupAndSortMovies([])
     expect(sagaGroups).toHaveLength(0)
     expect(standaloneMovies).toHaveLength(0)
+  })
+})
+
+// ─── binPackSagas ─────────────────────────────────────────────────────────────
+
+describe('binPackSagas', () => {
+  const SAGA_PX = (n: number) => 108 * n + 12
+  const SAGA_GAP = 16
+
+  const makeGroup = (id: number, movieCount = 2): SagaGroup => ({
+    id,
+    name: `Saga ${id}`,
+    movies: Array.from({ length: movieCount }, (_, i) =>
+      makeMovie({ id: id * 100 + i, collection_id: id, collection_name: `Saga ${id}` })
+    ),
+  })
+
+  it('returns empty array for empty input', () => {
+    expect(binPackSagas([], [], 1000)).toEqual([])
+  })
+
+  it('places a single group in a single row', () => {
+    const group = makeGroup(1, 2)
+    const result = binPackSagas([group], [2], 1000)
+    expect(result).toHaveLength(1)
+    expect(result[0]).toHaveLength(1)
+    expect(result[0][0].id).toBe(1)
+  })
+
+  it('keeps two groups in the same row when they fit exactly', () => {
+    const g1 = makeGroup(1, 2)
+    const g2 = makeGroup(2, 2)
+    const container = SAGA_PX(2) + SAGA_GAP + SAGA_PX(2)
+    const result = binPackSagas([g1, g2], [2, 2], container)
+    expect(result).toHaveLength(1)
+    expect(result[0].map((g) => g.id)).toEqual([1, 2])
+  })
+
+  it('places the second group in a new row when it does not fit', () => {
+    const g1 = makeGroup(1, 3)
+    const g2 = makeGroup(2, 3)
+    const container = SAGA_PX(3) // only fits one 3-movie saga
+    const result = binPackSagas([g1, g2], [3, 3], container)
+    expect(result).toHaveLength(2)
+    expect(result[0][0].id).toBe(1)
+    expect(result[1][0].id).toBe(2)
+  })
+
+  it('always keeps the first group in the first position of the first row', () => {
+    const groups = [makeGroup(1, 4), makeGroup(2, 3), makeGroup(3, 2)]
+    const result = binPackSagas(groups, [4, 3, 2], 1000)
+    expect(result[0][0].id).toBe(1)
+  })
+
+  it('fills a gap in an existing row before opening a new one (bin packing)', () => {
+    // g1 (4) = 444px → row 0. Container = 700px (444 remaining: 240px)
+    // g2 (3) = 336px → 444+16+336=796 > 700 → new row 1
+    // g3 (2) = 228px → row 0: 444+16+228=688 ≤ 700 → fits in row 0
+    const g1 = makeGroup(1, 4)
+    const g2 = makeGroup(2, 3)
+    const g3 = makeGroup(3, 2)
+    const result = binPackSagas([g1, g2, g3], [4, 3, 2], 700)
+    expect(result[0].map((g) => g.id)).toEqual([1, 3])
+    expect(result[1].map((g) => g.id)).toEqual([2])
+  })
+
+  it('uses displayedCounts instead of movies.length for width calculation', () => {
+    // g1 has 1 watched movie but displayedCount=4 (placeholders counted)
+    // SAGA_PX(4)=444. Container=500 → g2 (SAGA_PX(2)=228) does not fit (444+16+228=688)
+    const g1 = makeGroup(1, 1)
+    const g2 = makeGroup(2, 2)
+    const result = binPackSagas([g1, g2], [4, 2], 500)
+    expect(result).toHaveLength(2)
   })
 })
 

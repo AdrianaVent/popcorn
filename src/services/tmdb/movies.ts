@@ -3,8 +3,8 @@ import { DEFAULT_LANGUAGE } from '@/config/constants'
 import type { ReleaseDatesResult, TMDBCollectionDetail, TMDBMovie, TMDBMovieDetail, TMDBPagedResponse, TMDBVideosResult, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
 export const moviesService = {
-  detail: (id: number, language = DEFAULT_LANGUAGE) =>
-    tmdbFetch<TMDBMovieDetail>(`/movie/${id}`, { language }),
+  detail: (id: number, language = DEFAULT_LANGUAGE, extra: Record<string, string> = {}) =>
+    tmdbFetch<TMDBMovieDetail>(`/movie/${id}`, { language, ...extra }),
 
   search: (query: string, page = 1, language = DEFAULT_LANGUAGE) =>
     tmdbFetch<TMDBPagedResponse<TMDBMovie>>('/search/movie', {

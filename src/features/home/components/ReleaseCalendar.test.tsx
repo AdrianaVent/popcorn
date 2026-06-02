@@ -32,6 +32,27 @@ jest.mock('@/components/icons', () => ({
   FilmIcon: () => <span>film</span>,
   TvIcon: () => <span>tv</span>,
   XIcon: () => <span>close</span>,
+  HeartIcon: () => <span>heart</span>,
+}))
+
+jest.mock('@/store/userStore', () => ({
+  useUserStore: (fn: (s: { role: string; userId: string | null }) => unknown) =>
+    fn({ role: 'guest', userId: 'user-1' }),
+}))
+
+jest.mock('@/store/watchedStore', () => ({
+  useWatchedStore: (fn: (s: { movies: Record<string, Record<number, unknown>>; seriesData: Record<string, Record<number, unknown>> }) => unknown) =>
+    fn({ movies: {}, seriesData: {} }),
+}))
+
+jest.mock('@/store/watchlistStore', () => ({
+  useWatchlistStore: (fn: (s: {
+    movies: Record<string, Record<number, unknown>>;
+    series: Record<string, Record<number, unknown>>;
+    toggleMovie: jest.Mock;
+    toggleSeries: jest.Mock;
+  }) => unknown) =>
+    fn({ movies: {}, series: {}, toggleMovie: jest.fn(), toggleSeries: jest.fn() }),
 }))
 
 jest.mock('@/features/series/getSeriesUI', () => ({

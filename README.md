@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.13.0-6B2737)
+![Version](https://img.shields.io/badge/version-0.15.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -24,6 +24,7 @@ Personal movie & series dashboard. Track what you watch, explore collections, an
 | Home dashboard — genre charts (personal + global view) | — | ✓ |
 | Home dashboard — release calendar | ✓ | ✓ |
 | Mark movies and episodes as watched | — | ✓ |
+| Add titles to watchlist via heart button (movies, series, calendar) | — | ✓ |
 | View and rate watched titles (My list) | — | ✓ |
 | Switch language (English / Spanish) | ✓ | ✓ |
 | Switch theme (Light / Dark / Auto) | ✓ | ✓ |
@@ -327,7 +328,9 @@ Expand the **Seasons** accordion to see the full episode list broken down by sea
 
 ### My list (`/my-list`) — guest only
 
-A personal overview of everything you have marked as watched. Admin accounts do not have access to this section.
+A personal overview of everything you have marked as watched, plus a dedicated watchlist for titles you plan to watch. Admin accounts do not have access to this section.
+
+The page has three tabs — **Movies**, **Series**, and **Watchlist** — each showing a count badge. Badges cap at 99 and display the exact count in a tooltip when above the cap.
 
 **Movies tab**
 
@@ -335,8 +338,9 @@ A personal overview of everything you have marked as watched. Admin accounts do 
 
 Displays your watched movies as cards (poster, year, star rating and a Recommendations button). The layout adapts dynamically:
 
-- Movies that belong to the same collection are automatically grouped under a shared **Saga** card (e.g. "Harry Potter - Saga"), with films sorted in release order inside.
+- Movies that belong to the same collection are automatically grouped under a shared **Saga** card (e.g. "Harry Potter - Saga"), with films sorted in release order inside. Collections with only one released film are shown as regular standalone cards instead.
 - Saga cards show **all released films** in the collection — not just the ones you have watched. Films you have not yet watched appear as dimmed placeholder slots, sorted in release order. Clicking a placeholder opens the detail modal so you can learn more or mark it as watched. Future or undated instalments are omitted.
+- Saga cards are laid out using a **bin-packing algorithm** that fills available horizontal space across rows, keeping the first saga in its position and fitting subsequent sagas into any gap before opening a new row.
 - Standalone films appear under a separate "Standalone films" label.
 - The section order (sagas first vs. standalone first) is driven by the most recent addition — whichever you marked last appears at the top.
 - Click the stars on any card to rate it from 0.5 to 5.
@@ -351,9 +355,17 @@ Displays your watched series as cards. Each card shows an episode progress badge
 - The Recommendations button is disabled while a series is in progress or when complete but not yet rated at ≥ 3.5★. Hovering the button shows the reason.
 - Once a series is complete and rated at ≥ 3.5★, the button becomes active.
 
+**Watchlist tab**
+
+![My list — watchlist tab](docs/screenshots/my-list-watchlist.png)
+
+A watchlist of titles you want to watch later. Add titles via the heart (♥) button in the movie/series detail modals or in the release calendar. Items are automatically removed from the list when you mark them as watched.
+
+The tab is split into two columns — Movies on the left and Series on the right. Movies that belong to a saga are grouped together, with each film showing one of three states: watched (dimmed ✓), in watchlist (heart card with remove button), or not yet added (dimmed placeholder).
+
 **Recommendations**
 
-Each standalone movie card has a **Recommendations** button; saga cards share one button for the whole group. When you have rated the title (or the best-rated film in a saga) at 3.5 stars or above, clicking the button opens a right-side drawer showing up to 5 TMDB recommendations. Already-watched titles are excluded from the results. Click any recommendation to open its detail modal. The Series tab works the same way.
+Each standalone movie card has a **Recommendations** button; saga cards share one button for the whole group. When you have rated the title (or the best-rated film in a saga) at 3.5 stars or above, clicking the button opens a right-side drawer showing up to 5 TMDB recommendations. Already-watched titles are excluded from the results. Click any recommendation to open its detail modal. The Series tab works the same way. When the drawer opens, the list automatically scrolls to center the selected card in view.
 
 Ratings are stored locally per user — they are not sent to TMDB.
 
@@ -443,9 +455,9 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-The project has two test layers: **646 unit/integration tests** (Jest) and **127 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+The project has two test layers: **669 unit/integration tests** (Jest) and **141 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 646 tests · 57 suites
+### Unit & integration tests (Jest) — 669 tests · 59 suites
 
 ```bash
 npm test           # run once
@@ -456,13 +468,13 @@ npm run test:watch # watch mode
 |---|---|
 | Pure functions | `getMovieUI`, `getSeriesUI`, `formatDate`, `formatVoteCount`, `deduplicateProviders`, `buildGenreCounts`, `toCSV`, `pickYouTubeTrailer`, `findSeasonTrailerInList`, `filterNonSeasonTrailers`, `resolveSeasonFallback`, `resolveHeaderTrailer` |
 | Business logic | Client-side filters (movies + series), TMDB fetch error mapping, export utilities |
-| Stores | `watchedStore` (toggle movie/episode, season counts), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
+| Stores | `watchedStore` (toggle movie/episode, season counts, auto-remove from watchlist), `watchlistStore` (toggleMovie/toggleSeries, removeMovie/removeSeries, per-user isolation), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
 | Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases`, `useTrailer` (language preference, YouTube filtering, allTrailers list), `useEnrichedTrailers` (YouTube oEmbed title enrichment, 24h cache), `useSeriesEnrichment` (status/totals/runtimes/genreIds backfill, stable-reference pattern), `useMovieRuntimeEnrichment` (Promise.allSettled backfill, null on fail), `useFilters` (initial state, setFilters, reference identity) |
-| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button), `SearchableSelect` (open/close, search, selection, clear), `YearRangePicker` (cross-filtering, null callbacks), `FilterFieldInput` (all field types, null guards), `ToggleSwitch` (active style, onChange, role="group"), `MediaTableCells` (TitleCell tooltip guard, GenresCell deduplication by icon), `StatusBadge` (all status variants) |
+| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `CalendarReleaseItem` (heart visible/hidden by role and watched state), `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button), `SearchableSelect` (open/close, search, selection, clear), `YearRangePicker` (cross-filtering, null callbacks), `FilterFieldInput` (all field types, null guards), `ToggleSwitch` (active style, onChange, role="group"), `MediaTableCells` (TitleCell tooltip guard, GenresCell deduplication by icon), `StatusBadge` (all status variants) |
 | Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
 | API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date) |
 
-### End-to-end tests (Cypress) — 127 tests · 7 suites
+### End-to-end tests (Cypress) — 141 tests · 7 suites
 
 In CI, Cypress runs against the production build automatically. Locally, run against the dev server:
 
@@ -480,11 +492,11 @@ npm run cypress:run
 | Suite | Tests | What's covered |
 |---|---|---|
 | `auth.cy.ts` | 6 | Redirect when unauthenticated, invalid credentials, login, logout, session expiry |
-| `home.cy.ts` | 24 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar, Top 10 year display, calendar trailer button, Top 10 genre filter dropdown |
-| `movies.cy.ts` | 33 | Movie list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, access control, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter (2h → 120min, 90min) |
-| `series.cy.ts` | 28 | Series list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, episode runtime guard, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter client-side (filters below total duration threshold, not sent to TMDB) |
+| `home.cy.ts` | 26 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar, Top 10 year display, calendar trailer button, Top 10 genre filter dropdown, calendar watchlist button (admin: hidden; guest: visible) |
+| `movies.cy.ts` | 36 | Movie list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, access control, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter (2h → 120min, 90min), watchlist heart button (guest: visible + gains active style on click; admin: hidden) |
+| `series.cy.ts` | 31 | Series list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, episode runtime guard, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter client-side (filters below total duration threshold, not sent to TMDB), watchlist heart button (guest: visible + gains active style on click; admin: hidden) |
 | `users.cy.ts` | 15 | Create, edit, delete (single + bulk), toasts, import JSON/CSV, partial failures |
-| `my-list.cy.ts` | 18 | Tabs, empty state, nav access control, watched movie, Recommendations button (disabled/enabled), saga name formatting, section ordering (standalone-first/saga-first), series tab + episode progress, "Finish to rate", recommendations drawer, unwatched saga placeholders, future-date filter regression, click placeholder opens modal |
+| `my-list.cy.ts` | 25 | Tabs, empty state, nav access control, watched movie, Recommendations button (disabled/enabled), saga name formatting, single-released-movie collection as standalone, section ordering (standalone-first/saga-first), series tab + episode progress, "Finish to rate", recommendations drawer, unwatched saga placeholders, future-date filter regression, click placeholder opens modal, Watchlist tab (visible, empty state, movie/series visible, count badge, remove on heart click) |
 | `settings.cy.ts` | 3 | Theme switching (light / dark), language switching (EN / ES) |
 
 Cypress creates and cleans up its own test users in the local database automatically. TMDB calls are intercepted — no real API key needed to run the E2E suite.
@@ -572,10 +584,10 @@ src/
 │   ├── common/         # FiltersPanel, ExportButton, Sidebar, SettingsModal, ...
 │   ├── layouts/        # AuthLayout, DashboardLayout, PageLayout
 │   └── ui/             # Button, Input, Text, Modal, ModalFooter, Header,
-│                       # DatePicker, ConfirmModal, IconButton, Table/, LoadingOverlay,
+│                       # DatePicker, ConfirmModal, IconButton, IconToggleButton, Table/, LoadingOverlay,
 │                       # Toast/ToastItem, Toast/ToastContainer, BarChart, ToggleSwitch,
 │                       # SearchableSelect, YearRangePicker, FilterFieldInput,
-│                       # StarRating, Tooltip, ...
+│                       # StarRating, Tooltip, TrailerPlayer, ...
 ├── config/             # auth.ts · tmdb.ts · i18n.ts · constants.ts
 ├── db/                 # client.ts (SQLite singleton) · users.ts (typed queries)
 ├── features/
@@ -593,7 +605,7 @@ src/
 │   ├── apiFetch.ts     # fetch wrapper — auto-refresh on 401, redirect to /login on expiry
 │   ├── auth/           # authService — bcrypt verify, JWT sign/refresh
 │   └── tmdb/           # TMDB client — movies, series, search
-├── store/              # themeStore · languageStore · userStore · watchedStore · ratingsStore · toastStore
+├── store/              # themeStore · languageStore · userStore · watchedStore · watchlistStore · ratingsStore · toastStore
 └── utils/              # formatDate · formatNumber · exportData · getTMDBImageUrl · ...
 cypress/
 ├── e2e/                # auth · home · movies · series · my-list · users · settings

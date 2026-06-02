@@ -82,7 +82,7 @@ export function fetchMovies(
 }
 
 export function fetchMovieDetail(id: number, language = 'es'): Promise<TMDBMovieDetail> {
-  return moviesService.detail(id, TMDB_LANGUAGE[language] ?? 'es-ES')
+  return moviesService.detail(id, TMDB_LANGUAGE[language] ?? 'es-ES', { append_to_response: 'release_dates' })
 }
 
 export function fetchCollectionDetail(id: number, language = 'es'): Promise<TMDBCollectionDetail> {

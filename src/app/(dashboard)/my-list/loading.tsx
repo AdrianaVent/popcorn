@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next'
 import Header from '@/components/ui/Header'
-import { BookmarkIcon, FilmIcon, TvIcon } from '@/components/icons'
+import { BookmarkIcon, FilmIcon, TvIcon, HeartIcon } from '@/components/icons'
 
 const CARD_COUNT = 10
 
@@ -12,8 +12,9 @@ export default function Loading() {
   const tabSwitcher = (
     <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
       {([
-        { icon: <FilmIcon size={13} />, label: t('nav.movies'), active: true },
-        { icon: <TvIcon size={13} />,  label: t('nav.series'), active: false },
+        { icon: <FilmIcon size={13} />,                  label: t('nav.movies'),           active: true },
+        { icon: <TvIcon size={13} />,                    label: t('nav.series'),           active: false },
+        { icon: <HeartIcon size={13} strokeWidth={2} />, label: t('myList.watchlist.tab'), active: false },
       ]).map(({ icon, label, active }) => (
         <div
           key={label}
