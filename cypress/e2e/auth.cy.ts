@@ -39,8 +39,7 @@ describe('Auth', () => {
   it('redirects to /login when both the token and refresh token have expired', () => {
     // Log in to get valid cookies, then clear them to simulate full session expiry
     cy.visitAsAdmin('/users')
-    cy.clearCookie('token')
-    cy.clearCookie('refresh_token')
+    cy.clearAllCookies()
     // Next navigation — middleware sees no token and redirects to /login
     cy.visit('/users')
     cy.url().should('include', '/login')
