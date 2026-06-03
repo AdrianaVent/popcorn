@@ -366,7 +366,7 @@ npm run cypress      # terminal 2 — opens Cypress UI
 npm run cypress:run  # headless run
 ```
 
-Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test users directly in the SQLite DB. TMDB calls are intercepted with `cy.intercept`.
+Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test users directly in the SQLite DB. TMDB calls are intercepted with `cy.intercept`. CSS animations and transitions are globally disabled in `cypress/support/e2e.ts` via `window:before:load` hook (`animation-duration: 0s`, `transition-duration: 0s`) — prevents flakiness caused by `animate-fade-in` opacity states blocking interactions in headless CI.
 
 | Suite | What's covered |
 |---|---|
@@ -376,7 +376,7 @@ Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test user
 | `users.cy.ts` | List, create + toast, edit + toast, delete + toast, bulk delete + toast, self-protection, filters, import JSON + CSV, partial import failures, post-import cleanup |
 | `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
 | `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation, Top10 card title + year visible, calendar trailer button, Top10 genre dropdown (open, close, genre-filtered fetch, label update), calendar watchlist button (admin: hidden; guest: visible) |
-| `my-list.cy.ts` | Page header + tabs, empty state (movies/series), nav item hidden for admin / visible for guest, watched movie visible, Recommendations button disabled without rating / enabled after ≥ 3.5★, saga name formatted (no "Collection"), section ordering (standalone-first / saga-first by watchedAt), series tab + episode progress badge + "Finish to rate", recommendations drawer opens (waits for not-disabled then click({ force: true }) to bypass fade-in animation in headless CI; saga drawer also waits cy.wait('@collection') before click), unwatched saga placeholders visible, clicking placeholder opens detail modal, Por ver tab (visible, empty state, movie/series visible, count badge, remove on heart click), single-released-movie collection shown as standalone (not saga group); saga tests stub /collection API so CI placeholder TMDB key does not demote 2-part sagas |
+| `my-list.cy.ts` | Page header + tabs, empty state (movies/series), nav item hidden for admin / visible for guest, watched movie visible, Recommendations button disabled without rating / enabled after ≥ 3.5★, saga name formatted (no "Collection"), section ordering (standalone-first / saga-first by watchedAt), series tab + episode progress badge + "Finish to rate", recommendations drawer opens (waits for not-disabled before click; saga drawer waits cy.wait('@collection') before click), unwatched saga placeholders visible, clicking placeholder opens detail modal, Por ver tab (visible, empty state, movie/series visible, count badge, remove on heart click), single-released-movie collection shown as standalone (not saga group); saga tests stub /collection API so CI placeholder TMDB key does not demote 2-part sagas |
 
 ---
 
