@@ -360,17 +360,17 @@ describe('My List', () => {
     })
 
     it('opens when clicking an enabled Recommendations button', () => {
-      cy.contains('button', 'Recommendations').should('not.be.disabled').click({ force: true })
+      cy.contains('button', 'Recommendations').should('not.be.disabled').click()
       cy.get('[data-cy="recommendations-drawer"]').should('be.visible')
     })
 
     it('shows the movie title in the header for a standalone movie', () => {
-      cy.contains('button', 'Recommendations').should('not.be.disabled').click({ force: true })
+      cy.contains('button', 'Recommendations').should('not.be.disabled').click()
       cy.get('[data-cy="recommendations-drawer"]').contains('Inception').should('be.visible')
     })
 
     it('closes when clicking the X button', () => {
-      cy.contains('button', 'Recommendations').should('not.be.disabled').click({ force: true })
+      cy.contains('button', 'Recommendations').should('not.be.disabled').click()
       cy.get('[data-cy="recommendations-drawer"]').should('be.visible')
       cy.get('[data-cy="drawer-close"]').click()
       cy.get('[data-cy="recommendations-drawer"]').should('not.exist')
@@ -537,7 +537,7 @@ describe('My List', () => {
       )
     })
     cy.wait('@collectionAvatar')
-    cy.contains('button', 'Recommendations').should('not.be.disabled').click({ force: true })
+    cy.contains('button', 'Recommendations').should('not.be.disabled').click()
     cy.get('[data-cy="recommendations-drawer"]').contains('Avatar - Saga').should('be.visible')
   })
 
