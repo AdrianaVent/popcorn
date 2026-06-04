@@ -57,14 +57,14 @@ describe('Dashboard', () => {
   // ─── Content tab toggles ──────────────────────────────────────
 
   it('Movies icon buttons are active by default', () => {
-    cy.get('[aria-label="Movies"]').first().should('have.class', 'bg-primary/20')
-    cy.get('[aria-label="Series"]').first().should('not.have.class', 'bg-primary/20')
+    cy.get('button[aria-label="Movies"]').first().should('have.class', 'bg-primary/20')
+    cy.get('button[aria-label="Series"]').first().should('not.have.class', 'bg-primary/20')
   })
 
   it('switches to Series on icon click', () => {
-    cy.get('[aria-label="Series"]').first().click()
-    cy.get('[aria-label="Series"]').first().should('have.class', 'bg-primary/20')
-    cy.get('[aria-label="Movies"]').first().should('not.have.class', 'bg-primary/20')
+    cy.get('button[aria-label="Series"]').first().click()
+    cy.get('button[aria-label="Series"]').first().should('have.class', 'bg-primary/20')
+    cy.get('button[aria-label="Movies"]').first().should('not.have.class', 'bg-primary/20')
   })
 
   // ─── Mode toggle (admin) ─────────────────────────────────────
