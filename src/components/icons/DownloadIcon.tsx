@@ -1,6 +1,6 @@
 import { IconProps } from './types'
 
-export default function DownloadIcon({ size = 20, color = 'currentColor' }: IconProps) {
+export default function DownloadIcon({ size = 20, color = 'currentColor', 'aria-hidden': ariaHidden }: IconProps) {
   return (
     <svg
       width={size}
@@ -11,6 +11,7 @@ export default function DownloadIcon({ size = 20, color = 'currentColor' }: Icon
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden={ariaHidden}
     >
       <path d="M12 3v13M8 12l4 4 4-4M4 20h16" />
     </svg>

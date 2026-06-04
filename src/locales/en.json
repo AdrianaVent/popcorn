@@ -21,6 +21,8 @@
     "inTheaters": "In theaters",
     "errorBoundary": "Something went wrong. You can try again or reload the page.",
     "clearFilters": "Clear filters",
+    "close": "Close",
+    "noOverview": "No synopsis available",
     "minuteUnit": "m",
     "trailer": "Trailer",
     "search": "Search...",
@@ -67,7 +69,8 @@
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",
-    "themeAuto": "Auto"
+    "themeAuto": "Auto",
+    "themeHighContrast": "Contrast"
   },
   "nav": {
     "home": "Home",
@@ -75,7 +78,9 @@
     "series": "Series",
     "myList": "My list",
     "users": "Users",
-    "settings": "Settings"
+    "settings": "Settings",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar"
   },
   "movies": {
     "title": "Movies",
@@ -322,7 +327,10 @@
     "episodes": "{{count}} ep.",
     "today": "Today",
     "new": "New",
-    "renewed": "Renewed"
+    "renewed": "Renewed",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "close": "Close"
   },
   "topbar": {
     "search": "Search...",

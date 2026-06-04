@@ -90,6 +90,8 @@
 
 /* ─── Dark variant → data-theme attribute ────── */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+/* ─── High-contrast variant ─────────────────── */
+@custom-variant hc (&:where([data-theme="high-contrast"], [data-theme="high-contrast"] *));
 
 /* ─── Semantic tokens ─────────────────────────── */
 @theme inline {
@@ -149,6 +151,30 @@
   --chart-bar:          var(--color-cream-600);
 
   --pattern-opacity: 0.15;
+}
+
+/* ─── HIGH CONTRAST (WCAG AA) ────────────────── */
+[data-theme="high-contrast"] {
+  --background:         #FFFFFF;
+  --foreground:         #000000;
+
+  --muted:              #F0F0F0;
+  --muted-foreground:   #1A1A1A;
+
+  --card:               #FFFFFF;
+
+  --border:             #333333;
+
+  /* burgundy-600 — 9.83:1 on white, WCAG AAA */
+  --primary:            var(--color-burgundy-600);
+  --primary-foreground: #FFFFFF;
+
+  --destructive:        #B30000;
+
+  --chart-axis:         #000000;
+  --chart-bar:          var(--color-burgundy-600);
+
+  --pattern-opacity: 0;
 }
 
 /* ─── BASE ────────────────────────────────────── */

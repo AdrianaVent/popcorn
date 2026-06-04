@@ -35,6 +35,7 @@ export default function IconButton({
   return (
     <Tooltip content={label} placement={tooltipSide} disabled={!isGhost}>
       <button
+        aria-label={label}
         disabled={disabled}
         className={clsx(
           'flex items-center gap-1.5 rounded-md transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset',
@@ -46,9 +47,9 @@ export default function IconButton({
         )}
         {...props}
       >
-        <span className="shrink-0">{icon}</span>
+        <span className="shrink-0" aria-hidden="true">{icon}</span>
         {!isGhost && (
-          <span className={clsx('hidden', labelShow[showLabelAt])}>{label}</span>
+          <span className={clsx('hidden', labelShow[showLabelAt])} aria-hidden="true">{label}</span>
         )}
       </button>
     </Tooltip>

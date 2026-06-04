@@ -173,6 +173,7 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
       <div className="flex items-center gap-3 px-4 py-3">
         <button
           onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
           className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer text-left"
         >
           <Text variant="small" className="font-semibold text-foreground shrink-0">
@@ -188,31 +189,31 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
               ))}
             </div>
           )}
-        </button>
 
-        <div className="flex items-center gap-2 shrink-0">
-          {activeCount > 0 && (
-            <button
-              onClick={handleClear}
-              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground border border-border rounded-md px-1.5 py-0.5 hover:bg-muted transition-colors cursor-pointer"
-            >
-              <XIcon size={11} />
-              {t('common.clearFilters')}
-            </button>
-          )}
-
-          <button
-            onClick={() => setOpen((v) => !v)}
-            className={clsx('text-muted-foreground transition-transform duration-200', open && 'rotate-180')}
+          <span
+            aria-hidden="true"
+            className={clsx('ml-auto shrink-0 text-muted-foreground transition-transform duration-200', open && 'rotate-180')}
           >
             <ChevronDownIcon size={15} />
+          </span>
+        </button>
+
+        {activeCount > 0 && (
+          <button
+            onClick={handleClear}
+            aria-label={t('common.clearFilters')}
+            className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground border border-border rounded-md px-1.5 py-0.5 hover:bg-muted transition-colors cursor-pointer shrink-0"
+          >
+            <XIcon size={11} aria-hidden />
+            <span aria-hidden="true">{t('common.clearFilters')}</span>
           </button>
-        </div>
+        )}
       </div>
 
       {/* Body */}
       <div
         className="grid"
+        aria-hidden={!open}
         style={{ gridTemplateRows: open ? '1fr' : '0fr', transition: 'grid-template-rows 300ms ease-in-out' }}
       >
         <div className="overflow-hidden min-h-0">

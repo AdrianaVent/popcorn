@@ -30,8 +30,8 @@ export default function SeriesCard({ series, watchedEpisodes, rating, onRate, on
         <span className={clsx(
           'text-[10px] px-1.5 py-0 rounded border whitespace-nowrap',
           completed
-            ? 'bg-primary/10 border-primary/30 text-primary'
-            : 'bg-muted border-border/50 text-muted-foreground'
+            ? 'bg-primary/10 border-primary/30 text-primary hc:bg-primary hc:border-primary hc:text-primary-foreground'
+            : 'bg-muted border-border/50 hc:border-border text-muted-foreground'
         )}>
           {watchedEpisodes}/{total} ep.
         </span>
@@ -49,10 +49,10 @@ export default function SeriesCard({ series, watchedEpisodes, rating, onRate, on
           disabled={!onShowRecommendations}
           className={`text-[10px] px-1.5 py-0.5 rounded-md border transition-colors cursor-pointer disabled:cursor-not-allowed ${
             isRecommendationSource
-              ? 'border-primary/50 text-primary bg-primary/5'
+              ? 'border-primary/50 text-primary bg-primary/5 hc:border-primary hc:bg-primary hc:text-primary-foreground'
               : onShowRecommendations
-                ? 'border-primary/40 text-primary/80 hover:border-primary hover:text-primary'
-                : 'border-border/40 text-muted-foreground/30'
+                ? 'border-primary/40 text-primary/80 hover:border-primary hover:text-primary hc:border-primary hc:text-primary hc:hover:bg-muted'
+                : 'border-border/40 text-muted-foreground/30 hc:border-border hc:text-muted-foreground'
           }`}
         >
           {t('myList.recommendations.similar')}

@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { axe, type JestAxe } from 'jest-axe'
 import ImportModal, { type ImportResult, type ImportRow } from './ImportModal'
 import { exportAsCSV, exportAsJSON } from '@/utils/exportData'
 
@@ -8,9 +9,13 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('@/components/ui/Modal', () =>
   function MockModal({ title, children, footer }: { title: string; children: React.ReactNode; footer?: React.ReactNode }) {
-    return <div><h2>{title}</h2><div>{children}</div><div>{footer}</div></div>
+    return <div role="dialog" aria-label={title}><h2>{title}</h2><div>{children}</div><div>{footer}</div></div>
   }
 )
+
+const AXE_OPTS: Parameters<JestAxe>[1] = {
+  rules: { 'color-contrast': { enabled: false } },
+}
 
 jest.mock('@/components/ui/ModalFooter', () =>
   function MockModalFooter({ children }: { children: React.ReactNode }) {
@@ -64,6 +69,68 @@ function selectFile(container: HTMLElement, file: File) {
   const input = container.querySelector('input[type="file"]')!
   fireEvent.change(input, { target: { files: [file] } })
 }
+
+describe('ImportModal — axe', () => {
+  beforeEach(() => jest.clearAllMocks())
+
+  it('has no axe violations in upload phase', async () => {
+    const { container } = render(<ImportModal {...baseProps} />)
+    expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+  })
+
+  it('has no axe violations in results phase (success)', async () => {
+    baseProps.onProcess.mockResolvedValueOnce(SUCCESS_RESULT)
+    const { container } = render(<ImportModal {...baseProps} />)
+    selectFile(container, makeFile('[]', 'users.json'))
+    fireEvent.click(screen.getByText('users.import.process'))
+    await waitFor(() => expect(screen.getByText('Results')).toBeInTheDocument())
+    expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+  })
+
+  it('has no axe violations in results phase (with failures)', async () => {
+    baseProps.onProcess.mockResolvedValueOnce(PARTIAL_RESULT)
+    const { container } = render(<ImportModal {...baseProps} />)
+    selectFile(container, makeFile('[]', 'users.json'))
+    fireEvent.click(screen.getByText('users.import.process'))
+    await waitFor(() => expect(screen.getByText('bob')).toBeInTheDocument())
+    expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+  })
+})
+
+describe('ImportModal — ARIA', () => {
+  beforeEach(() => jest.clearAllMocks())
+
+  it('dropzone button has visible text content', () => {
+    render(<ImportModal {...baseProps} />)
+    expect(screen.getByRole('button', { name: /users\.import\.dropzone/i })).toBeInTheDocument()
+  })
+
+  it('clear-file button has aria-label', () => {
+    const { container } = render(<ImportModal {...baseProps} />)
+    selectFile(container, makeFile('[]', 'users.json'))
+    expect(screen.getByLabelText('button.cancel')).toBeInTheDocument()
+  })
+
+  it('results table headers have scope="col"', async () => {
+    baseProps.onProcess.mockResolvedValueOnce(PARTIAL_RESULT)
+    const { container } = render(<ImportModal {...baseProps} />)
+    selectFile(container, makeFile('[]', 'users.json'))
+    fireEvent.click(screen.getByText('users.import.process'))
+    await waitFor(() => expect(screen.getByText('bob')).toBeInTheDocument())
+    const ths = container.querySelectorAll('th')
+    ths.forEach((th) => expect(th).toHaveAttribute('scope', 'col'))
+  })
+
+  it('cancel button in footer has accessible name', () => {
+    render(<ImportModal {...baseProps} />)
+    expect(screen.getByRole('button', { name: 'button.cancel' })).toBeInTheDocument()
+  })
+
+  it('process button has accessible name', () => {
+    render(<ImportModal {...baseProps} />)
+    expect(screen.getByRole('button', { name: 'users.import.process' })).toBeInTheDocument()
+  })
+})
 
 describe('ImportModal', () => {
   beforeEach(() => jest.clearAllMocks())

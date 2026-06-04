@@ -237,6 +237,7 @@ export default function UsersFeature() {
       headerNode: (
         <input
           type="checkbox"
+          aria-label={t('users.columns.username')}
           checked={allSelected}
           ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected }}
           onChange={toggleAll}
@@ -248,6 +249,7 @@ export default function UsersFeature() {
       render: (row) => row.id === currentUserId ? null : (
         <input
           type="checkbox"
+          aria-label={row.username}
           checked={selected.has(row.id)}
           onChange={() => toggleSelect(row.id)}
           className="accent-primary cursor-pointer"
@@ -276,7 +278,9 @@ export default function UsersFeature() {
       render: (row) => (
         <span className={clsx(
           'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold',
-          row.role === 'admin' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+          row.role === 'admin'
+            ? 'bg-primary/10 text-primary hc:bg-primary hc:text-primary-foreground'
+            : 'bg-muted text-muted-foreground'
         )}>
           {t(`users.roles.${row.role}`)}
         </span>
@@ -340,16 +344,17 @@ export default function UsersFeature() {
     <>
       <PageLayout
         title={t('users.title')}
-        start={<UsersIcon size={32} strokeWidth={1.5} />}
+        start={<span aria-hidden="true"><UsersIcon size={32} strokeWidth={1.5} /></span>}
         end={
           <div className="flex items-center gap-2">
             <ExportButton onExport={handleExport} disabled={isLoading} />
             <button
+              aria-label={t('users.import.button')}
               onClick={() => setModal({ mode: 'import' })}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-foreground text-sm font-medium hover:bg-muted/60 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-foreground text-sm font-medium hover:bg-muted/60 hc:hover:bg-muted transition-colors"
             >
-              <UploadIcon size={15} />
-              <span className="hidden md:inline">{t('users.import.button')}</span>
+              <span aria-hidden="true"><UploadIcon size={15} /></span>
+              <span className="hidden md:inline" aria-hidden="true">{t('users.import.button')}</span>
             </button>
             <IconButton
               icon={<PlusCircleIcon size={15} />}
@@ -371,7 +376,7 @@ export default function UsersFeature() {
             onClick={handleDeleteSelected}
             className="group self-start flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium text-destructive border border-destructive/40 hover:bg-destructive hover:text-white transition-colors shrink-0"
           >
-            <TrashIcon size={12} />
+            <span aria-hidden="true"><TrashIcon size={12} /></span>
             {t('users.deleteSelected')}
             <span className="inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-destructive/15 text-destructive text-[10px] font-bold transition-colors group-hover:bg-white/20 group-hover:text-white">
               {selected.size}

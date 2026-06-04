@@ -48,6 +48,11 @@ export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevM
     return raw.charAt(0).toUpperCase() + raw.slice(1)
   }, [year, month, locale])
 
+  const dayFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' }),
+    [locale]
+  )
+
   const releaseDays = useMemo(() => {
     const map = new Map<number, number>()
     if (!query.data) return map
@@ -90,7 +95,7 @@ export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevM
   const animClass = animateFrom === 'left' ? 'animate-slide-from-left' : animateFrom === 'right' ? 'animate-slide-from-right' : 'animate-fade-in'
 
   return (
-    <div className={`flex flex-col flex-1 gap-2 rounded-xl border border-border bg-card p-3 select-none ${animClass}${className ? ` ${className}` : ''}`}>
+    <div role="region" aria-label={t('calendar.title')} className={`flex flex-col flex-1 gap-2 rounded-xl border border-border bg-card p-3 select-none ${animClass}${className ? ` ${className}` : ''}`}>
       {/* Header */}
       <div className="flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-2">
@@ -107,10 +112,11 @@ export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevM
               <span className="text-xs font-semibold text-muted-foreground">{selectedDateLabel}</span>
               <button
                 data-cy="calendar-close"
+                aria-label={t('calendar.close')}
                 onClick={() => setSelectedDay(null)}
                 className="flex items-center justify-center w-6 h-6 rounded-md text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset"
               >
-                <XIcon size={14} />
+                <span aria-hidden="true"><XIcon size={14} /></span>
               </button>
             </div>
           ) : (
@@ -118,25 +124,27 @@ export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevM
               {todayDay === null && (
               <button
                 onClick={onToday}
-                className="text-[11px] font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 px-1.5 py-0.5 rounded-md transition-colors mr-1 outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset"
+                className="text-[11px] font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 hc:hover:bg-muted px-1.5 py-0.5 rounded-md transition-colors mr-1 outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset"
               >
                 {t('calendar.today')}
               </button>
             )}
             <button
+              aria-label={t('calendar.prevMonth')}
               onClick={onPrevMonth}
               className="flex items-center justify-center w-6 h-6 rounded-md text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset"
             >
-              <ChevronLeftIcon size={14} />
+              <span aria-hidden="true"><ChevronLeftIcon size={14} /></span>
             </button>
             <span className="text-xs font-semibold text-foreground min-w-28 text-center">
               {monthName} {year}
             </span>
             <button
+              aria-label={t('calendar.nextMonth')}
               onClick={onNextMonth}
               className="flex items-center justify-center w-6 h-6 rounded-md text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset"
             >
-                <ChevronRightIcon size={14} />
+              <span aria-hidden="true"><ChevronRightIcon size={14} /></span>
             </button>
             </div>
           )}
@@ -171,38 +179,39 @@ export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevM
           ) : (
             <div className="grid grid-cols-7 gap-0.5 flex-1" style={{ gridTemplateRows: `repeat(${rows}, 1fr)` }}>
               {cells.map((day, i) => {
-                const count      = day !== null ? (releaseDays.get(day) ?? 0) : 0
+                if (day === null) {
+                  return <div key={i} aria-hidden="true" className="rounded-md h-full" />
+                }
+
+                const count      = releaseDays.get(day) ?? 0
                 const hasRelease = count > 0
-                const isToday    = day !== null && day === todayDay
+                const isToday    = day === todayDay
 
                 let cellClass = 'flex flex-col items-center justify-center rounded-md text-xs transition-colors h-full outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset leading-none gap-[2px]'
 
-                if (day === null) {
-                  cellClass += ' cursor-default pointer-events-none'
-                } else if (hasRelease && isToday) {
-                  cellClass += ' bg-primary/15 dark:bg-primary/35 text-primary font-semibold ring-[1.5px] ring-inset ring-primary cursor-pointer'
+                if (hasRelease && isToday) {
+                  cellClass += ' bg-primary/15 dark:bg-primary/35 hc:bg-primary text-primary hc:text-primary-foreground font-semibold ring-[1.5px] ring-inset ring-primary hc:hover:bg-background hc:hover:text-primary cursor-pointer'
                 } else if (hasRelease) {
-                  cellClass += ' bg-primary/15 dark:bg-primary/35 text-foreground font-medium hover:bg-primary/25 dark:hover:bg-primary/45 cursor-pointer'
+                  cellClass += ' bg-primary/15 dark:bg-primary/35 hc:bg-primary text-foreground hc:text-primary-foreground font-medium hover:bg-primary/25 dark:hover:bg-primary/45 hc:hover:bg-background hc:hover:text-primary hc:hover:ring-[1.5px] hc:hover:ring-inset hc:hover:ring-primary cursor-pointer'
                 } else if (isToday) {
-                  cellClass += ' text-primary font-semibold ring-[1.5px] ring-inset ring-primary hover:bg-muted/40'
+                  cellClass += ' text-primary font-semibold ring-[1.5px] ring-inset ring-primary hover:bg-muted/40 hc:hover:bg-muted'
                 } else {
-                  cellClass += ' text-muted-foreground hover:bg-muted/40'
+                  cellClass += ' text-muted-foreground hover:bg-muted/40 hc:hover:bg-muted'
                 }
 
+                const dayLabel = dayFormatter.format(new Date(year, month - 1, day))
                 return (
                   <button
                     key={i}
-                    disabled={day === null || !hasRelease}
-                    onClick={() => day !== null && hasRelease && setSelectedDay(day)}
+                    disabled={!hasRelease}
+                    onClick={() => hasRelease && setSelectedDay(day)}
+                    aria-label={hasRelease ? `${dayLabel} (${count})` : dayLabel}
+                    aria-pressed={selectedDay === day}
                     className={cellClass}
                   >
-                    {day !== null && (
-                      <>
-                        <span>{day}</span>
-                        {hasRelease && (
-                          <span className="w-4 h-0.75 rounded-full bg-primary opacity-70" />
-                        )}
-                      </>
+                    <span aria-hidden="true">{day}</span>
+                    {hasRelease && (
+                      <span aria-hidden="true" className="w-4 h-0.75 rounded-full bg-primary opacity-70 hc:opacity-100" />
                     )}
                   </button>
                 )

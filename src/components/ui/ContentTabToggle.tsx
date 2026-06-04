@@ -20,28 +20,30 @@ export default function ContentTabToggle({ tab, onTabChange }: Props) {
         <button
           type="button"
           aria-label={t('nav.movies')}
+          aria-pressed={tab === 'movies'}
           onClick={() => onTabChange('movies')}
           className={`p-1 rounded transition-colors ${
             tab === 'movies'
-              ? 'bg-primary/20 text-primary'
-              : 'text-muted-foreground hover:bg-card/70 hover:text-foreground'
+              ? 'bg-primary/20 text-primary hc:bg-primary hc:text-primary-foreground'
+              : 'text-muted-foreground hover:bg-card/70 hover:text-foreground hc:hover:bg-muted'
           }`}
         >
-          <FilmIcon size={14} />
+          <span aria-hidden="true"><FilmIcon size={14} /></span>
         </button>
       </Tooltip>
       <Tooltip content={t('nav.series')} placement="bottom">
         <button
           type="button"
           aria-label={t('nav.series')}
+          aria-pressed={tab === 'series'}
           onClick={() => onTabChange('series')}
           className={`p-1 rounded transition-colors ${
             tab === 'series'
-              ? 'bg-primary/20 text-primary'
-              : 'text-muted-foreground hover:bg-card/70 hover:text-foreground'
+              ? 'bg-primary/20 text-primary hc:bg-primary hc:text-primary-foreground'
+              : 'text-muted-foreground hover:bg-card/70 hover:text-foreground hc:hover:bg-muted'
           }`}
         >
-          <TvIcon size={14} />
+          <span aria-hidden="true"><TvIcon size={14} /></span>
         </button>
       </Tooltip>
     </div>

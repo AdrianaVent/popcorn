@@ -13,6 +13,7 @@ type Props = {
 export default function WatchedToggleButton({ isWatched, label, onClick, loading }: Props) {
   return (
     <button
+      aria-pressed={isWatched}
       onClick={onClick}
       disabled={loading}
       className={clsx(
@@ -20,7 +21,7 @@ export default function WatchedToggleButton({ isWatched, label, onClick, loading
         loading && 'opacity-50 cursor-wait',
         isWatched
           ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-          : 'bg-foreground/10 text-foreground hover:bg-foreground/15',
+          : 'bg-foreground/10 text-foreground hover:bg-foreground/15 hc:bg-muted hc:border hc:border-border hc:hover:bg-muted-foreground/20',
       )}
     >
       <EyeIcon size={12} />

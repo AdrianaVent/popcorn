@@ -52,17 +52,21 @@ function ItemSkeleton() {
 
 function ItemScore({ item, mode }: { item: Top10Item; mode: 'user' | 'global' }) {
   if (mode === 'user' && item.personalRating !== null) {
+    const score = (item.personalRating * 2).toFixed(1)
     return (
-      <span className="text-xs font-semibold text-yellow-500 dark:text-yellow-300 shrink-0 tabular-nums">
-        ★ {(item.personalRating * 2).toFixed(1)}
+      <span aria-label={`${score} / 10`} className="text-xs font-semibold text-yellow-500 dark:text-yellow-300 hc:text-yellow-700 shrink-0 tabular-nums">
+        <span aria-hidden="true">★ </span>{score}
       </span>
     )
   }
+  const score = item.tmdbScore.toFixed(1)
   return (
-    <span className={`text-xs font-semibold shrink-0 tabular-nums ${
-      mode === 'user' ? 'text-muted-foreground/40' : 'text-yellow-500 dark:text-yellow-300'
+    <span aria-label={`${score} / 10`} className={`text-xs font-semibold shrink-0 tabular-nums ${
+      mode === 'user'
+        ? 'text-muted-foreground/40 hc:text-muted-foreground'
+        : 'text-yellow-500 dark:text-yellow-300 hc:text-yellow-700'
     }`}>
-      ★ {item.tmdbScore.toFixed(1)}
+      <span aria-hidden="true">★ </span>{score}
     </span>
   )
 }
@@ -205,23 +209,28 @@ export default function Top10Card({
             <button
               ref={genreTriggerRef}
               type="button"
+              aria-expanded={isGenreOpen}
               onClick={() => isGenreOpen ? setIsGenreOpen(false) : openDropdown()}
               className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md border transition-colors cursor-pointer ${
                 selectedGenreId !== null
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border bg-muted text-foreground hover:bg-muted/60'
+                  ? 'border-primary bg-primary/10 hc:bg-primary hc:text-primary-foreground text-primary'
+                  : 'border-border bg-muted text-foreground hover:bg-muted/60 hc:hover:bg-muted'
               }`}
             >
-              {[selectedGenreId].map((id) => {
-                if (id === null) return <LayoutGrid key="default" size={12} className="shrink-0" />
-                const Icon = getGenreIcon(id)
-                return Icon ? <Icon key={id} size={12} className="shrink-0" /> : <LayoutGrid key="default" size={12} className="shrink-0" />
-              })}
+              <span aria-hidden="true">
+                {[selectedGenreId].map((id) => {
+                  if (id === null) return <LayoutGrid key="default" size={12} className="shrink-0" />
+                  const Icon = getGenreIcon(id)
+                  return Icon ? <Icon key={id} size={12} className="shrink-0" /> : <LayoutGrid key="default" size={12} className="shrink-0" />
+                })}
+              </span>
               <span className="max-w-35 truncate">{activeGenreName}</span>
-              <ChevronDown
-                size={11}
-                className={`shrink-0 transition-transform duration-150 ${isGenreOpen ? 'rotate-180' : ''}`}
-              />
+              <span aria-hidden="true">
+                <ChevronDown
+                  size={11}
+                  className={`shrink-0 transition-transform duration-150 ${isGenreOpen ? 'rotate-180' : ''}`}
+                />
+              </span>
             </button>
 
             {isGenreOpen && typeof window !== 'undefined' && createPortal(
@@ -237,10 +246,10 @@ export default function Top10Card({
                   className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium mb-1 transition-colors ${
                     selectedGenreId === null
                       ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted/60'
+                      : 'text-foreground hover:bg-muted/60 hc:hover:bg-muted'
                   }`}
                 >
-                  <LayoutGrid size={12} className="shrink-0" />
+                  <span aria-hidden="true"><LayoutGrid size={12} className="shrink-0" /></span>
                   {t('dashboard.top10.allGenres')}
                 </button>
 
@@ -257,10 +266,10 @@ export default function Top10Card({
                         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors text-left ${
                           isSelected
                             ? 'bg-primary text-primary-foreground'
-                            : 'text-foreground hover:bg-muted/60'
+                            : 'text-foreground hover:bg-muted/60 hc:hover:bg-muted'
                         }`}
                       >
-                        {Icon && <Icon size={12} className="shrink-0" />}
+                        {Icon && <span aria-hidden="true"><Icon size={12} className="shrink-0" /></span>}
                         <span className="truncate">{name}</span>
                       </button>
                     )
@@ -309,13 +318,13 @@ export default function Top10Card({
 
         {!loading && !error && items.length > 0 && (
           <div key={`${tab}-${mode}-${selectedGenreId}`} className="absolute inset-0 overflow-y-auto animate-fade-in">
-            <ol className="flex flex-col gap-0.5">
+            <ol className="flex flex-col gap-0.5" aria-label={t('dashboard.top10.title')}>
               {items.map((item, i) => (
                 <li key={item.id}>
                   <button
                     type="button"
                     onClick={() => onItemClick(isMovies ? 'movie' : 'series', item.id)}
-                    className="w-full flex items-center gap-2.5 py-1 rounded-lg px-1 hover:bg-muted/60 transition-colors group text-left cursor-pointer"
+                    className="w-full flex items-center gap-2.5 py-1 rounded-lg px-1 hover:bg-muted/60 hc:hover:bg-muted transition-colors group text-left cursor-pointer"
                   >
                     <span className="w-5 text-center text-xs font-semibold text-muted-foreground shrink-0 tabular-nums">
                       {i + 1}
@@ -337,7 +346,7 @@ export default function Top10Card({
                           </span>
                         )}
                         {item.year && item.genre_ids.length > 0 && (
-                          <span className="text-muted-foreground/40 text-[10px] shrink-0">·</span>
+                          <span aria-hidden="true" className="text-muted-foreground/40 hc:text-muted-foreground text-[10px] shrink-0">·</span>
                         )}
                         {Array.from(
                           new Map(
@@ -347,7 +356,9 @@ export default function Top10Card({
                           ).entries()
                         ).slice(0, 3).map(([Icon, gid]) =>
                           Icon ? (
-                            <Icon key={gid} size={10} className="text-muted-foreground shrink-0" />
+                            <span key={gid} aria-hidden="true">
+                              <Icon size={10} className="text-muted-foreground shrink-0" />
+                            </span>
                           ) : null
                         )}
                       </span>

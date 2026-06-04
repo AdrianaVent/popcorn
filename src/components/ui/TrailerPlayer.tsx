@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { XIcon } from '@/components/icons'
 
 type Props = {
@@ -7,6 +8,7 @@ type Props = {
 }
 
 export default function TrailerPlayer({ trailerKey, className, onClose }: Props) {
+  const { t } = useTranslation()
   return (
     <div className={`relative ${className ?? 'aspect-video border border-border rounded-lg overflow-hidden'}`}>
       <iframe
@@ -14,14 +16,15 @@ export default function TrailerPlayer({ trailerKey, className, onClose }: Props)
         allow="autoplay; encrypted-media"
         allowFullScreen
         className="w-full h-full"
-        title="Trailer"
+        title={t('common.trailer')}
       />
       {onClose && (
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors cursor-pointer"
+          aria-label={t('common.close')}
+          className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-black/60 hc:bg-black text-white hover:bg-black/80 hc:hover:bg-black transition-colors cursor-pointer"
         >
-          <XIcon size={12} />
+          <span aria-hidden="true"><XIcon size={12} /></span>
         </button>
       )}
     </div>
