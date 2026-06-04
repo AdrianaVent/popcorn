@@ -7,6 +7,7 @@ export default defineConfig({
     viewportHeight: 800,
     video: false,
     screenshotOnRunFailure: true,
+    allowCypressEnv: false,
     setupNodeEvents(on) {
       on('task', {
         seedUser({ username, password, role }: { username: string; password: string; role: 'admin' | 'guest' }) {

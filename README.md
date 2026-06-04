@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.16.2-6B2737)
+![Version](https://img.shields.io/badge/version-0.16.3-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
