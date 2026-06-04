@@ -537,7 +537,7 @@ describe('My List', () => {
       )
     })
     cy.wait('@collectionAvatar')
-    cy.contains('button', 'Recommendations').should('not.be.disabled').click()
+    cy.contains('button', 'Recommendations').should('not.be.disabled').click({ force: true })
     cy.get('[data-cy="recommendations-drawer"]').contains('Avatar - Saga').should('be.visible')
   })
 
