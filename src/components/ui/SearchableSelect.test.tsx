@@ -131,8 +131,8 @@ describe('SearchableSelect', () => {
 
     it('highlights the currently selected option in the dropdown', async () => {
       render(<SearchableSelect options={options} value={2} onChange={jest.fn()} />)
-      await userEvent.click(screen.getByRole('button'))
-      // getAllByText returns [trigger-label-span, dropdown-option-button]
+      // trigger + clear are both buttons; click the trigger (aria-haspopup="listbox")
+      await userEvent.click(screen.getByRole('button', { name: /drama/i }))
       const dramaOptionBtn = screen.getAllByText('Drama')[1].closest('button')
       expect(dramaOptionBtn).toHaveClass('text-primary')
     })

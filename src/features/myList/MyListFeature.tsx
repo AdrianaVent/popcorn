@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useQueries } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -124,22 +125,23 @@ function UnwatchedMoviePlaceholder({ part, onClick }: { part: { id: number; titl
   return (
     <button
       onClick={onClick}
+      aria-label={part.title}
       className="flex flex-col gap-2 w-24 items-center group"
     >
-      <div className="relative w-24 aspect-2/3 rounded-lg overflow-hidden bg-muted border border-dashed border-border/60 hover:border-border transition-colors">
+      <div className="relative w-24 aspect-2/3 rounded-lg overflow-hidden bg-muted border border-dashed border-border/60 hc:border-border hover:border-border transition-colors">
         {part.poster_path && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={getTMDBImageUrl(part.poster_path, 'w185') ?? undefined}
-            alt={part.title}
-            className="w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity"
+          <Image
+            fill
+            src={getTMDBImageUrl(part.poster_path, 'w185')!}
+            alt=""
+            className="object-cover opacity-20 group-hover:opacity-30 transition-opacity"
           />
         )}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-6 h-6 rounded-full bg-border/60" />
+        <div aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
+          <div className="w-6 h-6 rounded-full bg-border/60 hc:bg-border" />
         </div>
       </div>
-      <p className="text-[11px] text-muted-foreground/50 text-center truncate w-full px-0.5 leading-tight">
+      <p aria-hidden="true" className="text-[11px] text-muted-foreground/50 hc:text-muted-foreground text-center truncate w-full px-0.5 leading-tight">
         {part.title}
       </p>
     </button>
@@ -258,10 +260,10 @@ function SagaCard({
             disabled={!bestRatedMovie}
             className={`text-[11px] px-3 py-1 rounded-md border transition-colors cursor-pointer disabled:cursor-not-allowed ${
               sagaRecActive
-                ? 'border-primary text-primary bg-primary/10'
+                ? 'border-primary text-primary bg-primary/10 hc:bg-primary hc:text-primary-foreground'
                 : bestRatedMovie
-                  ? 'border-primary/40 text-primary/80 hover:border-primary hover:bg-primary/5'
-                  : 'border-border/40 text-muted-foreground/30'
+                  ? 'border-primary/40 text-primary/80 hover:border-primary hover:bg-primary/5 hc:border-primary hc:text-primary hc:hover:bg-muted'
+                  : 'border-border/40 text-muted-foreground/30 hc:border-border hc:text-muted-foreground'
             }`}
           >
             {t('myList.recommendations.similar')}
@@ -308,7 +310,7 @@ function WatchlistSagaCard({
   }, [collection, group.movies, watchedMovies, watchlistMoviesMap])
 
   return (
-    <div className="rounded-xl border border-border/40 px-3 pt-3 pb-2 flex flex-col gap-2 bg-cream-100 dark:bg-gray-900">
+    <div className="rounded-xl border border-border/40 hc:border-border px-3 pt-3 pb-2 flex flex-col gap-2 bg-cream-100 dark:bg-gray-900">
       <div className="flex justify-center text-center">
         <Text variant="caption" className="font-semibold uppercase tracking-[0.14em] text-foreground">
           {formatSagaName(group.name)}
@@ -318,19 +320,19 @@ function WatchlistSagaCard({
         {allMovies.map(({ part, isWatched, isInWatchlist }, i) => {
           if (isWatched) {
             return (
-              <button key={part.id} onClick={() => onMovieClick(part.id)} className="flex flex-col gap-2 w-24 items-center group">
+              <button key={part.id} onClick={() => onMovieClick(part.id)} aria-label={part.title} className="flex flex-col gap-2 w-24 items-center group">
                 <div className="relative w-24 aspect-2/3 rounded-lg overflow-hidden">
                   {part.poster_path ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={getTMDBImageUrl(part.poster_path, 'w185') ?? undefined}
-                      alt={part.title}
-                      className="w-full h-full object-cover opacity-40 group-hover:opacity-50 transition-opacity"
+                    <Image
+                      fill
+                      src={getTMDBImageUrl(part.poster_path, 'w185')!}
+                      alt=""
+                      className="object-cover opacity-40 hc:opacity-70 group-hover:opacity-50 hc:group-hover:opacity-80 transition-opacity"
                     />
                   ) : (
-                    <div className="w-full h-full bg-muted opacity-40" />
+                    <div className="w-full h-full bg-muted opacity-40 hc:opacity-70" />
                   )}
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
                     <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M1 4l3 3L9 1" />
@@ -338,7 +340,7 @@ function WatchlistSagaCard({
                     </div>
                   </div>
                 </div>
-                <p className="text-[11px] text-muted-foreground/50 text-center truncate w-full px-0.5 leading-tight">{part.title}</p>
+                <p className="text-[11px] text-muted-foreground/50 hc:text-muted-foreground text-center truncate w-full px-0.5 leading-tight" aria-hidden="true">{part.title}</p>
               </button>
             )
           }
@@ -481,7 +483,7 @@ export default function MyListFeature() {
     const obs = new ResizeObserver(([entry]) => setSagaContainerPx(entry.contentRect.width))
     obs.observe(el)
     return () => obs.disconnect()
-  }, [])
+  }, [tab])
 
   useEffect(() => {
     if (!movieRecSource) return
@@ -520,32 +522,64 @@ export default function MyListFeature() {
   const sagasFirst = useMemo(() => computeSagasFirst(effectiveSagas, effectiveStandalones), [effectiveSagas, effectiveStandalones])
   const packedSagas = useMemo(() => binPackSagas(effectiveSagas, effectiveSagaCounts, sagaContainerPx), [effectiveSagas, effectiveSagaCounts, sagaContainerPx])
 
+  const movieExcludeIds = useMemo(() => {
+    if (!movieRecSource) return watchedMovieIds
+    const sagaIdx = sagaGroups.findIndex((g) => g.id === movieRecSource.scrollId)
+    if (sagaIdx === -1) return watchedMovieIds
+    const parts = collectionResults[sagaIdx]?.data?.parts ?? []
+    return new Set([...watchedMovieIds, ...parts.map((p) => p.id)])
+  }, [movieRecSource, watchedMovieIds, sagaGroups, collectionResults])
+
   const watchlistCount = watchlistMovieList.length + watchlistSeriesList.length
 
+  const TABS: { value: Tab; icon: React.ReactNode; labelKey: string; count: number }[] = [
+    { value: 'movies',  icon: <FilmIcon size={13} />,                  labelKey: 'nav.movies',           count: movieList.length },
+    { value: 'series',  icon: <TvIcon size={13} />,                    labelKey: 'nav.series',           count: seriesList.length },
+    { value: 'towatch', icon: <HeartIcon size={13} strokeWidth={2} />, labelKey: 'myList.watchlist.tab', count: watchlistCount },
+  ]
+
+  const handleTabKeyDown = (e: React.KeyboardEvent, currentIdx: number) => {
+    let nextIdx: number | null = null
+    if (e.key === 'ArrowRight') nextIdx = (currentIdx + 1) % TABS.length
+    if (e.key === 'ArrowLeft')  nextIdx = (currentIdx - 1 + TABS.length) % TABS.length
+    if (e.key === 'Home')       nextIdx = 0
+    if (e.key === 'End')        nextIdx = TABS.length - 1
+    if (nextIdx !== null) {
+      e.preventDefault()
+      const nextTab = TABS[nextIdx].value
+      setTab(nextTab)
+      setMovieRecSource(null)
+      setSeriesRecSource(null)
+      document.getElementById(`mylist-tab-${nextTab}`)?.focus()
+    }
+  }
+
   const tabSwitcher = (
-    <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
-      {([
-        { value: 'movies',  icon: <FilmIcon size={13} />,                  labelKey: 'nav.movies',        count: movieList.length },
-        { value: 'series',  icon: <TvIcon size={13} />,                    labelKey: 'nav.series',        count: seriesList.length },
-        { value: 'towatch', icon: <HeartIcon size={13} strokeWidth={2} />, labelKey: 'myList.watchlist.tab', count: watchlistCount },
-      ] as { value: Tab; icon: React.ReactNode; labelKey: string; count: number }[]).map(({ value, icon, labelKey, count }) => (
+    <div role="tablist" aria-label={t('myList.title')} className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
+      {TABS.map(({ value, icon, labelKey, count }, idx) => (
         <button
           key={value}
+          id={`mylist-tab-${value}`}
+          role="tab"
+          aria-selected={tab === value}
+          aria-controls={`mylist-panel-${value}`}
+          tabIndex={tab === value ? 0 : -1}
           onClick={() => { setTab(value); setMovieRecSource(null); setSeriesRecSource(null) }}
+          onKeyDown={(e) => handleTabKeyDown(e, idx)}
           className={`flex items-center gap-1.5 text-[12px] px-2.5 py-1 rounded transition-colors ${
             tab === value
-              ? 'bg-primary/20 text-primary font-medium'
+              ? 'bg-primary/20 text-primary font-medium hc:bg-primary hc:text-primary-foreground'
               : 'text-muted-foreground hover:bg-card/70 hover:text-foreground'
           }`}
         >
-          {icon}
+          <span aria-hidden="true">{icon}</span>
           {t(labelKey)}
           {count > 0 && (
             <Tooltip content={String(count)} placement="bottom" disabled={count <= 99}>
               <span className={`min-w-4.5 h-4.5 flex items-center justify-center rounded-full text-[10px] font-semibold leading-none px-1 ${
                 tab === value
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted-foreground/20 text-muted-foreground'
+                  : 'bg-muted-foreground/20 text-muted-foreground hc:bg-muted hc:text-muted-foreground'
               }`}>
                 {count > 99 ? '99+' : count}
               </span>
@@ -557,7 +591,15 @@ export default function MyListFeature() {
   )
 
   return (
-    <PageLayout title={t('myList.title')} start={<BookmarkIcon size={32} strokeWidth={1.5} />} end={tabSwitcher}>
+    <PageLayout title={t('myList.title')} start={<span aria-hidden="true"><BookmarkIcon size={32} strokeWidth={1.5} /></span>} end={tabSwitcher}>
+
+      <div
+        role="tabpanel"
+        id={`mylist-panel-${tab}`}
+        aria-labelledby={`mylist-tab-${tab}`}
+        tabIndex={0}
+        className="flex-1 flex flex-col min-h-0 outline-none"
+      >
 
       {isEmpty && (
         <div className="flex-1 flex items-center justify-center">
@@ -569,7 +611,7 @@ export default function MyListFeature() {
 
       {/* Movies */}
       {tab === 'movies' && !isEmpty && (
-        <div key="movies" className="flex-1 flex gap-0 min-h-0 animate-fade-in">
+        <div className="flex-1 flex gap-0 min-h-0 animate-fade-in">
           <div ref={sagaContainerRef} className="flex-1 overflow-y-auto space-y-6 min-w-0">
             {(() => {
               const sagasSection = effectiveSagas.length > 0 && (
@@ -580,7 +622,7 @@ export default function MyListFeature() {
                         <div
                           key={group.id}
                           data-scroll-id={group.id}
-                          className={`rounded-xl border border-border/40 px-3 pt-3 pb-2 flex flex-col gap-2 h-full bg-cream-100 dark:bg-gray-900 ${
+                          className={`rounded-xl border border-border/40 hc:border-border px-3 pt-3 pb-2 flex flex-col gap-2 h-full bg-cream-100 dark:bg-gray-900 ${
                             group.movies.some((m) => movieRecSource?.id === m.id) ? 'ring-2 ring-primary' : ''
                           }`}
                         >
@@ -638,7 +680,7 @@ export default function MyListFeature() {
               sourceId={movieRecSource.id}
               sourceName={movieRecSource.name}
               sourcePosterPath={movieRecSource.posterPath}
-              watchedIds={watchedMovieIds}
+              watchedIds={movieExcludeIds}
               onSelect={setSelectedMovieId}
               onClose={() => setMovieRecSource(null)}
             />
@@ -648,7 +690,7 @@ export default function MyListFeature() {
 
       {/* Series */}
       {tab === 'series' && !isEmpty && (
-        <div key="series" className="flex-1 flex gap-0 min-h-0 animate-fade-in">
+        <div className="flex-1 flex gap-0 min-h-0 animate-fade-in">
           <div ref={seriesScrollRef} className="flex-1 overflow-y-auto min-w-0">
             <div className="flex flex-wrap gap-4 pt-0.5 px-0.5">
               {seriesList.map((series, i) => {
@@ -687,12 +729,12 @@ export default function MyListFeature() {
 
       {/* Por ver — two-column layout (movies left, series right) */}
       {tab === 'towatch' && (
-        <div key="towatch" className="flex-1 flex gap-6 min-h-0 animate-fade-in">
+        <div className="flex-1 flex gap-6 min-h-0 animate-fade-in">
 
           {/* Movies column */}
           <div className="flex-1 flex flex-col gap-3 min-w-0 overflow-y-auto">
             <div className="flex items-center gap-1.5 text-muted-foreground">
-              <FilmIcon size={13} />
+              <span aria-hidden="true"><FilmIcon size={13} /></span>
               <Text variant="caption" className="font-semibold uppercase tracking-[0.14em]">{t('nav.movies')}</Text>
             </div>
             {watchlistMovieList.length === 0 ? (
@@ -740,12 +782,12 @@ export default function MyListFeature() {
           </div>
 
           {/* Divider */}
-          <div className="w-px bg-border/40 self-stretch shrink-0" />
+          <div className="w-px bg-border/40 hc:bg-border self-stretch shrink-0" />
 
           {/* Series column */}
           <div className="flex-1 flex flex-col gap-3 min-w-0 overflow-y-auto">
             <div className="flex items-center gap-1.5 text-muted-foreground">
-              <TvIcon size={13} />
+              <span aria-hidden="true"><TvIcon size={13} /></span>
               <Text variant="caption" className="font-semibold uppercase tracking-[0.14em]">{t('nav.series')}</Text>
             </div>
             {watchlistSeriesList.length === 0 ? (
@@ -771,6 +813,8 @@ export default function MyListFeature() {
 
         </div>
       )}
+
+      </div>{/* end tabpanel */}
 
       {selectedMovieId !== null && (
         <MovieDetailModal movieId={selectedMovieId} onClose={() => setSelectedMovieId(null)} />

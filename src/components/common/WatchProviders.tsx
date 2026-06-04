@@ -16,7 +16,7 @@ type Props = {
 
 function PaidBadge({ source }: { source: 'rent' | 'buy' }) {
   return (
-    <span className="absolute -bottom-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground leading-none shadow-sm">
+    <span aria-hidden="true" className="absolute -bottom-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground leading-none shadow-sm">
       {source === 'rent' ? (
         <span className="text-[9px] font-bold">€</span>
       ) : (
@@ -67,13 +67,15 @@ export default function WatchProviders({ flatrate, rent, inTheaters, loading }: 
           {t('common.availableOn')}
         </Text>
         {inTheaters && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-primary/30 bg-primary/10 text-[11px] font-medium text-primary whitespace-nowrap">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="7" width="20" height="15" rx="2" />
-              <path d="M17 2l5 5-5 5" /><path d="M7 2L2 7l5 5" />
-              <line x1="12" y1="12" x2="12" y2="22" />
-              <line x1="2" y1="12" x2="22" y2="12" />
-            </svg>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-primary/30 hc:border-primary bg-primary/10 hc:bg-primary text-[11px] font-medium text-primary hc:text-primary-foreground whitespace-nowrap">
+            <span aria-hidden="true">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="7" width="20" height="15" rx="2" />
+                <path d="M17 2l5 5-5 5" /><path d="M7 2L2 7l5 5" />
+                <line x1="12" y1="12" x2="12" y2="22" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+              </svg>
+            </span>
             {t('common.inTheaters')}
           </span>
         )}

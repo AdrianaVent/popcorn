@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.15.3-6B2737)
+![Version](https://img.shields.io/badge/version-0.16.2-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -443,7 +443,7 @@ Click the gear icon in the sidebar to open the settings panel.
 
 - **Language** — switch between English and Spanish. Defaults to Spanish on first login. The preference is stored per user in localStorage and applied immediately across the entire interface with no page reload — i18next resolves the stored language before the first render to avoid any visible flash.
 - **Region** — switch between Spain and United States. Determines which streaming platforms are shown in the watch providers section of every movie and series detail modal.
-- **Theme** — choose Light, Dark or Auto. The Auto mode resolves the theme based on time of day (light from 7am to 7pm, dark otherwise) without requiring any user interaction. All three preferences are persisted in localStorage and restored across sessions.
+- **Theme** — choose Light, Dark, Auto or High Contrast. The Auto mode resolves the theme based on time of day (light from 7am to 7pm, dark otherwise). High Contrast replaces all translucent surfaces with solid borders and opaque backgrounds to meet WCAG AA contrast requirements. All preferences are persisted in localStorage and restored across sessions.
 
 ---
 
@@ -455,9 +455,9 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-The project has two test layers: **669 unit/integration tests** (Jest) and **141 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+The project has two test layers: **906 unit/integration tests** (Jest) and **141 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 669 tests · 59 suites
+### Unit & integration tests (Jest) — 906 tests · 73 suites
 
 ```bash
 npm test           # run once
@@ -470,7 +470,7 @@ npm run test:watch # watch mode
 | Business logic | Client-side filters (movies + series), TMDB fetch error mapping, export utilities |
 | Stores | `watchedStore` (toggle movie/episode, season counts, auto-remove from watchlist), `watchlistStore` (toggleMovie/toggleSeries, removeMovie/removeSeries, per-user isolation), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
 | Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases`, `useTrailer` (language preference, YouTube filtering, allTrailers list), `useEnrichedTrailers` (YouTube oEmbed title enrichment, 24h cache), `useSeriesEnrichment` (status/totals/runtimes/genreIds backfill, stable-reference pattern), `useMovieRuntimeEnrichment` (Promise.allSettled backfill, null on fail), `useFilters` (initial state, setFilters, reference identity) |
-| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar`, `CalendarReleaseItem` (heart visible/hidden by role and watched state), `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button), `SearchableSelect` (open/close, search, selection, clear), `YearRangePicker` (cross-filtering, null callbacks), `FilterFieldInput` (all field types, null guards), `ToggleSwitch` (active style, onChange, role="group"), `MediaTableCells` (TitleCell tooltip guard, GenresCell deduplication by icon), `StatusBadge` (all status variants) |
+| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar` (7 axe states, ARIA region/labels/day buttons), `CalendarReleaseItem` (heart visible/hidden by role and watched state), `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button), `SearchableSelect` (open/close, search, selection, clear), `YearRangePicker` (cross-filtering, null callbacks), `FilterFieldInput` (all field types, null guards), `ToggleSwitch` (active style, onChange, role="group"), `MediaTableCells` (TitleCell tooltip guard, GenresCell deduplication by icon), `StatusBadge` (all status variants), `MediaCard`, `MovieCard`, `SeriesCard`, `WatchlistCard`, `RecommendationsDrawer` (axe, ARIA, saga siblings exclusion) |
 | Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
 | API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date) |
 

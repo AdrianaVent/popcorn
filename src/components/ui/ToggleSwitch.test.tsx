@@ -47,6 +47,19 @@ describe('ToggleSwitch', () => {
     expect(screen.getByRole('group')).toBeInTheDocument()
   })
 
+  it('active button has aria-pressed=true, inactive has aria-pressed=false', () => {
+    render(<ToggleSwitch options={options} value="user" onChange={() => {}} />)
+    expect(screen.getByText('My profile').closest('button')).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('Global').closest('button')).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('aria-pressed updates when value changes', () => {
+    const { rerender } = render(<ToggleSwitch options={options} value="user" onChange={() => {}} />)
+    rerender(<ToggleSwitch options={options} value="global" onChange={() => {}} />)
+    expect(screen.getByText('Global').closest('button')).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('My profile').closest('button')).toHaveAttribute('aria-pressed', 'false')
+  })
+
   it('reflects a different active option when value changes', () => {
     const { rerender } = render(<ToggleSwitch options={options} value="user" onChange={() => {}} />)
     rerender(<ToggleSwitch options={options} value="global" onChange={() => {}} />)

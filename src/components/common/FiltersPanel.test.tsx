@@ -40,11 +40,12 @@ describe('FiltersPanel', () => {
       expect(screen.getByRole('textbox')).toBeInTheDocument()
     })
 
-    it('hides inputs when collapsed (opacity via inline style)', async () => {
+    it('hides inputs when collapsed (aria-hidden + opacity via inline style)', async () => {
       render(<FiltersPanel schema={schema} filters={defaultFilters} onChange={jest.fn()} />)
       await userEvent.click(screen.getAllByRole('button')[0])
-      // Content stays in DOM for animation; visually hidden via inline opacity style
-      const textbox = screen.getByRole('textbox')
+      // Content stays in DOM for animation; hidden from accessibility tree via aria-hidden
+      // and visually via inline opacity style — use { hidden: true } to reach it
+      const textbox = screen.getByRole('textbox', { hidden: true })
       expect(textbox).toBeInTheDocument()
       expect(textbox.closest('[style*="opacity: 0"]')).not.toBeNull()
     })

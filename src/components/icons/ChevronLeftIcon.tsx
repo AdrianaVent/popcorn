@@ -1,6 +1,6 @@
 import { IconProps } from './types'
 
-export default function ChevronLeftIcon({ size = 20, color = 'currentColor' }: IconProps) {
+export default function ChevronLeftIcon({ size = 20, color = 'currentColor', 'aria-hidden': ariaHidden }: IconProps) {
   return (
     <svg
       width={size}
@@ -11,6 +11,7 @@ export default function ChevronLeftIcon({ size = 20, color = 'currentColor' }: I
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden={ariaHidden}
     >
       <polyline points="15 18 9 12 15 6" />
     </svg>

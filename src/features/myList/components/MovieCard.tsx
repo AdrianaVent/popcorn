@@ -32,10 +32,10 @@ export default function MovieCard({ movie, rating, onRate, onClick, eager = fals
           disabled={!onShowRecommendations}
           className={`text-[10px] px-1.5 py-0.5 rounded-md border transition-colors cursor-pointer disabled:cursor-not-allowed ${
             isRecommendationSource
-              ? 'border-primary text-primary bg-primary/10'
+              ? 'border-primary text-primary bg-primary/10 hc:bg-primary hc:text-primary-foreground'
               : onShowRecommendations
-                ? 'border-primary/40 text-primary/80 hover:border-primary hover:bg-primary/5'
-                : 'border-border/40 text-muted-foreground/30'
+                ? 'border-primary/40 text-primary/80 hover:border-primary hover:bg-primary/5 hc:border-primary hc:text-primary hc:hover:bg-muted'
+                : 'border-border/40 text-muted-foreground/30 hc:border-border hc:text-muted-foreground'
           }`}
         >
           {t('myList.recommendations.similar')}

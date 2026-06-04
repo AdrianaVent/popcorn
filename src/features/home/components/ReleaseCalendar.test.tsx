@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
+import { axe, type JestAxe } from 'jest-axe'
 import ReleaseCalendar from './ReleaseCalendar'
 import type { ReleaseEntry } from '@/services/tmdb/releases'
 
@@ -7,7 +8,17 @@ jest.mock('react-i18next', () => ({
     t: (key: string, opts?: Record<string, unknown>) => {
       if (opts?.number != null) return `S${opts.number}`
       if (opts?.count != null) return `${opts.count} ep.`
-      return key
+      const map: Record<string, string> = {
+        'calendar.title':      'Release calendar',
+        'calendar.today':      'Today',
+        'calendar.prevMonth':  'Previous month',
+        'calendar.nextMonth':  'Next month',
+        'calendar.close':      'Close',
+        'calendar.error':      'Could not load releases',
+        'calendar.empty':      'No releases on this day',
+        'calendar.noOverview': 'No synopsis available',
+      }
+      return map[key] ?? key
     },
   }),
 }))
@@ -105,7 +116,7 @@ describe('ReleaseCalendar', () => {
   describe('header', () => {
     it('shows the calendar title', () => {
       render(<ReleaseCalendar {...BASE_PROPS} />)
-      expect(screen.getByText('calendar.title')).toBeInTheDocument()
+      expect(screen.getByText('Release calendar')).toBeInTheDocument()
     })
 
     it('shows the month name and year', () => {
@@ -115,26 +126,26 @@ describe('ReleaseCalendar', () => {
 
     it('shows the Today button when not on the current month', () => {
       render(<ReleaseCalendar {...BASE_PROPS} year={2024} month={1} />)
-      expect(screen.getByText('calendar.today')).toBeInTheDocument()
+      expect(screen.getByText('Today')).toBeInTheDocument()
     })
 
     it('hides the Today button when on the current month', () => {
       const now = new Date()
       render(<ReleaseCalendar {...BASE_PROPS} year={now.getFullYear()} month={now.getMonth() + 1} />)
-      expect(screen.queryByText('calendar.today')).not.toBeInTheDocument()
+      expect(screen.queryByText('Today')).not.toBeInTheDocument()
     })
 
     it('calls onPrevMonth when the prev button is clicked', () => {
       const onPrevMonth = jest.fn()
       render(<ReleaseCalendar {...BASE_PROPS} onPrevMonth={onPrevMonth} />)
-      fireEvent.click(screen.getByRole('button', { name: 'prev' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Previous month' }))
       expect(onPrevMonth).toHaveBeenCalledTimes(1)
     })
 
     it('calls onNextMonth when the next button is clicked', () => {
       const onNextMonth = jest.fn()
       render(<ReleaseCalendar {...BASE_PROPS} onNextMonth={onNextMonth} />)
-      fireEvent.click(screen.getByRole('button', { name: 'next' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Next month' }))
       expect(onNextMonth).toHaveBeenCalledTimes(1)
     })
   })
@@ -142,27 +153,27 @@ describe('ReleaseCalendar', () => {
   describe('day selection', () => {
     it('marks a day with a release indicator', () => {
       render(<ReleaseCalendar {...BASE_PROPS} />)
-      const day15 = screen.getByRole('button', { name: /^15$/ })
+      const day15 = screen.getByRole('button', { name: /May 15, 2025/ })
       expect(day15.querySelector('.bg-primary')).not.toBeNull()
     })
 
     it('clicking a day with a release shows the releases panel', () => {
       render(<ReleaseCalendar {...BASE_PROPS} />)
-      fireEvent.click(screen.getByRole('button', { name: /^15$/ }))
+      fireEvent.click(screen.getByRole('button', { name: /May 15, 2025/ }))
       expect(screen.getByText('Test Movie')).toBeInTheDocument()
     })
 
     it('shows the release overview in the panel', () => {
       render(<ReleaseCalendar {...BASE_PROPS} />)
-      fireEvent.click(screen.getByRole('button', { name: /^15$/ }))
+      fireEvent.click(screen.getByRole('button', { name: /May 15, 2025/ }))
       expect(screen.getByText('A great movie.')).toBeInTheDocument()
     })
 
     it('clicking X closes the panel and restores the calendar', () => {
       render(<ReleaseCalendar {...BASE_PROPS} />)
-      fireEvent.click(screen.getByRole('button', { name: /^15$/ }))
+      fireEvent.click(screen.getByRole('button', { name: /May 15, 2025/ }))
       expect(screen.getByText('Test Movie')).toBeInTheDocument()
-      fireEvent.click(screen.getByRole('button', { name: 'close' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Close' }))
       expect(screen.queryByText('Test Movie')).not.toBeInTheDocument()
       expect(screen.getByText('May 2025')).toBeInTheDocument()
     })
@@ -170,7 +181,7 @@ describe('ReleaseCalendar', () => {
     it('calls onEntryClick with the release id when an entry is clicked', () => {
       const onEntryClick = jest.fn()
       render(<ReleaseCalendar {...BASE_PROPS} onEntryClick={onEntryClick} />)
-      fireEvent.click(screen.getByRole('button', { name: /^15$/ }))
+      fireEvent.click(screen.getByRole('button', { name: /May 15, 2025/ }))
       fireEvent.click(screen.getByText('Test Movie'))
       expect(onEntryClick).toHaveBeenCalledWith(1)
     })
@@ -178,8 +189,8 @@ describe('ReleaseCalendar', () => {
     it('shows "no overview" message when overview is null', () => {
       const releaseNoOverview: ReleaseEntry = { ...RELEASE, overview: null }
       render(<ReleaseCalendar {...BASE_PROPS} query={{ data: [releaseNoOverview], isLoading: false, isError: false }} />)
-      fireEvent.click(screen.getByRole('button', { name: /^15$/ }))
-      expect(screen.getByText('calendar.noOverview')).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: /May 15, 2025/ }))
+      expect(screen.getByText('No synopsis available')).toBeInTheDocument()
     })
   })
 
@@ -195,7 +206,94 @@ describe('ReleaseCalendar', () => {
       render(
         <ReleaseCalendar {...BASE_PROPS} query={{ data: undefined, isLoading: false, isError: true }} />
       )
-      expect(screen.getByText('calendar.error')).toBeInTheDocument()
+      expect(screen.getByText('Could not load releases')).toBeInTheDocument()
     })
+  })
+})
+
+// ── axe accessibility ─────────────────────────────────────────────────────────
+
+const AXE_OPTS: Parameters<JestAxe>[1] = {
+  rules: { 'color-contrast': { enabled: false } },
+}
+
+describe('ReleaseCalendar — axe accessibility', () => {
+  it('passes axe in default state (calendar grid)', async () => {
+    const { container } = render(<ReleaseCalendar {...BASE_PROPS} />)
+    expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+  })
+
+  it('passes axe in loading state', async () => {
+    const { container } = render(
+      <ReleaseCalendar {...BASE_PROPS} query={{ data: undefined, isLoading: true, isError: false }} />
+    )
+    expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+  })
+
+  it('passes axe in error state', async () => {
+    const { container } = render(
+      <ReleaseCalendar {...BASE_PROPS} query={{ data: undefined, isLoading: false, isError: true }} />
+    )
+    expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+  })
+
+  it('passes axe on empty month (no releases)', async () => {
+    const { container } = render(
+      <ReleaseCalendar {...BASE_PROPS} query={{ data: [], isLoading: false, isError: false }} />
+    )
+    expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+  })
+
+  it('passes axe with releases panel open', async () => {
+    const { container } = render(<ReleaseCalendar {...BASE_PROPS} />)
+    fireEvent.click(screen.getByRole('button', { name: /May 15, 2025/ }))
+    expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+  })
+
+  it('passes axe on series tab', async () => {
+    const { container } = render(
+      <ReleaseCalendar {...BASE_PROPS} tab="series" />
+    )
+    expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+  })
+
+  it('passes axe with animation from left', async () => {
+    const { container } = render(
+      <ReleaseCalendar {...BASE_PROPS} animateFrom="left" />
+    )
+    expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+  })
+})
+
+// ── ARIA structure ────────────────────────────────────────────────────────────
+
+describe('ReleaseCalendar — ARIA structure', () => {
+  it('renders as a region landmark with the calendar title as label', () => {
+    render(<ReleaseCalendar {...BASE_PROPS} />)
+    expect(screen.getByRole('region', { name: 'Release calendar' })).toBeInTheDocument()
+  })
+
+  it('prev-month button has an accessible label', () => {
+    render(<ReleaseCalendar {...BASE_PROPS} year={2024} month={1} />)
+    expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+  })
+
+  it('next-month button has an accessible label', () => {
+    render(<ReleaseCalendar {...BASE_PROPS} />)
+    expect(screen.getByRole('button', { name: 'Next month' })).toBeInTheDocument()
+  })
+
+  it('close button has an accessible label', () => {
+    render(<ReleaseCalendar {...BASE_PROPS} />)
+    fireEvent.click(screen.getByRole('button', { name: /May 15, 2025/ }))
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
+  })
+
+  it('release-day buttons are enabled and plain-day buttons are disabled', () => {
+    render(<ReleaseCalendar {...BASE_PROPS} />)
+    // Day 15 has a release → enabled
+    expect(screen.getByRole('button', { name: /May 15, 2025/ })).not.toBeDisabled()
+    // Day 1 has no release → disabled
+    expect(screen.getByRole('button', { name: 'May 1, 2025' })).toBeDisabled()
   })
 })

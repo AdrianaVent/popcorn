@@ -43,7 +43,7 @@ export default function Button({
         'transition-colors duration-150 cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset',
         isPrimary
           ? 'bg-primary text-primary-foreground border-0 hover:opacity-80'
-          : 'bg-transparent text-foreground border border-border hover:bg-gray-100 dark:hover:bg-gray-700',
+          : 'bg-transparent text-foreground border border-border hover:bg-muted hc:hover:bg-muted',
         isDisabled && 'opacity-60 cursor-not-allowed',
         className,
       )}
@@ -54,7 +54,7 @@ export default function Button({
       ) : (
         <>
           {icon && (
-            <span className={clsx('shrink-0 flex', hideIconBelow && hidden[hideIconBelow])}>
+            <span aria-hidden="true" className={clsx('shrink-0 flex', hideIconBelow && hidden[hideIconBelow])}>
               {icon}
             </span>
           )}

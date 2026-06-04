@@ -57,9 +57,9 @@ export default function StarRating({ value, onChange, readonly = false, size = 1
             className={
               (readonly ? 'shrink-0' : 'shrink-0 cursor-pointer') + ' ' +
               (filled || half
-                ? 'text-yellow-500 dark:text-yellow-300'
+                ? 'text-yellow-500 dark:text-yellow-300 hc:text-amber-700'
                 : hovered !== null && !readonly
-                  ? 'text-yellow-500/40 dark:text-yellow-300/30'
+                  ? 'text-yellow-500/40 dark:text-yellow-300/30 hc:text-amber-700/50'
                   : 'text-muted-foreground/30')
             }
           >

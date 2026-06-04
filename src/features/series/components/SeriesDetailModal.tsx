@@ -157,6 +157,7 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
                     <Tooltip content={t('common.trailer')} placement="top">
                       <IconToggleButton
                         data-cy="trailer-button"
+                        aria-label={t('common.trailer')}
                         active={showTrailer}
                         onClick={() => setShowTrailer((v) => !v)}
                       >
@@ -170,6 +171,7 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
                     <Tooltip content={isInWatchlist ? t('myList.watchlist.remove') : t('myList.watchlist.add')} placement="top">
                       <IconToggleButton
                         data-cy="watchlist-toggle"
+                        aria-label={isInWatchlist ? t('myList.watchlist.remove') : t('myList.watchlist.add')}
                         active={isInWatchlist}
                         onClick={() => detail && toggleWatchlist(userKey, {
                           id: detail.id,
@@ -230,17 +232,20 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
           <WatchProviders flatrate={flatrate} rent={rent} loading={providersLoading} />
 
           {/* OVERVIEW */}
-          {detail.overview && (
-            <div className="flex flex-col gap-2 pt-5">
-              <Text className="text-caption font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                {t('series.detail.overview')}
-              </Text>
-
+          <div className="flex flex-col gap-2 pt-5">
+            <Text className="text-caption font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {t('series.detail.overview')}
+            </Text>
+            {detail.overview ? (
               <Text variant="small" className="text-foreground leading-relaxed">
                 {detail.overview}
               </Text>
-            </div>
-          )}
+            ) : (
+              <Text variant="small" className="text-muted-foreground italic">
+                {t('common.noOverview')}
+              </Text>
+            )}
+          </div>
 
         </div>
       )}
