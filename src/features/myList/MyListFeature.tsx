@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useQueries } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -129,11 +130,11 @@ function UnwatchedMoviePlaceholder({ part, onClick }: { part: { id: number; titl
     >
       <div className="relative w-24 aspect-2/3 rounded-lg overflow-hidden bg-muted border border-dashed border-border/60 hc:border-border hover:border-border transition-colors">
         {part.poster_path && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={getTMDBImageUrl(part.poster_path, 'w185') ?? undefined}
+          <Image
+            fill
+            src={getTMDBImageUrl(part.poster_path, 'w185')!}
             alt=""
-            className="w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity"
+            className="object-cover opacity-20 group-hover:opacity-30 transition-opacity"
           />
         )}
         <div aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
@@ -322,11 +323,11 @@ function WatchlistSagaCard({
               <button key={part.id} onClick={() => onMovieClick(part.id)} aria-label={part.title} className="flex flex-col gap-2 w-24 items-center group">
                 <div className="relative w-24 aspect-2/3 rounded-lg overflow-hidden">
                   {part.poster_path ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={getTMDBImageUrl(part.poster_path, 'w185') ?? undefined}
+                    <Image
+                      fill
+                      src={getTMDBImageUrl(part.poster_path, 'w185')!}
                       alt=""
-                      className="w-full h-full object-cover opacity-40 hc:opacity-70 group-hover:opacity-50 hc:group-hover:opacity-80 transition-opacity"
+                      className="object-cover opacity-40 hc:opacity-70 group-hover:opacity-50 hc:group-hover:opacity-80 transition-opacity"
                     />
                   ) : (
                     <div className="w-full h-full bg-muted opacity-40 hc:opacity-70" />
