@@ -23,17 +23,14 @@ jest.mock('react-i18next', () => ({
 }))
 
 // Recharts uses SVG APIs unavailable in jsdom — stub with semantic equivalents
-jest.mock('recharts', () => {
-  const React = require('react')
-  return {
-    BarChart:          ({ children }: { children: React.ReactNode }) => <svg data-testid="bar-chart">{children}</svg>,
-    Bar:               () => <g data-testid="bar" />,
-    XAxis:             () => null,
-    YAxis:             () => null,
-    Tooltip:           () => null,
-    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="recharts-wrapper">{children}</div>,
-  }
-})
+jest.mock('recharts', () => ({
+  BarChart:          ({ children }: { children: React.ReactNode }) => <svg data-testid="bar-chart">{children}</svg>,
+  Bar:               () => <g data-testid="bar" />,
+  XAxis:             () => null,
+  YAxis:             () => null,
+  Tooltip:           () => null,
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="recharts-wrapper">{children}</div>,
+}))
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 

@@ -32,7 +32,7 @@ jest.mock('recharts', () => ({
 class ResizeObserverStub {
   callback: ResizeObserverCallback
   constructor(cb: ResizeObserverCallback) { this.callback = cb }
-  observe(el: Element) {
+  observe(_el: Element) {
     this.callback(
       [{ contentRect: { width: 200, height: 200 } } as ResizeObserverEntry],
       this as unknown as ResizeObserver,
