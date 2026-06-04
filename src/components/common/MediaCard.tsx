@@ -30,6 +30,7 @@ export default function MediaCard({ posterPath, title, onClick, eager = false, o
     <div className={`flex flex-col gap-2 group ${widthClass}`}>
       <button
         onClick={onClick}
+        aria-label={title}
         className={`relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${variant === 'fluid' ? 'w-full' : 'w-fit'} ${isSelected ? 'ring-2 ring-primary' : ''}`}
       >
         <MediaPoster

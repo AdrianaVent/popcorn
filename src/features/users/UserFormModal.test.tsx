@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { axe, type JestAxe } from 'jest-axe'
 import UserFormModal from './UserFormModal'
 import type { PublicUser } from '@/types/user'
 
@@ -8,10 +9,14 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('@/components/ui/Modal', () => {
   function MockModal({ title, children, footer }: { title: string; children: React.ReactNode; footer?: React.ReactNode }) {
-    return <div><h2>{title}</h2>{children}{footer}</div>
+    return <div role="dialog" aria-label={title}><h2>{title}</h2>{children}{footer}</div>
   }
   return MockModal
 })
+
+const AXE_OPTS: Parameters<JestAxe>[1] = {
+  rules: { 'color-contrast': { enabled: false } },
+}
 
 const existingUser: PublicUser = {
   id: 'u1',
@@ -26,6 +31,60 @@ const baseProps = {
   onClose: jest.fn(),
   onSubmit: jest.fn().mockResolvedValue(undefined),
 }
+
+describe('UserFormModal — axe', () => {
+  beforeEach(() => jest.clearAllMocks())
+
+  it('has no axe violations in add mode', async () => {
+    const { container } = render(<UserFormModal {...baseProps} />)
+    expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+  })
+
+  it('has no axe violations in edit mode', async () => {
+    const { container } = render(<UserFormModal {...baseProps} user={existingUser} />)
+    expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+  })
+
+  it('has no axe violations when isSelf is true', async () => {
+    const { container } = render(<UserFormModal {...baseProps} user={existingUser} isSelf />)
+    expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+  })
+})
+
+describe('UserFormModal — ARIA', () => {
+  beforeEach(() => jest.clearAllMocks())
+
+  it('username input is labelled', () => {
+    render(<UserFormModal {...baseProps} />)
+    expect(screen.getByLabelText('users.form.username')).toBeInTheDocument()
+  })
+
+  it('password input is labelled', () => {
+    render(<UserFormModal {...baseProps} />)
+    expect(screen.getByLabelText('users.form.password')).toBeInTheDocument()
+  })
+
+  it('role select is labelled', () => {
+    render(<UserFormModal {...baseProps} />)
+    expect(screen.getByLabelText('users.form.role')).toBeInTheDocument()
+  })
+
+  it('eye toggle button has accessible label when password is hidden', () => {
+    render(<UserFormModal {...baseProps} />)
+    expect(screen.getByLabelText('users.form.showPassword')).toBeInTheDocument()
+  })
+
+  it('eye toggle button label changes to hide after toggling', () => {
+    render(<UserFormModal {...baseProps} />)
+    fireEvent.click(screen.getByLabelText('users.form.showPassword'))
+    expect(screen.getByLabelText('users.form.hidePassword')).toBeInTheDocument()
+  })
+
+  it('role select is disabled when isSelf is true', () => {
+    render(<UserFormModal {...baseProps} user={existingUser} isSelf />)
+    expect(screen.getByRole('combobox')).toBeDisabled()
+  })
+})
 
 describe('UserFormModal', () => {
   beforeEach(() => jest.clearAllMocks())

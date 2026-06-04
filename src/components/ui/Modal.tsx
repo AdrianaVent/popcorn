@@ -1,6 +1,16 @@
 'use client'
 
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+
+const FOCUSABLE = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
 
 type ModalProps = {
   title: string
@@ -19,9 +29,52 @@ export default function Modal({
   maxWidth = '48rem',
   dismissOnOverlayClick = true,
 }: ModalProps) {
+  const { t } = useTranslation()
+  const panelRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement as HTMLElement
+
+    const focusFirst = () => {
+      const first = panelRef.current?.querySelector<HTMLElement>(FOCUSABLE)
+      first?.focus()
+    }
+    // rAF lets the DOM paint before focusing so animations don't interfere
+    const frame = requestAnimationFrame(focusFirst)
+
+    return () => {
+      cancelAnimationFrame(frame)
+      previousFocusRef.current?.focus()
+    }
+  }, [])
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && dismissOnOverlayClick) onClose()
+      if (e.key === 'Escape' && dismissOnOverlayClick) {
+        onClose()
+        return
+      }
+
+      if (e.key !== 'Tab') return
+      const panel = panelRef.current
+      if (!panel) return
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE))
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
@@ -43,6 +96,7 @@ export default function Modal({
       "
     >
       <div
+        ref={panelRef}
         onClick={(e) => e.stopPropagation()}
         style={{ maxWidth }}
         className="
@@ -74,10 +128,10 @@ export default function Modal({
 
           <button
             onClick={onClose}
-            aria-label="Close modal"
+            aria-label={t('common.close')}
             className="
               text-muted-foreground
-              hover:text-red-500 dark:hover:text-red-400
+              hover:text-red-500 dark:hover:text-red-400 hc:hover:text-destructive
               transition-colors
               text-xl leading-none
               px-2

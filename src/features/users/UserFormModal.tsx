@@ -71,7 +71,7 @@ export default function UserFormModal({ user, isSelf, onClose, onSubmit }: Props
       tabIndex={-1}
       aria-label={showPassword ? t('users.form.hidePassword') : t('users.form.showPassword')}
     >
-      {showPassword ? <EyeSlashIcon size={15} /> : <EyeIcon size={15} />}
+      <span aria-hidden="true">{showPassword ? <EyeSlashIcon size={15} /> : <EyeIcon size={15} />}</span>
     </button>
   )
 

@@ -37,6 +37,20 @@ const COLORS_DARK = [
   '#BEF264', // lime     80°
 ]
 
+// All ≥4.5:1 on white — interleaved so each adjacent pair in the pie is ≥49° apart on the hue wheel
+const COLORS_HC = [
+  '#B91C1C', // red-700        0°    6.0:1
+  '#5B21B6', // violet-700   263°    8.1:1  ← 263° from red
+  '#3F6212', // lime-800      87°   11.4:1  ← 176° from violet
+  '#9D174D', // pink-800     331°    8.1:1  ← 116° from lime
+  '#15803D', // green-700    142°    5.2:1  ← 171° from pink
+  '#4C5000', // dark olive    63°    8.5:1  ←  79° from green
+  '#1D4ED8', // blue-700     225°    7.4:1  ← 162° from olive
+  '#C2410C', // orange-700    25°    5.1:1  ← 200° from blue
+  '#0F766E', // teal-700     175°    5.8:1  ← 150° from orange
+  '#665400', // dark gold     49°    7.5:1  ← 126° from teal (10th genre only)
+]
+
 type Props = {
   title: string
   tooltipLabel: string
@@ -83,7 +97,7 @@ export default function DonutChart({
   const { t } = useTranslation()
   const [mode, setMode] = useState<'user' | 'global'>(showUserToggle ? defaultMode : 'global')
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
-  const [isDark, setIsDark] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark' | 'high-contrast'>('light')
   const [chartPx, setChartPx] = useState(0)
   const obsRef = useRef<ResizeObserver | null>(null)
 
@@ -99,14 +113,17 @@ export default function DonutChart({
   }, [])
 
   useLayoutEffect(() => {
-    const check = () => setIsDark(document.documentElement.getAttribute('data-theme') === 'dark')
+    const check = () => {
+      const t = document.documentElement.getAttribute('data-theme')
+      setTheme(t === 'dark' ? 'dark' : t === 'high-contrast' ? 'high-contrast' : 'light')
+    }
     check()
     const obs = new MutationObserver(check)
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => obs.disconnect()
   }, [])
 
-  const colors = isDark ? COLORS_DARK : COLORS_LIGHT
+  const colors = theme === 'dark' ? COLORS_DARK : theme === 'high-contrast' ? COLORS_HC : COLORS_LIGHT
 
   const query = mode === 'user' ? userQuery : globalQuery
   const data = query.data ?? []
@@ -154,9 +171,9 @@ export default function DonutChart({
       )}
 
       {!query.isLoading && !query.isError && data.length > 0 && (
-        <div key={mode} className="flex flex-1 items-stretch gap-2 min-h-0 animate-fade-in">
+        <div key={mode} className="flex flex-1 items-stretch gap-2 min-h-0 animate-fade-in" role="figure" aria-label={title}>
           {/* Donut — square; ResizeObserver measures the flex cell, chart gets exact pixels */}
-          <div ref={containerRef} className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
+          <div ref={containerRef} className="flex-1 min-h-0 flex items-center justify-center overflow-hidden" aria-hidden="true">
             <div className="relative" style={{ width: chartPx, height: chartPx }}>
               {chartPx > 0 && <ResponsiveContainer width={chartPx} height={chartPx}>
                 <PieChart>
@@ -173,7 +190,8 @@ export default function DonutChart({
                     paddingAngle={2}
                     startAngle={90}
                     endAngle={-270}
-                    stroke="none"
+                    stroke={theme === 'high-contrast' ? '#000000' : 'none'}
+                    strokeWidth={theme === 'high-contrast' ? 1.5 : 0}
                     style={{ cursor: 'default', outline: 'none' }}
                     onMouseEnter={(_, index) => setActiveIndex(index)}
                     onMouseLeave={() => setActiveIndex(null)}
@@ -199,23 +217,26 @@ export default function DonutChart({
           </div>
 
           {/* Legend — fixed width so the donut always dominates */}
-          <div className={`grid gap-0 overflow-y-auto items-start shrink-0 w-45 ${data.length >= 6 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <div role="list" className={`grid gap-0 overflow-y-auto items-start shrink-0 w-45 ${data.length >= 6 ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {data.map((entry, i) => {
               const Icon = getRowIcon?.(entry.name) ?? null
               const color = colors[i % colors.length]
               const isActive = activeIndex === i
               return (
-                <button
-                  key={entry.name}
-                  type="button"
-                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium transition-colors cursor-default text-left min-w-0 ${isActive ? 'bg-muted/60' : 'hover:bg-muted/40'}`}
-                  onMouseEnter={() => setActiveIndex(i)}
-                  onMouseLeave={() => setActiveIndex(null)}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} />
-                  {Icon && <Icon size={12} color={color} className="shrink-0" />}
-                  <span className="truncate" style={{ color }}>{entry.name}</span>
-                </button>
+                <div key={entry.name} role="listitem">
+                  <button
+                    type="button"
+                    className={`w-full flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium transition-colors cursor-default text-left min-w-0 ${isActive ? 'bg-muted/60' : 'hover:bg-muted/40'}`}
+                    onMouseEnter={() => setActiveIndex(i)}
+                    onMouseLeave={() => setActiveIndex(null)}
+                    onFocus={() => setActiveIndex(i)}
+                    onBlur={() => setActiveIndex(null)}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} />
+                    {Icon && <Icon size={12} color={color} className="shrink-0" />}
+                    <span className="truncate" style={{ color }}>{entry.name}</span>
+                  </button>
+                </div>
               )
             })}
           </div>

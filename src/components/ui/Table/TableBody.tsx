@@ -33,7 +33,7 @@ export default function TableBody<
             key={rowIndex}
             className={clsx(
               'border-b border-border',
-              rowIndex % 2 === 0 ? 'bg-cream-100 dark:bg-gray-900' : 'bg-cream-300 dark:bg-gray-800'
+              rowIndex % 2 === 0 ? 'bg-cream-100 dark:bg-gray-900 hc:bg-background' : 'bg-cream-300 dark:bg-gray-800 hc:bg-background'
             )}
           >
             {columns.map((col, colIndex) => (
@@ -62,9 +62,9 @@ export default function TableBody<
           className={clsx(
             'border-b border-border transition-colors',
             index % 2 === 0
-              ? 'bg-cream-100 dark:bg-gray-900'
-              : 'bg-cream-300 dark:bg-gray-800',
-            'hover:bg-cream-400 dark:hover:bg-gray-700/60',
+              ? 'bg-cream-100 dark:bg-gray-900 hc:bg-background'
+              : 'bg-cream-300 dark:bg-gray-800 hc:bg-background',
+            'hover:bg-cream-400 dark:hover:bg-gray-700/60 hc:hover:bg-muted',
             onRowClick && 'cursor-pointer',
             rowClassName?.(row)
           )}

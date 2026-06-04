@@ -15,10 +15,10 @@ function SortIcon<T extends Record<string, unknown>>({ col, sort }: { col: Colum
 
   return (
     <span className="inline-flex flex-col ml-1 shrink-0" aria-hidden>
-      <svg width="8" height="5" viewBox="0 0 8 5" className={clsx('block', asc ? 'text-primary' : 'text-muted-foreground/40')}>
+      <svg width="8" height="5" viewBox="0 0 8 5" className={clsx('block', asc ? 'text-primary' : 'text-muted-foreground/40 hc:text-muted-foreground')}>
         <path d="M4 0L8 5H0L4 0Z" fill="currentColor" />
       </svg>
-      <svg width="8" height="5" viewBox="0 0 8 5" className={clsx('block mt-0.5', desc ? 'text-primary' : 'text-muted-foreground/40')}>
+      <svg width="8" height="5" viewBox="0 0 8 5" className={clsx('block mt-0.5', desc ? 'text-primary' : 'text-muted-foreground/40 hc:text-muted-foreground')}>
         <path d="M4 5L0 0H8L4 5Z" fill="currentColor" />
       </svg>
     </span>
@@ -45,6 +45,15 @@ export default function TableHead<T extends Record<string, unknown>>({
           return (
             <th
               key={String(col.key)}
+              scope="col"
+              aria-sort={
+                col.sortable
+                  ? isActive
+                    ? sort?.dir === 'asc' ? 'ascending' : 'descending'
+                    : 'none'
+                  : undefined
+              }
+              tabIndex={col.sortable ? 0 : undefined}
               className={clsx(
                 'sticky top-0 z-10 bg-background',
                 'border-b border-border/60 shadow-[0_1px_0_rgba(0,0,0,0.04)]',
@@ -56,6 +65,12 @@ export default function TableHead<T extends Record<string, unknown>>({
                 col.className
               )}
               onClick={col.sortable && onSort ? () => onSort(col.key) : undefined}
+              onKeyDown={col.sortable && onSort ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onSort(col.key)
+                }
+              } : undefined}
             >
               {content}
             </th>

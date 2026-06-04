@@ -24,6 +24,7 @@ export default function ToggleSwitch<T extends string>({
         <button
           key={opt.value}
           type="button"
+          aria-pressed={value === opt.value}
           onClick={() => onChange(opt.value)}
           className={
             value === opt.value

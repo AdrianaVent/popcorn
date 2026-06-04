@@ -4,7 +4,7 @@ import TrailerPlayer from './TrailerPlayer'
 describe('TrailerPlayer', () => {
   it('renders an iframe with the correct YouTube embed src', () => {
     render(<TrailerPlayer trailerKey="abc123" />)
-    const iframe = screen.getByTitle('Trailer')
+    const iframe = screen.getByTitle('common.trailer')
     expect(iframe).toHaveAttribute('src', expect.stringContaining('abc123'))
   })
 

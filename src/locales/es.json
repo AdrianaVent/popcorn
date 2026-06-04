@@ -21,6 +21,8 @@
     "inTheaters": "En cartelera",
     "errorBoundary": "Algo ha ido mal. Puedes volver a intentarlo o recargar la página.",
     "clearFilters": "Limpiar filtros",
+    "close": "Cerrar",
+    "noOverview": "Sinopsis no disponible",
     "minuteUnit": "min",
     "trailer": "Tráiler",
     "search": "Buscar...",
@@ -67,7 +69,8 @@
     "theme": "Tema",
     "themeLight": "Claro",
     "themeDark": "Oscuro",
-    "themeAuto": "Auto"
+    "themeAuto": "Auto",
+    "themeHighContrast": "Contraste"
   },
   "nav": {
     "home": "Inicio",
@@ -75,7 +78,9 @@
     "series": "Series",
     "myList": "Mi lista",
     "users": "Usuarios",
-    "settings": "Configuración"
+    "settings": "Configuración",
+    "expandSidebar": "Expandir barra lateral",
+    "collapseSidebar": "Contraer barra lateral"
   },
   "movies": {
     "title": "Películas",
@@ -322,7 +327,10 @@
     "episodes": "{{count}} ep.",
     "today": "Hoy",
     "new": "Nuevo",
-    "renewed": "Renovada"
+    "renewed": "Renovada",
+    "prevMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente",
+    "close": "Cerrar"
   },
   "topbar": {
     "search": "Buscar...",

@@ -67,7 +67,7 @@ export default function LoginForm({
         className="flex flex-col gap-4"
       >
       {successMessage && (
-        <div className="mb-2 rounded-md bg-green-500/10 px-3 py-2 text-center">
+        <div role="alert" className="mb-2 rounded-md bg-green-500/10 hc:bg-transparent hc:border hc:border-green-500 px-3 py-2 text-center">
           <p className="text-caption text-green-600 font-medium">
             {t('auth.reset.messageSuccess')}
           </p>
@@ -75,7 +75,7 @@ export default function LoginForm({
       )}
 
       {errorMessage && (
-        <div data-cy="login-error" className="rounded-md bg-destructive/10 px-3 py-1.5">
+        <div role="alert" data-cy="login-error" className="rounded-md bg-destructive/10 hc:bg-transparent hc:border hc:border-destructive px-3 py-1.5">
           <Text variant="caption" className="text-destructive font-medium leading-tight">
             {errorMessage}
           </Text>
@@ -106,10 +106,10 @@ export default function LoginForm({
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
             className="flex items-center bg-transparent border-0 cursor-pointer p-0 text-muted-foreground"
           >
-            {showPassword ? <EyeIcon size={16} /> : <EyeSlashIcon size={16} />}
+            <span aria-hidden="true">{showPassword ? <EyeIcon size={16} /> : <EyeSlashIcon size={16} />}</span>
           </button>
         }
       />

@@ -109,10 +109,12 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
   const statusConfig = release.series_status ? getStatusConfig(release.series_status) : null
 
   return (
-    <div ref={itemRef} className={clsx('rounded-lg -mx-1 transition-colors', showTrailer && 'bg-cream-300 dark:bg-gray-700/60')}>
+    <div ref={itemRef} className={clsx('rounded-lg -mx-1 transition-colors', showTrailer && 'bg-cream-300 dark:bg-gray-700/60 hc:bg-card')}>
       <div
+        tabIndex={0}
         onClick={() => onEntryClick?.(release.id)}
-        className="flex items-center gap-3 py-2.5 w-full text-left px-1 cursor-pointer hover:bg-cream-400 dark:hover:bg-gray-700/60 rounded-lg transition-colors"
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEntryClick?.(release.id) } }}
+        className="flex items-center gap-3 py-2.5 w-full text-left px-1 cursor-pointer hover:bg-cream-400 dark:hover:bg-gray-700/60 hc:hover:bg-muted rounded-lg transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset"
       >
         <MoviePoster posterPath={release.poster_path} title={release.title} variant="list" loading="eager" />
         <div className="flex flex-col gap-1.5 min-w-0 flex-1">
@@ -143,7 +145,7 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
                     if (!Icon) return null
                     return (
                       <Tooltip key={id} content={name} placement="top">
-                        <span className="text-muted-foreground">
+                        <span aria-hidden="true" className="text-muted-foreground">
                           <Icon size={12} strokeWidth={1.5} />
                         </span>
                       </Tooltip>
@@ -156,12 +158,16 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
                   <IconToggleButton
                     data-cy="trailer-button"
                     active={showTrailer}
+                    aria-label={t('common.trailer')}
+                    aria-pressed={showTrailer}
                     onClick={(e) => { e.stopPropagation(); setShowTrailer((v) => !v) }}
                     className="shrink-0"
                   >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                      <path d="M3 2l7 4-7 4V2z" />
-                    </svg>
+                    <span aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                        <path d="M3 2l7 4-7 4V2z" />
+                      </svg>
+                    </span>
                   </IconToggleButton>
                 </Tooltip>
               )}
@@ -170,10 +176,12 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
                   <IconToggleButton
                     data-cy="calendar-watchlist-toggle"
                     active={isInWatchlist}
+                    aria-label={isInWatchlist ? t('myList.watchlist.remove') : t('myList.watchlist.add')}
+                    aria-pressed={isInWatchlist}
                     onClick={handleToggleWatchlist}
                     className="shrink-0"
                   >
-                    <HeartIcon size={13} filled={isInWatchlist} />
+                    <span aria-hidden="true"><HeartIcon size={13} filled={isInWatchlist} /></span>
                   </IconToggleButton>
                 </Tooltip>
               )}
@@ -185,7 +193,7 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
         </div>
       </div>
       {showTrailer && trailer && (
-        <div ref={trailerRef} className="px-4 py-3 border-t border-border/30 flex justify-center">
+        <div ref={trailerRef} className="px-4 py-3 border-t border-border/30 hc:border-border flex justify-center">
           <TrailerPlayer
             trailerKey={trailer.key}
             className="w-full max-w-xs aspect-video border border-border rounded-lg overflow-hidden"

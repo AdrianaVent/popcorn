@@ -31,11 +31,13 @@ export default function ExportButton({ onExport = () => {}, disabled = false }: 
     <div className="relative group/export" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-label={t('export.button')}
         disabled={disabled}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card text-foreground text-sm font-medium hover:bg-muted/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <DownloadIcon size={15} />
-        <span className="hidden md:inline">{t('export.button')}</span>
+        <DownloadIcon size={15} aria-hidden />
+        <span className="hidden md:inline" aria-hidden="true">{t('export.button')}</span>
       </button>
 
       {/* Tooltip shown on small screens only when dropdown is closed */}

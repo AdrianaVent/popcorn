@@ -21,10 +21,10 @@ export default function WatchlistCard({ posterPath, title, year, onClick, onRemo
       <button
         data-cy="watchlist-remove"
         onClick={(e) => { e.stopPropagation(); onRemove() }}
+        aria-label={t('myList.watchlist.remove')}
         className="flex items-center justify-center text-primary hover:text-primary/70 transition-colors cursor-pointer"
-        title={t('myList.watchlist.remove')}
       >
-        <HeartIcon size={14} filled />
+        <span aria-hidden="true"><HeartIcon size={14} filled /></span>
       </button>
     </MediaCard>
   )

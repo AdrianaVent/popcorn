@@ -189,9 +189,9 @@ export default function ImportModal({
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="flex flex-col items-center justify-center gap-2 w-full py-8 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-muted/30 transition-colors cursor-pointer"
+              className="flex flex-col items-center justify-center gap-2 w-full py-8 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hc:hover:border-primary hover:bg-muted/30 hc:hover:bg-muted transition-colors cursor-pointer"
             >
-              <UploadIcon size={24} color="var(--color-muted-foreground)" />
+              <span aria-hidden="true"><UploadIcon size={24} color="var(--color-muted-foreground)" /></span>
               {file ? (
                 <>
                   <span className="text-[13px] font-medium text-primary">{file.name}</span>
@@ -208,7 +208,7 @@ export default function ImportModal({
                 className="absolute top-2 right-2 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label={t('button.cancel')}
               >
-                <XIcon size={14} />
+                <span aria-hidden="true"><XIcon size={14} /></span>
               </button>
             )}
           </div>
@@ -217,6 +217,7 @@ export default function ImportModal({
             ref={inputRef}
             type="file"
             accept=".json,.csv"
+            aria-hidden="true"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0] ?? null
@@ -228,7 +229,7 @@ export default function ImportModal({
 
           {/* Format hint */}
           <div className="rounded-lg border border-border overflow-hidden">
-            <div className="px-3 py-2 bg-muted/50 border-b border-border">
+            <div className="px-3 py-2 bg-muted/50 hc:bg-muted border-b border-border">
               <Text variant="caption" className="font-semibold text-foreground">{formatTitle}</Text>
             </div>
             <div className="px-3 py-3 font-mono bg-card text-[11px]">
@@ -245,8 +246,8 @@ export default function ImportModal({
       {phase === 'results' && result && (
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
-            <span className="shrink-0 w-5 h-5 rounded-full bg-green-500/15 flex items-center justify-center">
-              <CheckIcon size={12} color="#22c55e" />
+            <span aria-hidden="true" className="shrink-0 w-5 h-5 rounded-full bg-green-500/15 hc:bg-transparent hc:border hc:border-green-500 flex items-center justify-center">
+              <span className="text-green-500"><CheckIcon size={12} /></span>
             </span>
             <Text variant="small" className="text-foreground">
               {result.created > 0
@@ -263,21 +264,21 @@ export default function ImportModal({
               <div className="rounded-lg border border-border overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-muted/40 border-b border-border">
-                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground w-14">
+                    <tr className="bg-muted/40 hc:bg-muted border-b border-border">
+                      <th scope="col" className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground w-14">
                         {t('users.import.results.colRow')}
                       </th>
-                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <th scope="col" className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         {identifierLabel}
                       </th>
-                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <th scope="col" className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         {t('users.import.results.colReason')}
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {result.failed.map((row, i) => (
-                      <tr key={i} className="border-b border-border/50 last:border-0">
+                      <tr key={i} className="border-b border-border/50 hc:border-border last:border-0">
                         <td className="px-3 py-2 text-muted-foreground text-center">{row.index}</td>
                         <td className="px-3 py-2 font-medium text-foreground">{row.identifier}</td>
                         <td className="px-3 py-2 text-destructive text-[12px]">{translateError(row.code, row.fields)}</td>

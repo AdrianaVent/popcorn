@@ -59,19 +59,22 @@ export default function BarChart({ title, orientation, tooltipLabel, userQuery, 
   const { t } = useTranslation()
   const [mode, setMode] = useState<'user' | 'global'>(showUserToggle ? defaultMode : 'global')
   const [genreTip, setGenreTip] = useState<GenreTip | null>(null)
-  const [isDark, setIsDark] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark' | 'high-contrast'>('light')
 
   useLayoutEffect(() => {
-    const check = () => setIsDark(document.documentElement.getAttribute('data-theme') === 'dark')
+    const check = () => {
+      const t = document.documentElement.getAttribute('data-theme')
+      setTheme(t === 'dark' ? 'dark' : t === 'high-contrast' ? 'high-contrast' : 'light')
+    }
     check()
     const obs = new MutationObserver(check)
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => obs.disconnect()
   }, [])
 
-  const barColor  = isDark ? '#F5E6C8' : '#8E3B2E'
-  const axisColor = isDark ? '#9CA3AF' : '#111827'
-  const mutedColor = isDark ? '#D1D5DB' : '#4B5563'
+  const barColor   = theme === 'dark' ? '#F5E6C8' : theme === 'high-contrast' ? '#712F24' : '#8E3B2E'
+  const axisColor  = theme === 'dark' ? '#9CA3AF' : '#111827'
+  const mutedColor = theme === 'dark' ? '#D1D5DB' : '#4B5563'
 
   const effectiveMode = mode
 
@@ -170,7 +173,7 @@ export default function BarChart({ title, orientation, tooltipLabel, userQuery, 
         )}
 
         {!query.isLoading && !query.isError && data.length > 0 && (
-          <div key={effectiveMode} className="flex-1 overflow-y-auto min-h-0">
+          <div key={effectiveMode} role="figure" aria-label={title} className="flex-1 overflow-y-auto min-h-0">
           <ResponsiveContainer
             width="100%"
             height={orientation === 'horizontal' ? HORIZONTAL_ROWS * 34 + 48 : 300}

@@ -61,8 +61,8 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
     clsx(
       'flex items-center gap-2 px-3 py-2 rounded-lg text-small cursor-pointer w-full border-0 text-left transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset',
       isActive
-        ? 'bg-primary/10 text-primary font-semibold'
-        : 'bg-transparent text-muted-foreground hover:text-foreground'
+        ? 'bg-primary/10 text-primary font-semibold hc:bg-primary hc:text-primary-foreground'
+        : 'bg-transparent text-muted-foreground hover:text-foreground hc:hover:bg-muted'
     )
 
   return (
@@ -102,7 +102,9 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
           <div className="flex-1 border-t border-border" />
           <button
             onClick={() => setCollapsed((v) => !v)}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
+            aria-expanded={!collapsed}
+            aria-controls="sidebar-nav"
             className={clsx(
               'absolute top-1/2 -translate-y-1/2 w-7 h-7 rounded-full',
               'bg-primary text-primary-foreground flex items-center justify-center',
@@ -111,19 +113,19 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
               collapsed ? '-right-5.5' : '-right-6.5'
             )}
           >
-            {collapsed ? <ChevronRightIcon size={14} /> : <ChevronLeftIcon size={14} />}
+            <span aria-hidden="true">{collapsed ? <ChevronRightIcon size={14} /> : <ChevronLeftIcon size={14} />}</span>
           </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 flex flex-col gap-1 p-2 pt-1">
+        <nav id="sidebar-nav" className="flex-1 flex flex-col gap-1 p-2 pt-1">
           {navItems.map((item) => {
             const isActive = item.key === activeKey
             const isHidden = (item.adminOnly && role !== 'admin') || (item.guestOnly && role === 'admin')
 
             const content = (
               <>
-                <span className="shrink-0">{item.icon}</span>
+                <span className="shrink-0" aria-hidden="true">{item.icon}</span>
                 {!collapsed && <span suppressHydrationWarning>{t(item.labelKey)}</span>}
               </>
             )
@@ -132,11 +134,11 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
 
             const label = t(item.labelKey)
             const el = item.onClick ? (
-              <button onClick={item.onClick} className={itemClass(isActive)}>
+              <button onClick={item.onClick} aria-label={label} className={itemClass(isActive)}>
                 {content}
               </button>
             ) : (
-              <Link href={item.href ?? '/'} className={itemClass(isActive)}>
+              <Link href={item.href ?? '/'} aria-label={label} aria-current={isActive ? 'page' : undefined} className={itemClass(isActive)}>
                 {content}
               </Link>
             )
@@ -154,10 +156,11 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
           <Tooltip content={t('topbar.logout')} placement="right" disabled={!collapsed} className="w-full">
             <button
               onClick={onLogout}
+              aria-label={t('topbar.logout')}
               className={itemClass(false)}
               suppressHydrationWarning
             >
-              <span className="shrink-0"><LogOutIcon size={16} /></span>
+              <span className="shrink-0" aria-hidden="true"><LogOutIcon size={16} /></span>
               {!collapsed && <span suppressHydrationWarning>{t('topbar.logout')}</span>}
             </button>
           </Tooltip>

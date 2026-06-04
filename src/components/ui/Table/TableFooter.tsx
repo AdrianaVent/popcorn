@@ -44,6 +44,7 @@ export default function TableFooter({
 
         {/* Prev */}
         <button
+            aria-label={t('common.prev')}
             onClick={onPrev}
             disabled={disabled || page <= 1}
             className="
@@ -56,8 +57,8 @@ export default function TableFooter({
             outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset
             "
         >
-            <ChevronLeftIcon size={14} />
-            <span className="hidden md:inline">{t('common.prev')}</span>
+            <ChevronLeftIcon size={14} aria-hidden />
+            <span className="hidden md:inline" aria-hidden="true">{t('common.prev')}</span>
         </button>
 
         {/* Pages */}
@@ -68,12 +69,13 @@ export default function TableFooter({
             return (
                 <button
                 key={p}
+                aria-current={isActive ? 'page' : undefined}
                 onClick={() => !disabled && onPageChange?.(p)}
                 className={clsx(
                     'w-7 h-7 flex items-center justify-center rounded-md text-xs transition outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset',
                     isActive
                     ? 'bg-background border border-border text-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/40 hc:hover:bg-muted'
                 )}
                 >
                 {p}
@@ -84,6 +86,7 @@ export default function TableFooter({
 
         {/* Next */}
         <button
+            aria-label={t('common.next')}
             onClick={onNext}
             disabled={disabled || page >= totalPages}
             className="
@@ -96,8 +99,8 @@ export default function TableFooter({
             outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset
             "
         >
-            <span className="hidden md:inline">{t('common.next')}</span>
-            <ChevronRightIcon size={14} />
+            <span className="hidden md:inline" aria-hidden="true">{t('common.next')}</span>
+            <ChevronRightIcon size={14} aria-hidden />
         </button>
 
     </div>
