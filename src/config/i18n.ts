@@ -9,15 +9,15 @@ function getStoredLanguage(): string {
   if (typeof window === 'undefined') return 'es'
   try {
     const userRaw = localStorage.getItem('popcorn-user')
-    const userId = JSON.parse(userRaw ?? '')?.state?.userId as string | null
+    const userId = userRaw ? (JSON.parse(userRaw)?.state?.userId as string | null) : null
 
     const langRaw = localStorage.getItem('popcorn-language')
-    const langState = JSON.parse(langRaw ?? '')?.state
+    const langState = langRaw ? JSON.parse(langRaw)?.state : null
 
     if (userId && langState?.userLanguages?.[userId]) {
       return langState.userLanguages[userId]
     }
-    // Fallback: stored global language (old format) or default Spanish
+    // Fallback: stored global language or default Spanish
     return langState?.language ?? 'es'
   } catch {
     return 'es'

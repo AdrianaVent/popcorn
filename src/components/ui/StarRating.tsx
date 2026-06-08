@@ -8,11 +8,12 @@ type Props = {
   onChange?: (rating: Rating) => void
   readonly?: boolean
   size?: number
+  ariaLabel?: string
 }
 
 const STARS = [1, 2, 3, 4, 5] as const
 
-export default function StarRating({ value, onChange, readonly = false, size = 18 }: Props) {
+export default function StarRating({ value, onChange, readonly = false, size = 18, ariaLabel }: Props) {
   const uid = useId().replace(/:/g, '')
   const [hovered, setHovered] = useState<Rating | null>(null)
 
@@ -37,9 +38,10 @@ export default function StarRating({ value, onChange, readonly = false, size = 1
       className="flex items-center gap-0.5"
       onMouseLeave={() => !readonly && setHovered(null)}
       role={readonly ? undefined : 'slider'}
-      aria-valuenow={value ?? 0}
-      aria-valuemin={0}
-      aria-valuemax={5}
+      aria-label={readonly ? undefined : ariaLabel}
+      aria-valuenow={readonly ? undefined : (value ?? 0)}
+      aria-valuemin={readonly ? undefined : 0}
+      aria-valuemax={readonly ? undefined : 5}
     >
       {STARS.map((star) => {
         const filled = display !== null && display >= star
@@ -52,6 +54,7 @@ export default function StarRating({ value, onChange, readonly = false, size = 1
             height={size}
             viewBox="0 0 20 20"
             fill="none"
+            aria-hidden="true"
             onMouseMove={readonly ? undefined : (e) => handleMouseMove(star, e)}
             onClick={readonly ? undefined : (e) => handleClick(star, e)}
             className={

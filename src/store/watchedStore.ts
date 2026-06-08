@@ -44,10 +44,12 @@ interface WatchedState {
   episodes:   EpisodesMap
   movies:     MoviesMap
   seriesData: SeriesMap
-  toggleMovie:   (userId: string, movie: StoredMovie) => void
-  enrichMovie:   (userId: string, movieId: number, patch: Partial<StoredMovie>) => void
-  toggleEpisode: (userId: string, seriesId: number, episodeId: number, seasonNumber: number, series?: StoredSeries) => void
-  markSeason:    (userId: string, seriesId: number, seasonNumber: number, episodeIds: number[], series?: StoredSeries) => void
+  toggleMovie:          (userId: string, movie: StoredMovie) => void
+  enrichMovie:          (userId: string, movieId: number, patch: Partial<StoredMovie>) => void
+  toggleEpisode:        (userId: string, seriesId: number, episodeId: number, seasonNumber: number, series?: StoredSeries) => void
+  markSeason:           (userId: string, seriesId: number, seasonNumber: number, episodeIds: number[], series?: StoredSeries) => void
+  purgeUpcomingMovies:  (userId: string) => void
+  purgeUpcomingSeries:  (userId: string) => void
 }
 
 export const useWatchedStore = create<WatchedState>()(
@@ -112,6 +114,46 @@ export const useWatchedStore = create<WatchedState>()(
           }
         })
         if (isFirstForSeries) useWatchlistStore.getState().removeSeries(userId, seriesId)
+      },
+
+      purgeUpcomingMovies: (userId) => {
+        const today = new Date().toISOString().slice(0, 10)
+        set((s) => {
+          const userMovies = s.movies[userId]
+          if (!userMovies) return s
+          const next = { ...userMovies }
+          let changed = false
+          Object.values(next).forEach((movie) => {
+            if (movie.release_date && movie.release_date > today) {
+              delete next[movie.id]
+              changed = true
+            }
+          })
+          if (!changed) return s
+          return { movies: { ...s.movies, [userId]: next } }
+        })
+      },
+
+      purgeUpcomingSeries: (userId) => {
+        const today = new Date().toISOString().slice(0, 10)
+        set((s) => {
+          const userSeries = s.seriesData[userId]
+          if (!userSeries) return s
+          const futureIds = Object.values(userSeries)
+            .filter((series) => series.first_air_date && series.first_air_date > today)
+            .map((series) => series.id)
+          if (futureIds.length === 0) return s
+          const nextSeries = { ...userSeries }
+          const nextEpisodes = { ...s.episodes[userId] }
+          futureIds.forEach((id) => {
+            delete nextSeries[id]
+            delete nextEpisodes[id]
+          })
+          return {
+            seriesData: { ...s.seriesData, [userId]: nextSeries },
+            episodes:   { ...s.episodes,   [userId]: nextEpisodes },
+          }
+        })
       },
 
       markSeason: (userId, seriesId, seasonNumber, episodeIds, series) => {

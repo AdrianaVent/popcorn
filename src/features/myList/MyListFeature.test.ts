@@ -210,6 +210,80 @@ describe('binPackSagas', () => {
   })
 })
 
+// ─── SagaCard allMovies — rating-filtered movies ─────────────────────────────
+//
+// When a min_rating filter is active, groupAndSortMovies only receives movies
+// that passed the filter. SagaCard must use the full watchedMovies store to
+// determine watched status so filtered-out (but watched) saga movies don't
+// render as UnwatchedMoviePlaceholder.
+
+type CollectionPart = { id: number; title: string; release_date: string; poster_path: string | null }
+
+/** Mirrors the allMovies computation inside SagaCard (collection path). */
+function computeAllMovies(
+  parts: CollectionPart[],
+  watchedMovies: Record<number, StoredMovie> | undefined,
+): { part: CollectionPart; watched: StoredMovie | null }[] {
+  return parts.map((part) => ({ part, watched: watchedMovies?.[part.id] ?? null }))
+}
+
+describe('SagaCard allMovies — rating-filtered saga movies still show as watched', () => {
+  const movieA = makeMovie({ id: 1, collection_id: 10, collection_name: 'X Collection', release_date: '2020-01-01' })
+  const movieB = makeMovie({ id: 2, collection_id: 10, collection_name: 'X Collection', release_date: '2021-01-01' })
+
+  const collectionParts: CollectionPart[] = [
+    { id: 1, title: movieA.title, release_date: '2020-01-01', poster_path: null },
+    { id: 2, title: movieB.title, release_date: '2021-01-01', poster_path: null },
+  ]
+
+  // Both movies are watched (the full store).
+  const watchedMovies: Record<number, StoredMovie> = { 1: movieA, 2: movieB }
+
+  it('shows both saga movies as watched when the full store is used', () => {
+    // Simulate min_rating=4 filter: only movieA (4★) passes → group.movies = [movieA].
+    const filteredList = [movieA]
+    const { sagaGroups } = groupAndSortMovies(filteredList)
+    expect(sagaGroups[0].movies).toHaveLength(1) // only A in the filtered group
+
+    // allMovies must use watchedMovies (full store), not group.movies.
+    const allMovies = computeAllMovies(collectionParts, watchedMovies)
+
+    expect(allMovies[0].watched?.id).toBe(1) // movieA → watched
+    expect(allMovies[1].watched?.id).toBe(2) // movieB → still watched despite being filtered out
+  })
+
+  it('returns null for a genuinely unwatched saga movie', () => {
+    const watchedMoviesOnlyA: Record<number, StoredMovie> = { 1: movieA }
+
+    const allMovies = computeAllMovies(collectionParts, watchedMoviesOnlyA)
+
+    expect(allMovies[0].watched?.id).toBe(1)
+    expect(allMovies[1].watched).toBeNull() // movieB genuinely not watched → placeholder
+  })
+
+  it('returns null for all parts when watchedMovies is undefined', () => {
+    const allMovies = computeAllMovies(collectionParts, undefined)
+
+    expect(allMovies.every(({ watched }) => watched === null)).toBe(true)
+  })
+
+  it('old group.movies approach would incorrectly mark filtered movie as unwatched', () => {
+    const filteredList = [movieA]
+    const { sagaGroups } = groupAndSortMovies(filteredList)
+    const group = sagaGroups[0]
+
+    // Demonstrates the pre-fix bug: using group.movies as the lookup source.
+    const watchedById = new Map(group.movies.map((m) => [m.id, m]))
+    const allMoviesOld = collectionParts.map((part) => ({
+      part,
+      watched: watchedById.get(part.id) ?? null,
+    }))
+
+    expect(allMoviesOld[0].watched?.id).toBe(1)
+    expect(allMoviesOld[1].watched).toBeNull() // bug: movieB appears as placeholder
+  })
+})
+
 // ─── computeSagasFirst ────────────────────────────────────────────────────────
 
 describe('computeSagasFirst', () => {

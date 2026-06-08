@@ -589,4 +589,42 @@ describe('Series', () => {
       })
     })
   })
+
+  // ─── Accessibility ────────────────────────────────────────────
+
+  describe('Accessibility', () => {
+    it('has no axe violations on the series list (admin)', () => {
+      cy.wait('@tmdb')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+
+    it('has no axe violations on the series list (guest)', () => {
+      cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'series.json' }).as('tmdb-a11y')
+      cy.visitAsGuest('/series')
+      cy.wait('@tmdb-a11y')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+
+    it('has no axe violations with detail modal open', () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, BREAKING_BAD_DETAIL).as('detail-a11y')
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} })
+      cy.intercept('GET', /\/tv\/1396\/videos/, { results: [] })
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail-a11y')
+      cy.get('[role="dialog"]').should('be.visible')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+
+    it('has no axe violations with genre filter dropdown open', () => {
+      cy.wait('@tmdb')
+      cy.get('[data-cy="filter-genre_ids"]').click()
+      cy.contains('Drama').should('be.visible')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+  })
 })

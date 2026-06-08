@@ -34,6 +34,7 @@ export type FilterField<T> = {
   max?: number
   unit?: string
   units?: FilterUnit[]
+  grow?: boolean
 }
 
 export type FiltersSchema<T> = FilterField<T>[]

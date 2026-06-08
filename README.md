@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.16.3-6B2737)
+![Version](https://img.shields.io/badge/version-0.18.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -26,6 +26,7 @@ Personal movie & series dashboard. Track what you watch, explore collections, an
 | Mark movies and episodes as watched | — | ✓ |
 | Add titles to watchlist via heart button (movies, series, calendar) | — | ✓ |
 | View and rate watched titles (My list) | — | ✓ |
+| Search, filter and sort My list (by title, rating, Recent / Rating / Title) | — | ✓ |
 | Switch language (English / Spanish) | ✓ | ✓ |
 | Switch theme (Light / Dark / Auto) | ✓ | ✓ |
 | Change region (Spain / United States) | ✓ | ✓ |
@@ -339,7 +340,7 @@ The page has three tabs — **Movies**, **Series**, and **Watchlist** — each s
 Displays your watched movies as cards (poster, year, star rating and a Recommendations button). The layout adapts dynamically:
 
 - Movies that belong to the same collection are automatically grouped under a shared **Saga** card (e.g. "Harry Potter - Saga"), with films sorted in release order inside. Collections with only one released film are shown as regular standalone cards instead.
-- Saga cards show **all released films** in the collection — not just the ones you have watched. Films you have not yet watched appear as dimmed placeholder slots, sorted in release order. Clicking a placeholder opens the detail modal so you can learn more or mark it as watched. Future or undated instalments are omitted.
+- Saga cards show **all films** in the collection with a known release date — not just the ones you have watched. Films you have not yet watched (including future releases) appear as dimmed placeholder slots, sorted in release order. Clicking a placeholder opens the detail modal so you can learn more or mark it as watched. Undated instalments are omitted.
 - Saga cards are laid out using a **bin-packing algorithm** that fills available horizontal space across rows, keeping the first saga in its position and fitting subsequent sagas into any gap before opening a new row.
 - Standalone films appear under a separate "Standalone films" label.
 - The section order (sagas first vs. standalone first) is driven by the most recent addition — whichever you marked last appears at the top.
@@ -455,9 +456,9 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-The project has two test layers: **906 unit/integration tests** (Jest) and **141 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+The project has two test layers: **924 unit/integration tests** (Jest) and **188 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 906 tests · 73 suites
+### Unit & integration tests (Jest) — 924 tests · 73 suites
 
 ```bash
 npm test           # run once
@@ -474,7 +475,7 @@ npm run test:watch # watch mode
 | Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
 | API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date) |
 
-### End-to-end tests (Cypress) — 141 tests · 7 suites
+### End-to-end tests (Cypress) — 188 tests · 8 suites
 
 In CI, Cypress runs against the production build automatically. Locally, run against the dev server:
 
@@ -496,7 +497,7 @@ npm run cypress:run
 | `movies.cy.ts` | 36 | Movie list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, access control, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter (2h → 120min, 90min), watchlist heart button (guest: visible + gains active style on click; admin: hidden) |
 | `series.cy.ts` | 31 | Series list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, episode runtime guard, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter client-side (filters below total duration threshold, not sent to TMDB), watchlist heart button (guest: visible + gains active style on click; admin: hidden) |
 | `users.cy.ts` | 15 | Create, edit, delete (single + bulk), toasts, import JSON/CSV, partial failures |
-| `my-list.cy.ts` | 25 | Tabs, empty state, nav access control, watched movie, Recommendations button (disabled/enabled), saga name formatting, single-released-movie collection as standalone, section ordering (standalone-first/saga-first), series tab + episode progress, "Finish to rate", recommendations drawer, unwatched saga placeholders, future-date filter regression, click placeholder opens modal, Watchlist tab (visible, empty state, movie/series visible, count badge, remove on heart click) |
+| `my-list.cy.ts` | 25 | Tabs, empty state, nav access control, watched movie, Recommendations button (disabled/enabled), saga name formatting, single-released-movie collection as standalone, section ordering (standalone-first/saga-first), series tab + episode progress, "Finish to rate", recommendations drawer, unwatched saga placeholders, future-release placeholder visible, click placeholder opens modal, Watchlist tab (visible, empty state, movie/series visible, count badge, remove on heart click) |
 | `settings.cy.ts` | 3 | Theme switching (light / dark), language switching (EN / ES) |
 
 Cypress creates and cleans up its own test users in the local database automatically. TMDB calls are intercepted — no real API key needed to run the E2E suite.
@@ -594,7 +595,7 @@ src/
 │   ├── auth/login/     # LoginFeature · useLogin · login.service.ts
 │   ├── home/           # HomeFeature · useMovieGenres · useSeriesGenres · ReleaseCalendar · CalendarReleaseItem
 │   ├── movies/         # MoviesFeature · hooks · components · service
-│   ├── myList/         # MyListFeature · MovieCard · SeriesCard · RecommendationsDrawer (tabs, saga grouping, watchedAt ordering, ratings)
+│   ├── myList/         # MyListFeature · myListUtils · MovieCard · SeriesCard · SagaCard · WatchlistSagaCard · UnwatchedMoviePlaceholder · RecommendationsDrawer · hooks (tabs, saga grouping, watchedAt ordering, ratings)
 │   ├── series/         # SeriesFeature · hooks · components · service
 │   └── users/          # UsersFeature · UserFormModal · ImportUsersModal · users.service.ts
 ├── hooks/              # useFilters · useWatchProviders · useTruncated · useTrailer · useEnrichedTrailers

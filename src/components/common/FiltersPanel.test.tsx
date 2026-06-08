@@ -128,8 +128,8 @@ describe('FiltersPanel — star filter', () => {
     const { container } = render(
       <FiltersPanel schema={starSchema} filters={{ rating: 0 }} onChange={jest.fn()} />
     )
-    // 5 star SVGs + 1 ChevronDownIcon in the panel header
-    expect(container.querySelectorAll('svg')).toHaveLength(6)
+    // 5 star SVGs + 1 ChevronDownIcon + 1 XIcon (clear button, always rendered)
+    expect(container.querySelectorAll('svg')).toHaveLength(7)
   })
 
   it('calls onChange with star value * 2 when a star is clicked', () => {
@@ -137,26 +137,26 @@ describe('FiltersPanel — star filter', () => {
     const { container } = render(
       <FiltersPanel schema={starSchema} filters={{ rating: 0 }} onChange={onChange} />
     )
-    // SVG[0] = ChevronDownIcon; SVG[1..5] = stars 1..5
-    // Click star #4 (index 4) → rating=4 → stored as 8
-    fireEvent.click(container.querySelectorAll('svg')[4])
+    // SVG[0] = XIcon (clear); SVG[1] = ChevronDownIcon; SVG[2..6] = stars 1..5
+    // Click star #4 (index 5) → rating=4 → stored as 8
+    fireEvent.click(container.querySelectorAll('svg')[5])
     expect(onChange).toHaveBeenCalledWith({ rating: 8 })
   })
 
   it('hides clear button when rating is 0', () => {
     render(<FiltersPanel schema={starSchema} filters={{ rating: 0 }} onChange={jest.fn()} />)
-    expect(screen.queryByLabelText('Clear')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('common.clear')).not.toBeInTheDocument()
   })
 
   it('shows clear button when rating is active', () => {
     render(<FiltersPanel schema={starSchema} filters={{ rating: 8 }} onChange={jest.fn()} />)
-    expect(screen.getByLabelText('Clear')).toBeInTheDocument()
+    expect(screen.getByLabelText('common.clearFilters')).toBeInTheDocument()
   })
 
   it('resets rating to 0 when clear is clicked', async () => {
     const onChange = jest.fn()
     render(<FiltersPanel schema={starSchema} filters={{ rating: 8 }} onChange={onChange} />)
-    await userEvent.click(screen.getByLabelText('Clear'))
+    await userEvent.click(screen.getByLabelText('common.clearFilters'))
     expect(onChange).toHaveBeenCalledWith({ rating: 0 })
   })
 
@@ -166,10 +166,10 @@ describe('FiltersPanel — star filter', () => {
     expect(screen.getByText('common.clearFilters')).toBeInTheDocument()
   })
 
-  it('shows no clear button when rating is 0 (filter inactive)', async () => {
+  it('hides clear button visually when rating is 0 (filter inactive)', async () => {
     render(<FiltersPanel schema={starSchema} filters={{ rating: 0 }} onChange={jest.fn()} />)
     await userEvent.click(screen.getAllByRole('button')[0])
-    expect(screen.queryByText('common.clearFilters')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('common.clearFilters')).toHaveClass('invisible')
   })
 
   it('summary pill tooltip shows TMDB score /10, not star equivalent', () => {

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useLanguageStore } from '@/store/languageStore'
@@ -33,6 +34,12 @@ export default function RecommendationsDrawer({ type, sourceId, sourceName, sour
         : fetchSeriesRecommendations(sourceId, language) as Promise<TMDBPagedResponse<RecommendationItem>>,
     staleTime: 24 * 60 * 60 * 1000,
   })
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
 
   const items = (data?.results ?? [])
     .filter((item) => !watchedIds.has(item.id))

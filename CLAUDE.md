@@ -114,9 +114,13 @@ src/
 │   │   ├── seriesFilters.schema.ts
 │   │   ├── getSeriesUI.ts      # status badge config; resolveSeriesGenreName — static ES translation map (TV genre IDs)
 │   │   └── index.ts
-│   ├── myList/                 # MyListFeature — Movies/Series/Por ver tabs, saga grouping (bin-packing layout), watchedAt ordering, recommendations drawer, UnwatchedMoviePlaceholder
+│   ├── myList/                 # MyListFeature — Movies/Series/Por ver tabs, saga grouping (bin-packing layout), watchedAt ordering, recommendations drawer
+│   │   ├── myListUtils.ts      # RATING_THRESHOLD, SagaGroup, WatchlistSagaGroup, RecommendationSource types; formatSagaName
 │   │   ├── components/         # MovieCard (poster, year, StarRating, always-visible Recommendations button + Tooltip),
 │   │   │                       # SeriesCard (ribbon, episode progress, StarRating, always-visible Recommendations button + Tooltip),
+│   │   │                       # SagaCard (collection query + bin-packing row; uses full watchedMovies store for watched state),
+│   │   │                       # WatchlistSagaCard (3 states: watched/watchlisted/placeholder; date-gated to released parts),
+│   │   │                       # UnwatchedMoviePlaceholder (dimmed dashed-border poster for unwatched/upcoming saga entries),
 │   │   │                       # RecommendationsDrawer (right-side panel, max 5 items, saga/movie/series source header),
 │   │   │                       # WatchlistCard (poster, year, remove heart button — used in Por ver tab)
 │   │   └── hooks/              # useMovieRecommendations, useSeriesRecommendations (useQueries per source, ≥3.5★ filter, excludes watched)
@@ -200,7 +204,7 @@ data/
 | Home release calendar (monthly EN/ES releases, dots per day, movie/series tabs) | Done |
 | My list (guest-only: watched movies/series, saga grouping, watchedAt-based section ordering, 5-star ratings) | Done |
 | My list recommendations — right-side drawer, max 5 items, ≥ 3.5★ filter, saga name in header, excludes watched | Done |
-| My list saga — UnwatchedMoviePlaceholder (dimmed poster + dashed border) for unreleased-eligible saga movies; future/undated parts filtered out everywhere (SagaCard + CollectionAccordion) | Done |
+| My list saga — UnwatchedMoviePlaceholder (dimmed poster + dashed border) for unwatched/upcoming saga movies; parts with a known release_date shown (past and future); undated parts filtered out. CollectionAccordion follows the same rule. | Done |
 | My list saga layout — bin-packing algorithm fills horizontal space across rows; single-released-movie collections demoted to standalone; CollectionAccordion hidden when ≤ 1 released part | Done |
 | My list scroll-to-card — opening the recommendations drawer centers the selected movie/saga/series card in the scroll container | Done |
 | Watchlist (Por ver) — per-user watchlist store; heart button in tables, detail modals, calendar; Por ver tab in My list with two-column layout (movies + series), saga grouping with 3 states (watched/watchlisted/placeholder); count badges on all 3 tabs (circle, 99+ cap, exact tooltip); auto-remove from watchlist on mark watched | Done |
@@ -236,6 +240,15 @@ data/
 | Accessibility + high-contrast audit — ARIA roles, aria-hidden on decorative icons, aria-pressed on toggles, role=alert on login messages, keyboard support on CalendarReleaseItem, full date aria-labels on calendar day buttons | Done |
 | High-contrast mode (HC) — solid borders + transparent backgrounds on STATUS_MAP badges, provider/theater chips, trailer close button, today/empty hover states, login message boxes, release calendar, Top10Card hover/active states | Done |
 | MyList HC + ARIA — SagaCard rec button, saga wrapper border, Por ver divider, WatchlistSagaCard watched state, UnwatchedMoviePlaceholder; saga siblings excluded from recommendations drawer | Done |
+| My list filters — title search, genre multi-select (when genres available), min-rating star filter (FiltersPanel); no-results state; filter bar hidden when list is empty | Done |
+| Cypress settings HC test — high-contrast theme switch test added to settings.cy.ts | Done |
+| Recommendations button aria-label with title context (MovieCard, SeriesCard, SagaCard) — screen readers distinguish between cards | Done |
+| Episode count badge role=img + aria-label in SeriesCard ("X of Y episodes watched") | Done |
+| RecommendationsDrawer closes on Escape key (document keydown listener) | Done |
+| Top10Card star score color unified with StarRating: yellow-500 (light) / yellow-300 (dark) / amber-700 (HC) | Done |
+| MyList component extraction — SagaCard, WatchlistSagaCard, UnwatchedMoviePlaceholder extracted to separate files; shared types in myListUtils.ts | Done |
+| FiltersPanel clear-filters button repositioned left of chevron; always rendered (invisible when inactive) to prevent layout jump; data-cy="clear-filters" | Done |
+| Cypress cypress-axe — imported in support/e2e.ts; accessibility.cy.ts checks login, home, movies, series, my-list pages (wcag2a + wcag2aa) | Done |
 
 ---
 
@@ -351,7 +364,7 @@ npm run test:watch  # watch mode
 
 | Area | What's covered |
 |---|---|
-| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `tmdbToStarRating` (TMDB 0–10 → Rating 0.5–5), `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10; per-entry name dedup), `applyRuntimeFilter` (undefined/0 threshold → passthrough, empty runtimes map → passthrough, filters by total duration, exact threshold kept, null rt passes through, missing from map passes through), `binPackSagas` (empty input, single row, two groups fitting/not fitting, gap-filling before new row, displayedCounts used for width) |
+| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `tmdbToStarRating` (TMDB 0–10 → Rating 0.5–5), `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10; per-entry name dedup), `applyRuntimeFilter` (undefined/0 threshold → passthrough, empty runtimes map → passthrough, filters by total duration, exact threshold kept, null rt passes through, missing from map passes through), `binPackSagas` (empty input, single row, two groups fitting/not fitting, gap-filling before new row, displayedCounts used for width), `computeSagasFirst` (sagas-first when saga watchedAt > standalone; standalone-first when no sagas; tie-break by most-recent watchedAt), `computeAllMovies` (SagaCard helper — rating-filtered watched movies still show as watched via full store; genuinely unwatched returns null; regression test for old group.movies approach) |
 | Business logic | `applyClientFilters` (movies + series + language filter), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
 | Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber, watchedAt), `markSeason` (watchedAt), per-season count derivation, auto-remove from watchlist on mark (movie/episode/season); `watchlistStore` — `toggleMovie` (add, addedAt, remove, per-user isolation), `toggleSeries` (add, addedAt, remove, per-user isolation), `removeMovie`/`removeSeries` (no-op safety); `toastStore` — addToast, timers, removeToast; `ratingsStore` — setRating, removeRating, per-user isolation |
 | Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window), `useMovieReleases` (service call args), `useSeriesReleases` (disabled when no providers, enabled with providers), `useUserMovieTop10` / `useUserSeriesTop10` (genre_ids backfill via detail fetch, staleTime 5min), `useTrailer` (language preference via iso_639_1, YouTube filter, allTrailers list; disabled/enabled), `useEnrichedTrailers` (YouTube oEmbed batch fetch, replaces TMDB names with real YouTube titles, 24h cache), `useMovieRuntimeEnrichment` (empty map, populates runtime, null when no runtime, null on fetch fail, multiple movies, mixed success/failure), `useFilters` (initial state, setFilters, replaces entire object, preserves initial reference, exposes function) — all wrapped in `QueryClientProvider` with `retry: false` |
@@ -377,7 +390,8 @@ Cypress uses `cy.task('seedUser')` / `cy.task('deleteUser')` to manage test user
 | `movies.cy.ts` | Movie list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, access control (guest), watched controls (admin/guest), trailer (button visible, open iframe, close via button, close via × in player), column sort (rating asc/desc — verifies sort_by param sent to TMDB), runtime filter (2h → 120min, 90min — verifies with_runtime.gte param), watchlist heart button (guest: visible + gains active style on click; admin: hidden) |
 | `series.cy.ts` | Series list, detail modal, watch providers, platform filter, star rating filter, genre multi-select filter, genre deduplication in modal, watched controls (admin/guest), trailer (button visible, open iframe, close via button, close via × in player), column sort (rating asc/desc — verifies sort_by param sent to TMDB), runtime filter client-side (filters out series below total duration threshold; verifies with_runtime.gte NOT sent to TMDB), watchlist heart button (guest: visible + gains active style on click; admin: hidden) |
 | `users.cy.ts` | List, create + toast, edit + toast, delete + toast, bulk delete + toast, self-protection, filters, import JSON + CSV, partial import failures, post-import cleanup |
-| `settings.cy.ts` | Theme switching (light / dark), language switching (EN / ES) |
+| `settings.cy.ts` | Theme switching (light / dark / high contrast), language switching (EN / ES) |
+| `accessibility.cy.ts` | axe-core wcag2a+wcag2aa checks on login, home, movies, series, my-list pages |
 | `home.cy.ts` | Home header, content tab switch (Movies/Series), toggle defaults to Global when no watched data, My profile/Global toggle, empty state message, genre chart SVG renders, release calendar title and navigation, Top10 card title + year visible, calendar trailer button, Top10 genre dropdown (open, close, genre-filtered fetch, label update), calendar watchlist button (admin: hidden; guest: visible) |
 | `my-list.cy.ts` | Page header + tabs, empty state (movies/series), nav item hidden for admin / visible for guest, watched movie visible, Recommendations button disabled without rating / enabled after ≥ 3.5★, saga name formatted (no "Collection"), section ordering (standalone-first / saga-first by watchedAt), series tab + episode progress badge + "Finish to rate", recommendations drawer opens (waits for not-disabled before click; saga drawer waits cy.wait('@collection') before click), unwatched saga placeholders visible, clicking placeholder opens detail modal, Por ver tab (visible, empty state, movie/series visible, count badge, remove on heart click), single-released-movie collection shown as standalone (not saga group); saga tests stub /collection API so CI placeholder TMDB key does not demote 2-part sagas |
 

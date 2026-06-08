@@ -1,14 +1,15 @@
 'use client'
 
-import Image from 'next/image'
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { useQuery, useQueries } from '@tanstack/react-query'
+import { useQueries } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import Text from '@/components/ui/Text'
 import MovieDetailModal from '@/features/movies/components/MovieDetailModal'
 import SeriesDetailModal from '@/features/series/components/SeriesDetailModal'
 import MovieCard from '@/features/myList/components/MovieCard'
 import SeriesCard from '@/features/myList/components/SeriesCard'
+import SagaCard from '@/features/myList/components/SagaCard'
+import WatchlistSagaCard from '@/features/myList/components/WatchlistSagaCard'
 import RecommendationsDrawer from '@/features/myList/components/RecommendationsDrawer'
 import { fetchCollectionDetail } from '@/features/movies/movies.service'
 import { useWatchedStore } from '@/store/watchedStore'
@@ -19,26 +20,26 @@ import { useLanguageStore } from '@/store/languageStore'
 import type { Rating } from '@/store/ratingsStore'
 import type { StoredMovie, StoredSeries } from '@/store/watchedStore'
 import type { WatchlistMovie } from '@/store/watchlistStore'
-import type { TMDBCollectionPart } from '@/types/tmdb'
 import PageLayout from '@/components/layouts/PageLayout'
 import Tooltip from '@/components/ui/Tooltip'
 import { BookmarkIcon, FilmIcon, TvIcon, HeartIcon } from '@/components/icons'
-import { getTMDBImageUrl } from '@/utils/tmdb'
 import WatchlistCard from '@/features/myList/components/WatchlistCard'
+import FiltersPanel from '@/components/common/FiltersPanel'
+import { resolveGenreName } from '@/config/genres'
+import { getGenreIcon } from '@/config/genreIcons'
+import type { FiltersSchema } from '@/types/table'
+import {
+  RATING_THRESHOLD,
+  type SagaGroup,
+  type WatchlistSagaGroup,
+  type RecommendationSource,
+  formatSagaName,
+} from './myListUtils'
+export type { SagaGroup, WatchlistSagaGroup }
+export { formatSagaName }
 
-const RATING_THRESHOLD: Rating = 3.5
-
-export type SagaGroup = {
-  id: number
-  name: string
-  movies: StoredMovie[]
-}
-
-export const formatSagaName = (name: string) =>
-  name
-    .replace(/\s*-?\s*Collection/gi, ' - Saga')
-    .replace(/\s*-?\s*Colección/gi, ' - Saga')
-    .trim()
+type MyListFilters = { title: string; genre_ids: number[]; min_rating: number }
+const INITIAL_FILTERS: MyListFilters = { title: '', genre_ids: [], min_rating: 0 }
 
 export function groupAndSortMovies(movieList: StoredMovie[]): { sagaGroups: SagaGroup[]; standaloneMovies: StoredMovie[] } {
   const collectionMap = new Map<number, SagaGroup>()
@@ -86,12 +87,6 @@ export function computeSagasFirst(sagaGroups: SagaGroup[], standaloneMovies: Sto
 
 type Tab = 'movies' | 'series' | 'towatch'
 
-export type WatchlistSagaGroup = {
-  id: number
-  name: string
-  movies: WatchlistMovie[]
-}
-
 export function groupWatchlistMovies(movieList: WatchlistMovie[]): { sagaGroups: WatchlistSagaGroup[]; standaloneMovies: WatchlistMovie[] } {
   const collectionMap = new Map<number, WatchlistSagaGroup>()
   const standalone: WatchlistMovie[] = []
@@ -117,35 +112,6 @@ export function groupWatchlistMovies(movieList: WatchlistMovie[]): { sagaGroups:
   groups.sort((a, b) => Math.max(...b.movies.map((m) => m.addedAt)) - Math.max(...a.movies.map((m) => m.addedAt)))
 
   return { sagaGroups: groups, standaloneMovies: standalone }
-}
-
-type RecommendationSource = { id: number; scrollId: number; name: string; posterPath: string | null } | null
-
-function UnwatchedMoviePlaceholder({ part, onClick }: { part: { id: number; title: string; poster_path: string | null }; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={part.title}
-      className="flex flex-col gap-2 w-24 items-center group"
-    >
-      <div className="relative w-24 aspect-2/3 rounded-lg overflow-hidden bg-muted border border-dashed border-border/60 hc:border-border hover:border-border transition-colors">
-        {part.poster_path && (
-          <Image
-            fill
-            src={getTMDBImageUrl(part.poster_path, 'w185')!}
-            alt=""
-            className="object-cover opacity-20 group-hover:opacity-30 transition-opacity"
-          />
-        )}
-        <div aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
-          <div className="w-6 h-6 rounded-full bg-border/60 hc:bg-border" />
-        </div>
-      </div>
-      <p aria-hidden="true" className="text-[11px] text-muted-foreground/50 hc:text-muted-foreground text-center truncate w-full px-0.5 leading-tight">
-        {part.title}
-      </p>
-    </button>
-  )
 }
 
 // Saga card pixel width: px-3 padding (24px) + N × w-24 (96px) + (N-1) × gap-3 (12px) = 108N + 12
@@ -175,197 +141,6 @@ export function binPackSagas(groups: SagaGroup[], displayedCounts: number[], con
   return rows
 }
 
-function SagaCard({
-  group,
-  movieRatings,
-  userRatings,
-  movieRecSource,
-  onRate,
-  onMovieClick,
-  onSagaRec,
-}: {
-  group: SagaGroup
-  movieRatings: Record<number, Rating>
-  userRatings: Record<number, Rating> | undefined
-  movieRecSource: RecommendationSource
-  onRate: (id: number, r: Rating) => void
-  onMovieClick: (id: number) => void
-  onSagaRec: (movie: StoredMovie, sagaName: string, groupId: number) => void
-}) {
-  const { t } = useTranslation()
-  const { language } = useLanguageStore()
-
-  const { data: collection } = useQuery({
-    queryKey: ['collection-detail', group.id, language],
-    queryFn: () => fetchCollectionDetail(group.id, language),
-    staleTime: 24 * 60 * 60 * 1000,
-  })
-
-  // Merge full collection (all movies) with watched data; fall back to watched-only while loading
-  const allMovies = useMemo(() => {
-    const watchedById = new Map(group.movies.map((m) => [m.id, m]))
-    if (!collection?.parts?.length) {
-      return group.movies.map((m) => ({ part: null as TMDBCollectionPart | null, watched: m }))
-    }
-    const today = new Date().toISOString().slice(0, 10)
-    return [...collection.parts]
-      .filter((p) => p.release_date && p.release_date <= today)
-      .sort((a, b) => a.release_date.localeCompare(b.release_date))
-      .map((part) => ({ part, watched: watchedById.get(part.id) ?? null }))
-  }, [collection, group.movies])
-
-  const bestRatedMovie = useMemo(() =>
-    group.movies.reduce<StoredMovie | null>((best, movie) => {
-      const r = movieRatings[movie.id] ?? 0
-      const bestR = best ? (movieRatings[best.id] ?? 0) : 0
-      return r >= RATING_THRESHOLD && r > bestR ? movie : best
-    }, null),
-    [group.movies, movieRatings],
-  )
-
-  const sagaRecActive = bestRatedMovie !== null && movieRecSource?.id === bestRatedMovie.id
-
-  return (
-    <>
-      <div className="flex justify-center text-center">
-        <Text variant="caption" className="font-semibold uppercase tracking-[0.14em] text-foreground">{formatSagaName(group.name)}</Text>
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        {allMovies.map(({ part, watched }, i) =>
-          watched ? (
-            <MovieCard
-              key={watched.id}
-              movie={watched}
-              rating={userRatings?.[watched.id] ?? null}
-              onRate={(r) => onRate(watched.id, r)}
-              onClick={() => onMovieClick(watched.id)}
-              eager={i < 6}
-              showRecommendations={false}
-            />
-          ) : (
-            <UnwatchedMoviePlaceholder
-              key={part!.id}
-              part={part!}
-              onClick={() => onMovieClick(part!.id)}
-            />
-          )
-        )}
-      </div>
-
-      <div className="flex justify-center mt-auto pt-1">
-        <Tooltip content={t('myList.recommendations.rateFirst')} disabled={!!bestRatedMovie} placement="bottom">
-          <button
-            onClick={bestRatedMovie ? () => onSagaRec(bestRatedMovie, formatSagaName(group.name), group.id) : undefined}
-            disabled={!bestRatedMovie}
-            className={`text-[11px] px-3 py-1 rounded-md border transition-colors cursor-pointer disabled:cursor-not-allowed ${
-              sagaRecActive
-                ? 'border-primary text-primary bg-primary/10 hc:bg-primary hc:text-primary-foreground'
-                : bestRatedMovie
-                  ? 'border-primary/40 text-primary/80 hover:border-primary hover:bg-primary/5 hc:border-primary hc:text-primary hc:hover:bg-muted'
-                  : 'border-border/40 text-muted-foreground/30 hc:border-border hc:text-muted-foreground'
-            }`}
-          >
-            {t('myList.recommendations.similar')}
-          </button>
-        </Tooltip>
-      </div>
-    </>
-  )
-}
-
-function WatchlistSagaCard({
-  group,
-  watchedMovies,
-  watchlistMoviesMap,
-  onMovieClick,
-  onRemove,
-}: {
-  group: WatchlistSagaGroup
-  watchedMovies: Record<number, StoredMovie> | undefined
-  watchlistMoviesMap: Record<number, WatchlistMovie> | undefined
-  onMovieClick: (id: number) => void
-  onRemove: (movieId: number) => void
-}) {
-  const { language } = useLanguageStore()
-
-  const { data: collection } = useQuery({
-    queryKey: ['collection-detail', group.id, language],
-    queryFn: () => fetchCollectionDetail(group.id, language),
-    staleTime: 24 * 60 * 60 * 1000,
-  })
-
-  const allMovies = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10)
-    type PartMin = { id: number; title: string; poster_path: string | null; release_date: string }
-    const parts: PartMin[] = collection?.parts?.length ? collection.parts : group.movies
-    return [...parts]
-      .filter((p) => p.release_date && p.release_date <= today)
-      .sort((a, b) => a.release_date.localeCompare(b.release_date))
-      .map((part) => ({
-        part,
-        isWatched:     !!watchedMovies?.[part.id],
-        isInWatchlist: !!watchlistMoviesMap?.[part.id],
-      }))
-  }, [collection, group.movies, watchedMovies, watchlistMoviesMap])
-
-  return (
-    <div className="rounded-xl border border-border/40 hc:border-border px-3 pt-3 pb-2 flex flex-col gap-2 bg-cream-100 dark:bg-gray-900">
-      <div className="flex justify-center text-center">
-        <Text variant="caption" className="font-semibold uppercase tracking-[0.14em] text-foreground">
-          {formatSagaName(group.name)}
-        </Text>
-      </div>
-      <div className="flex flex-wrap gap-3">
-        {allMovies.map(({ part, isWatched, isInWatchlist }, i) => {
-          if (isWatched) {
-            return (
-              <button key={part.id} onClick={() => onMovieClick(part.id)} aria-label={part.title} className="flex flex-col gap-2 w-24 items-center group">
-                <div className="relative w-24 aspect-2/3 rounded-lg overflow-hidden">
-                  {part.poster_path ? (
-                    <Image
-                      fill
-                      src={getTMDBImageUrl(part.poster_path, 'w185')!}
-                      alt=""
-                      className="object-cover opacity-40 hc:opacity-70 group-hover:opacity-50 hc:group-hover:opacity-80 transition-opacity"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-muted opacity-40 hc:opacity-70" />
-                  )}
-                  <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
-                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 4l3 3L9 1" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-[11px] text-muted-foreground/50 hc:text-muted-foreground text-center truncate w-full px-0.5 leading-tight" aria-hidden="true">{part.title}</p>
-              </button>
-            )
-          }
-          if (isInWatchlist) {
-            return (
-              <WatchlistCard
-                key={part.id}
-                posterPath={part.poster_path}
-                title={part.title}
-                year={part.release_date ? new Date(part.release_date).getFullYear() : null}
-                onClick={() => onMovieClick(part.id)}
-                onRemove={() => onRemove(part.id)}
-                eager={i < 6}
-              />
-            )
-          }
-          return (
-            <UnwatchedMoviePlaceholder key={part.id} part={part} onClick={() => onMovieClick(part.id)} />
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 export default function MyListFeature() {
   const { t } = useTranslation()
   const [tab, setTab]                               = useState<Tab>('movies')
@@ -376,6 +151,9 @@ export default function MyListFeature() {
   const [sagaContainerPx, setSagaContainerPx]       = useState(1000)
   const sagaContainerRef                            = useRef<HTMLDivElement>(null)
   const seriesScrollRef                             = useRef<HTMLDivElement>(null)
+
+  const [movieFilters, setMovieFilters]   = useState<MyListFilters>(INITIAL_FILTERS)
+  const [seriesFilters, setSeriesFilters] = useState<MyListFilters>(INITIAL_FILTERS)
 
   const userId  = useUserStore((s) => s.userId)
   const userKey = String(userId ?? 'guest')
@@ -392,6 +170,8 @@ export default function MyListFeature() {
   const userRatings = useRatingsStore((s) => s.ratings[userKey])
   const setRating   = useRatingsStore((s) => s.setRating)
   const { language } = useLanguageStore()
+  const movieRatings  = useMemo(() => userRatings?.movies ?? {}, [userRatings])
+  const seriesRatings = useMemo(() => userRatings?.series ?? {}, [userRatings])
 
   const movieList  = useMemo(
     () => Object.values(watchedMovies ?? {}).sort((a, b) => (b.watchedAt ?? 0) - (a.watchedAt ?? 0)),
@@ -403,6 +183,88 @@ export default function MyListFeature() {
       .sort((a, b) => (b.watchedAt ?? 0) - (a.watchedAt ?? 0)),
     [watchedSeries, watchedEpisodes],
   )
+
+  const movieGenreOptions = useMemo(() => {
+    const seen = new Map<string, number>()
+    movieList.forEach((m) => {
+      m.genre_ids?.forEach((id) => {
+        const name = resolveGenreName(id, language)
+        if (name && !seen.has(name)) seen.set(name, id)
+      })
+    })
+    return [...seen.entries()]
+      .map(([label, id]) => ({ value: id, label, icon: getGenreIcon(id) ?? undefined }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [movieList, language])
+
+  const seriesGenreOptions = useMemo(() => {
+    const seen = new Map<string, number>()
+    seriesList.forEach((s) => {
+      s.genre_ids?.forEach((id) => {
+        const name = resolveGenreName(id, language)
+        if (name && !seen.has(name)) seen.set(name, id)
+      })
+    })
+    return [...seen.entries()]
+      .map(([label, id]) => ({ value: id, label, icon: getGenreIcon(id) ?? undefined }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [seriesList, language])
+
+  const movieFiltersSchema = useMemo(() => {
+    const schema: FiltersSchema<MyListFilters> = [
+      { key: 'title', label: 'movies.filters.title', type: 'text', grow: true },
+    ]
+    if (movieGenreOptions.length > 0) {
+      schema.push({ key: 'genre_ids', label: 'movies.filters.genres', type: 'genre-multi', options: movieGenreOptions })
+    }
+    schema.push({ key: 'min_rating', label: 'movies.filters.ratingGte', type: 'star' })
+    return schema
+  }, [movieGenreOptions])
+
+  const seriesFiltersSchema = useMemo(() => {
+    const schema: FiltersSchema<MyListFilters> = [
+      { key: 'title', label: 'movies.filters.title', type: 'text', grow: true },
+    ]
+    if (seriesGenreOptions.length > 0) {
+      schema.push({ key: 'genre_ids', label: 'movies.filters.genres', type: 'genre-multi', options: seriesGenreOptions })
+    }
+    schema.push({ key: 'min_rating', label: 'movies.filters.ratingGte', type: 'star' })
+    return schema
+  }, [seriesGenreOptions])
+
+  const filteredMovieList = useMemo(() => {
+    const { title, genre_ids, min_rating } = movieFilters
+    const q = title.toLowerCase()
+    const selectedGenreNames = genre_ids.map((id) => resolveGenreName(id, language)).filter(Boolean)
+    return movieList.filter((m) => {
+      if (q && !m.title.toLowerCase().includes(q)) return false
+      if (min_rating > 0 && (movieRatings[m.id] ?? 0) * 2 < min_rating) return false
+      if (selectedGenreNames.length > 0 && m.genre_ids?.length) {
+        const movieNames = new Set(m.genre_ids.map((id) => resolveGenreName(id, language)).filter(Boolean))
+        if (!selectedGenreNames.some((name) => movieNames.has(name))) return false
+      }
+      return true
+    })
+  }, [movieList, movieFilters, movieRatings, language])
+
+  const hasFilteredMovies = filteredMovieList.length > 0
+
+  const filteredSeriesList = useMemo(() => {
+    const { title, genre_ids, min_rating } = seriesFilters
+    const q = title.toLowerCase()
+    const selectedGenreNames = genre_ids.map((id) => resolveGenreName(id, language)).filter(Boolean)
+    return seriesList.filter((s) => {
+      if (q && !s.name.toLowerCase().includes(q)) return false
+      if (min_rating > 0 && (seriesRatings[s.id] ?? 0) * 2 < min_rating) return false
+      if (selectedGenreNames.length > 0 && s.genre_ids?.length) {
+        const seriesNames = new Set(s.genre_ids.map((id) => resolveGenreName(id, language)).filter(Boolean))
+        if (!selectedGenreNames.some((name) => seriesNames.has(name))) return false
+      }
+      return true
+    })
+  }, [seriesList, seriesFilters, seriesRatings, language])
+
+  const hasFilteredSeries = filteredSeriesList.length > 0
 
   const watchlistMovieList = useMemo(
     () => Object.values(watchlistMovies ?? {}).sort((a, b) => b.addedAt - a.addedAt),
@@ -417,7 +279,7 @@ export default function MyListFeature() {
     [watchlistMovieList],
   )
 
-  const { sagaGroups, standaloneMovies } = useMemo(() => groupAndSortMovies(movieList), [movieList])
+  const { sagaGroups, standaloneMovies } = useMemo(() => groupAndSortMovies(filteredMovieList), [filteredMovieList])
 
   const collectionResults = useQueries({
     queries: sagaGroups.map((g) => ({
@@ -428,12 +290,11 @@ export default function MyListFeature() {
   })
 
   const sagaDisplayedCounts = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10)
     return sagaGroups.map((g, i) => {
       const parts = collectionResults[i]?.data?.parts
       if (!parts?.length) return g.movies.length
-      const released = parts.filter((p) => p.release_date && p.release_date <= today).length
-      return Math.max(released, g.movies.length)
+      const withDate = parts.filter((p) => !!p.release_date).length
+      return Math.max(withDate, g.movies.length)
     })
   }, [sagaGroups, collectionResults])
 
@@ -477,6 +338,9 @@ export default function MyListFeature() {
     setSeriesRecSource((prev) => prev?.id === series.id ? null : { id: series.id, scrollId: series.id, name: series.name, posterPath: series.poster_path })
   }, [])
 
+  const handleCloseMovieDrawer = useCallback(() => setMovieRecSource(null), [])
+  const handleCloseSeriesDrawer = useCallback(() => setSeriesRecSource(null), [])
+
   useEffect(() => {
     const el = sagaContainerRef.current
     if (!el) return
@@ -514,10 +378,6 @@ export default function MyListFeature() {
     })
     return () => cancelAnimationFrame(frame)
   }, [seriesRecSource])
-
-  const movieRatings  = userRatings?.movies ?? {}
-  const seriesRatings = userRatings?.series ?? {}
-  const isEmpty = tab === 'movies' ? movieList.length === 0 : tab === 'series' ? seriesList.length === 0 : false
 
   const sagasFirst = useMemo(() => computeSagasFirst(effectiveSagas, effectiveStandalones), [effectiveSagas, effectiveStandalones])
   const packedSagas = useMemo(() => binPackSagas(effectiveSagas, effectiveSagaCounts, sagaContainerPx), [effectiveSagas, effectiveSagaCounts, sagaContainerPx])
@@ -560,6 +420,7 @@ export default function MyListFeature() {
         <button
           key={value}
           id={`mylist-tab-${value}`}
+          data-cy={`tab-${value}`}
           role="tab"
           aria-selected={tab === value}
           aria-controls={`mylist-panel-${value}`}
@@ -601,128 +462,155 @@ export default function MyListFeature() {
         className="flex-1 flex flex-col min-h-0 outline-none"
       >
 
-      {isEmpty && (
-        <div className="flex-1 flex items-center justify-center">
-          <Text variant="small" className="text-muted-foreground text-center">
-            {tab === 'movies' ? t('myList.emptyMovies') : t('myList.emptySeries')}
-          </Text>
-        </div>
-      )}
-
       {/* Movies */}
-      {tab === 'movies' && !isEmpty && (
-        <div className="flex-1 flex gap-0 min-h-0 animate-fade-in">
-          <div ref={sagaContainerRef} className="flex-1 overflow-y-auto space-y-6 min-w-0">
-            {(() => {
-              const sagasSection = effectiveSagas.length > 0 && (
-                <div className="flex flex-col gap-4 pt-0.5 px-0.5">
-                  {packedSagas.map((row, rowIdx) => (
-                    <div key={rowIdx} className="flex flex-wrap gap-4">
-                      {row.map((group) => (
-                        <div
-                          key={group.id}
-                          data-scroll-id={group.id}
-                          className={`rounded-xl border border-border/40 hc:border-border px-3 pt-3 pb-2 flex flex-col gap-2 h-full bg-cream-100 dark:bg-gray-900 ${
-                            group.movies.some((m) => movieRecSource?.id === m.id) ? 'ring-2 ring-primary' : ''
-                          }`}
-                        >
-                          <SagaCard
-                            group={group}
-                            movieRatings={movieRatings}
-                            userRatings={userRatings?.movies}
-                            movieRecSource={movieRecSource}
-                            onRate={(id, r) => handleRate('movie', id, r)}
-                            onMovieClick={setSelectedMovieId}
-                            onSagaRec={handleSagaRec}
-                          />
+      {tab === 'movies' && (
+        <div className="flex-1 flex flex-col min-h-0">
+          {movieList.length > 0 && (
+            <div className="mb-4">
+              <FiltersPanel schema={movieFiltersSchema} filters={movieFilters} onChange={(next) => setMovieFilters(next)} />
+            </div>
+          )}
+          {movieList.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Text variant="small" className="text-muted-foreground text-center">{t('myList.emptyMovies')}</Text>
+            </div>
+          ) : !hasFilteredMovies ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Text variant="small" className="text-muted-foreground text-center">{t('myList.filters.noResults')}</Text>
+            </div>
+          ) : (
+            <div className="flex-1 flex gap-0 min-h-0 animate-fade-in">
+              <div ref={sagaContainerRef} className="flex-1 overflow-y-auto space-y-6 min-w-0">
+                {(() => {
+                  const sagasSection = effectiveSagas.length > 0 && (
+                    <div className="flex flex-col gap-4 pt-0.5 px-0.5">
+                      {packedSagas.map((row, rowIdx) => (
+                        <div key={rowIdx} className="flex flex-wrap gap-4">
+                          {row.map((group) => (
+                            <div
+                              key={group.id}
+                              data-scroll-id={group.id}
+                              className={`rounded-xl border border-border/40 hc:border-border px-3 pt-3 pb-2 flex flex-col gap-2 h-full bg-cream-100 dark:bg-gray-900 ${
+                                group.movies.some((m) => movieRecSource?.id === m.id) ? 'ring-2 ring-primary' : ''
+                              }`}
+                            >
+                              <SagaCard
+                                group={group}
+                                movieRatings={movieRatings}
+                                userRatings={userRatings?.movies}
+                                movieRecSource={movieRecSource}
+                                watchedMovies={watchedMovies}
+                                onRate={(id, r) => handleRate('movie', id, r)}
+                                onMovieClick={setSelectedMovieId}
+                                onSagaRec={handleSagaRec}
+                              />
+                            </div>
+                          ))}
                         </div>
                       ))}
                     </div>
-                  ))}
-                </div>
-              )
+                  )
 
-              const standaloneSection = effectiveStandalones.length > 0 && (
-                <div className="flex flex-col gap-3">
-                  {effectiveSagas.length > 0 && (
-                    <Text variant="caption" className="font-semibold uppercase tracking-[0.14em] text-muted-foreground mt-2">{t('myList.noSaga')}</Text>
-                  )}
-                  <div className="flex flex-wrap gap-4 px-0.5">
-                    {effectiveStandalones.map((movie, i) => {
-                      const rated = (movieRatings[movie.id] ?? 0) >= RATING_THRESHOLD
-                      return (
-                        <div key={movie.id} data-scroll-id={movie.id}>
-                          <MovieCard
-                            movie={movie}
-                            rating={userRatings?.movies?.[movie.id] ?? null}
-                            onRate={(r) => handleRate('movie', movie.id, r)}
-                            onClick={() => setSelectedMovieId(movie.id)}
-                            eager={i < 6}
-                            onShowRecommendations={rated ? () => handleMovieRec(movie) : undefined}
-                            isRecommendationSource={movieRecSource?.id === movie.id}
-                          />
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
+                  const standaloneSection = effectiveStandalones.length > 0 && (
+                    <div className="flex flex-col gap-3">
+                      {effectiveSagas.length > 0 && (
+                        <Text variant="caption" className="font-semibold uppercase tracking-[0.14em] text-muted-foreground mt-2">{t('myList.noSaga')}</Text>
+                      )}
+                      <div className="flex flex-wrap gap-4 px-0.5">
+                        {effectiveStandalones.map((movie, i) => {
+                          const rated = (movieRatings[movie.id] ?? 0) >= RATING_THRESHOLD
+                          return (
+                            <div key={movie.id} data-scroll-id={movie.id}>
+                              <MovieCard
+                                movie={movie}
+                                rating={userRatings?.movies?.[movie.id] ?? null}
+                                onRate={(r) => handleRate('movie', movie.id, r)}
+                                onClick={() => setSelectedMovieId(movie.id)}
+                                eager={i < 6}
+                                onShowRecommendations={rated ? () => handleMovieRec(movie) : undefined}
+                                isRecommendationSource={movieRecSource?.id === movie.id}
+                              />
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
 
-              return sagasFirst
-                ? <>{sagasSection}{standaloneSection}</>
-                : <>{standaloneSection}{sagasSection}</>
-            })()}
-          </div>
+                  return sagasFirst
+                    ? <>{sagasSection}{standaloneSection}</>
+                    : <>{standaloneSection}{sagasSection}</>
+                })()}
+              </div>
 
-          {movieRecSource && (
-            <RecommendationsDrawer
-              type="movie"
-              sourceId={movieRecSource.id}
-              sourceName={movieRecSource.name}
-              sourcePosterPath={movieRecSource.posterPath}
-              watchedIds={movieExcludeIds}
-              onSelect={setSelectedMovieId}
-              onClose={() => setMovieRecSource(null)}
-            />
+              {movieRecSource && (
+                <RecommendationsDrawer
+                  type="movie"
+                  sourceId={movieRecSource.id}
+                  sourceName={movieRecSource.name}
+                  sourcePosterPath={movieRecSource.posterPath}
+                  watchedIds={movieExcludeIds}
+                  onSelect={setSelectedMovieId}
+                  onClose={handleCloseMovieDrawer}
+                />
+              )}
+            </div>
           )}
         </div>
       )}
 
       {/* Series */}
-      {tab === 'series' && !isEmpty && (
-        <div className="flex-1 flex gap-0 min-h-0 animate-fade-in">
-          <div ref={seriesScrollRef} className="flex-1 overflow-y-auto min-w-0">
-            <div className="flex flex-wrap gap-4 pt-0.5 px-0.5">
-              {seriesList.map((series, i) => {
-                const rated = (seriesRatings[series.id] ?? 0) >= RATING_THRESHOLD
-                return (
-                  <div key={series.id} data-scroll-id={series.id}>
-                    <SeriesCard
-                      series={series}
-                      watchedEpisodes={seriesEpCounts.get(series.id) ?? 0}
-                      rating={userRatings?.series?.[series.id] ?? null}
-                      onRate={(r) => handleRate('series', series.id, r)}
-                      onClick={() => setSelectedSeriesId(series.id)}
-                      eager={i < 6}
-                      onShowRecommendations={rated ? () => handleSeriesRec(series) : undefined}
-                      isRecommendationSource={seriesRecSource?.id === series.id}
-                    />
-                  </div>
-                )
-              })}
+      {tab === 'series' && (
+        <div className="flex-1 flex flex-col min-h-0">
+          {seriesList.length > 0 && (
+            <div className="mb-4">
+              <FiltersPanel schema={seriesFiltersSchema} filters={seriesFilters} onChange={(next) => setSeriesFilters(next)} />
             </div>
-          </div>
+          )}
+          {seriesList.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Text variant="small" className="text-muted-foreground text-center">{t('myList.emptySeries')}</Text>
+            </div>
+          ) : !hasFilteredSeries ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Text variant="small" className="text-muted-foreground text-center">{t('myList.filters.noResults')}</Text>
+            </div>
+          ) : (
+            <div className="flex-1 flex gap-0 min-h-0 animate-fade-in">
+              <div ref={seriesScrollRef} className="flex-1 overflow-y-auto min-w-0">
+                <div className="flex flex-wrap gap-4 pt-0.5 px-0.5">
+                  {filteredSeriesList.map((series, i) => {
+                    const rated = (seriesRatings[series.id] ?? 0) >= RATING_THRESHOLD
+                    return (
+                      <div key={series.id} data-scroll-id={series.id}>
+                        <SeriesCard
+                          series={series}
+                          watchedEpisodes={seriesEpCounts.get(series.id) ?? 0}
+                          rating={userRatings?.series?.[series.id] ?? null}
+                          onRate={(r) => handleRate('series', series.id, r)}
+                          onClick={() => setSelectedSeriesId(series.id)}
+                          eager={i < 6}
+                          onShowRecommendations={rated ? () => handleSeriesRec(series) : undefined}
+                          isRecommendationSource={seriesRecSource?.id === series.id}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
 
-          {seriesRecSource && (
-            <RecommendationsDrawer
-              type="series"
-              sourceId={seriesRecSource.id}
-              sourceName={seriesRecSource.name}
-              sourcePosterPath={seriesRecSource.posterPath}
-              watchedIds={watchedSeriesIds}
-              onSelect={setSelectedSeriesId}
-              onClose={() => setSeriesRecSource(null)}
-            />
+              {seriesRecSource && (
+                <RecommendationsDrawer
+                  type="series"
+                  sourceId={seriesRecSource.id}
+                  sourceName={seriesRecSource.name}
+                  sourcePosterPath={seriesRecSource.posterPath}
+                  watchedIds={watchedSeriesIds}
+                  onSelect={setSelectedSeriesId}
+                  onClose={handleCloseSeriesDrawer}
+                />
+              )}
+            </div>
           )}
         </div>
       )}

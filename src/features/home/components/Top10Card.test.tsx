@@ -249,17 +249,17 @@ describe('Top10Card — ARIA structure', () => {
 // ── HC: yellow color classes ──────────────────────────────────────────────────
 
 describe('Top10Card — HC color classes on star scores', () => {
-  it('global mode score has hc:text-yellow-700 class', () => {
+  it('global mode score has hc:text-amber-700 class', () => {
     renderCard({ defaultMode: 'global' })
     const scoreSpan = document.querySelector('[aria-label="8.5 / 10"]')
-    expect(scoreSpan?.className).toMatch(/hc:text-yellow-700/)
+    expect(scoreSpan?.className).toMatch(/hc:text-amber-700/)
   })
 
-  it('user mode with personal rating has hc:text-yellow-700 class', () => {
+  it('user mode with personal rating has hc:text-amber-700 class', () => {
     const rated = ITEMS.map((item) => ({ ...item, personalRating: 4 as typeof item.personalRating }))
     renderCard({ defaultMode: 'user', userMovieItems: rated })
     const scoreSpan = document.querySelector('[aria-label="8.0 / 10"]')
-    expect(scoreSpan?.className).toMatch(/hc:text-yellow-700/)
+    expect(scoreSpan?.className).toMatch(/hc:text-amber-700/)
   })
 
   it('user mode with no rating has hc:text-muted-foreground class (no opacity in HC)', () => {

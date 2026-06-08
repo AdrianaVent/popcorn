@@ -77,23 +77,23 @@ describe('MovieCard — rendering', () => {
 
   it('renders the Similar button when showRecommendations is true (default)', () => {
     render(<MovieCard movie={makeMovie()} rating={null} onRate={jest.fn()} onClick={jest.fn()} />)
-    expect(screen.getByRole('button', { name: 'myList.recommendations.similar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'myList.recommendations.similar: Inception' })).toBeInTheDocument()
   })
 
   it('hides the Similar button when showRecommendations is false', () => {
     render(<MovieCard movie={makeMovie()} rating={null} onRate={jest.fn()} onClick={jest.fn()} showRecommendations={false} />)
-    expect(screen.queryByRole('button', { name: 'myList.recommendations.similar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'myList.recommendations.similar: Inception' })).not.toBeInTheDocument()
   })
 
   it('Similar button is disabled when onShowRecommendations is not provided', () => {
     render(<MovieCard movie={makeMovie()} rating={null} onRate={jest.fn()} onClick={jest.fn()} />)
-    expect(screen.getByRole('button', { name: 'myList.recommendations.similar' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'myList.recommendations.similar: Inception' })).toBeDisabled()
   })
 
   it('Similar button is enabled and calls handler when onShowRecommendations is provided', () => {
     const onRec = jest.fn()
     render(<MovieCard movie={makeMovie()} rating={4} onRate={jest.fn()} onClick={jest.fn()} onShowRecommendations={onRec} />)
-    const btn = screen.getByRole('button', { name: 'myList.recommendations.similar' })
+    const btn = screen.getByRole('button', { name: 'myList.recommendations.similar: Inception' })
     expect(btn).not.toBeDisabled()
     fireEvent.click(btn)
     expect(onRec).toHaveBeenCalledTimes(1)

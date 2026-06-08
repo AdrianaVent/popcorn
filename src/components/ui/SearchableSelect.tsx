@@ -16,9 +16,10 @@ type Props = {
   onChange: (next: string | number | null) => void
   placeholder?: string
   searchPlaceholder?: string
+  ariaLabel?: string
 }
 
-export default function SearchableSelect({ options, value, onChange, placeholder = '—', searchPlaceholder = '...' }: Props) {
+export default function SearchableSelect({ options, value, onChange, placeholder = '—', searchPlaceholder = '...', ariaLabel }: Props) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [activeIndex, setActiveIndex] = useState<number>(-1)
@@ -112,6 +113,7 @@ export default function SearchableSelect({ options, value, onChange, placeholder
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-controls={open ? listId : undefined}
+          aria-label={ariaLabel}
           className="flex-1 text-left truncate outline-none cursor-pointer"
         >
           <span className={clsx(!selected && 'text-muted-foreground')}>
