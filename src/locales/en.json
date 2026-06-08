@@ -21,6 +21,7 @@
     "inTheaters": "In theaters",
     "errorBoundary": "Something went wrong. You can try again or reload the page.",
     "clearFilters": "Clear filters",
+    "clear": "Clear",
     "close": "Close",
     "noOverview": "No synopsis available",
     "minuteUnit": "m",
@@ -280,7 +281,9 @@
     "emptySeries": "No series started yet",
     "watching": "Watching",
     "rate": "Rate it",
+    "rating": "Rating",
     "finishToRate": "Finish to rate",
+    "episodesProgress": "{{watched}} of {{total}} episodes watched",
     "noSaga": "Standalone films",
     "recommendations": {
       "title": "Recommendations",
@@ -294,6 +297,13 @@
       "emptyMovies": "No movies in your watchlist yet",
       "emptySeries": "No series in your watchlist yet",
       "tab": "To watch"
+    },
+    "filters": {
+      "search": "Search...",
+      "genres": "Genres",
+      "minRating": "Min. rating",
+      "clearFilters": "Clear filters",
+      "noResults": "No results match your filters"
     }
   },
   "dashboard": {

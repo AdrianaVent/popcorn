@@ -98,6 +98,13 @@ describe('Dashboard', () => {
       cy.get('button[class*="rounded-md"]').should('have.length.gte', 2)
     })
   })
+
+  it('has no axe violations on the home page (admin)', () => {
+    cy.wait('@discoverMovies')
+    cy.injectAxe()
+    // color-contrast disabled: yellow-500 star scores are a deliberate design choice
+    cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'], rules: { 'color-contrast': { enabled: false } } })
+  })
 })
 
 // ─── Mode toggle (guest) ──────────────────────────────────────────────────────
@@ -143,6 +150,13 @@ describe('Mode toggle (guest)', () => {
     cy.wait('@discoverMovies')
     cy.get('[role="group"]').last().contains('My profile').click()
     cy.contains('Mark some titles as watched to see your genres').should('be.visible')
+  })
+
+  it('has no axe violations on the home page (guest)', () => {
+    cy.wait('@discoverMovies')
+    cy.injectAxe()
+    // color-contrast disabled: yellow-500 star scores are a deliberate design choice
+    cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'], rules: { 'color-contrast': { enabled: false } } })
   })
 })
 
@@ -226,6 +240,13 @@ describe('Top10 card', () => {
     cy.contains('button', 'All genres').click()
     cy.get('[data-cy="top10-genre-dropdown"]').contains('Drama').click()
     cy.contains('button', 'Drama').should('be.visible')
+  })
+
+  it('has no axe violations on the Top10 card', () => {
+    cy.wait('@top10')
+    cy.injectAxe()
+    // color-contrast disabled: yellow-500 star scores are a deliberate design choice
+    cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'], rules: { 'color-contrast': { enabled: false } } })
   })
 })
 
@@ -322,5 +343,18 @@ describe('Release calendar interaction', () => {
       cy.contains('Calendar Test Movie').should('exist')
     })
     cy.get('[data-cy="calendar-watchlist-toggle"]').should('be.visible')
+  })
+
+  it('has no axe violations with calendar panel open', () => {
+    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
+      cy.contains('button', '15').click()
+      cy.contains('Calendar Test Movie').should('exist')
+    })
+    cy.injectAxe()
+    // Scope to the calendar card only — yellow-500 star scores elsewhere on the page
+    // are a deliberate design choice and excluded from this check
+    cy.contains('Release calendar').parents('.rounded-xl').first().then(($el) => {
+      cy.checkA11y($el[0], { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
   })
 })

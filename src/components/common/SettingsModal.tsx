@@ -69,6 +69,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             {languages.map(({ key, label }) => (
               <button
                 key={key}
+                data-cy={`lang-${key}`}
                 aria-pressed={language === key}
                 onClick={() => setLanguage(key, userId ?? undefined)}
                 className={clsx(optionBase, language === key ? optionActive : optionInactive)}
@@ -86,6 +87,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             {REGIONS.map(({ code, labelKey }) => (
               <button
                 key={code}
+                data-cy={`region-${code}`}
                 aria-pressed={region === code}
                 onClick={() => setRegion(code, userId ?? undefined)}
                 className={clsx(optionBase, region === code ? optionActive : optionInactive)}
@@ -103,6 +105,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             {themeModes.map(({ key, labelKey }) => (
               <button
                 key={key}
+                data-cy={`theme-${key}`}
                 onClick={() => setMode(key)}
                 aria-pressed={mode === key}
                 className={clsx(optionBase, mode === key ? optionActive : optionInactive)}

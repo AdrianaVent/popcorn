@@ -12,9 +12,10 @@ type Props = {
   value: number[]
   onChange: (next: number[]) => void
   placeholder?: string
+  ariaLabel?: string
 }
 
-export default function MultiSelectChips({ options, value, onChange, placeholder = '' }: Props) {
+export default function MultiSelectChips({ options, value, onChange, placeholder = '', ariaLabel }: Props) {
   const [open, setOpen] = useState(false)
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({})
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -76,6 +77,9 @@ export default function MultiSelectChips({ options, value, onChange, placeholder
       <button
         ref={triggerRef}
         onClick={() => (open ? setOpen(false) : openDropdown())}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
         className={clsx(
           'flex items-center gap-1 px-2 py-1 rounded-md border text-xs transition-colors cursor-pointer min-w-13',
           open ? 'border-primary/50 bg-muted' : 'border-border bg-background hover:bg-muted',

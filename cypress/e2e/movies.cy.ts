@@ -114,9 +114,9 @@ describe('Movies', () => {
   it('clear filters button resets active filters', () => {
     cy.wait('@tmdb')
     cy.get('[data-cy="filter-title"]').type('inception')
-    cy.contains('button', 'Clear filters').should('be.visible').click()
+    cy.get('[data-cy="clear-filters"]').should('be.visible').click()
     cy.get('[data-cy="filter-title"]').should('have.value', '')
-    cy.contains('button', 'Clear filters').should('not.exist')
+    cy.get('[data-cy="clear-filters"]').should('not.be.visible')
   })
 
   // ─── Access control ───────────────────────────────────────────
@@ -434,6 +434,45 @@ describe('Movies', () => {
       cy.get('[data-cy="filter-runtime_gte"] select').select('min')
       cy.get('[data-cy="filter-runtime_gte"] input[type="number"]').type('90')
       cy.wait('@runtime-filtered')
+    })
+  })
+
+  // ─── Accessibility ────────────────────────────────────────────
+
+  describe('Accessibility', () => {
+    const mockDetail = FIGHT_CLUB_DETAIL
+
+    it('has no axe violations on the movies list (admin)', () => {
+      cy.wait('@tmdb')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+
+    it('has no axe violations on the movies list (guest)', () => {
+      cy.intercept('GET', 'https://api.themoviedb.org/3/**', { fixture: 'movies.json' }).as('tmdb-guest')
+      cy.visitAsGuest('/movies')
+      cy.wait('@tmdb-guest')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+
+    it('has no axe violations with the detail modal open', () => {
+      cy.intercept('GET', /\/movie\/550(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/movie\/550\/watch\/providers/, { results: {} })
+      cy.intercept('GET', /\/movie\/550\/release_dates/, { results: [] })
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.get('[role="dialog"]').should('be.visible')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+
+    it('has no axe violations with filters panel open', () => {
+      cy.wait('@tmdb')
+      cy.get('[data-cy="filter-genre_ids"]').click()
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
     })
   })
 

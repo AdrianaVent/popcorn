@@ -175,17 +175,17 @@ describe('FilterFieldInput', () => {
 
     it('does not show clear button when value is 0', () => {
       render(<FilterFieldInput field={makeField({ type: 'star' })} value={0} filters={baseFilters} onChange={noop} />)
-      expect(screen.queryByLabelText('Clear')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText('common.clear')).not.toBeInTheDocument()
     })
 
     it('shows clear button when value is greater than 0', () => {
       render(<FilterFieldInput field={makeField({ type: 'star' })} value={6} filters={baseFilters} onChange={noop} />)
-      expect(screen.getByLabelText('Clear')).toBeInTheDocument()
+      expect(screen.getByLabelText('common.clear')).toBeInTheDocument()
     })
 
     it('calls onChange with 0 when clear is clicked', async () => {
       render(<FilterFieldInput field={makeField({ type: 'star' })} value={6} filters={baseFilters} onChange={noop} />)
-      await userEvent.click(screen.getByLabelText('Clear'))
+      await userEvent.click(screen.getByLabelText('common.clear'))
       expect(noop).toHaveBeenCalledWith({ field: 0 })
     })
 

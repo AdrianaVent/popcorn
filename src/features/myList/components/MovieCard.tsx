@@ -25,9 +25,10 @@ export default function MovieCard({ movie, rating, onRate, onClick, eager = fals
   return (
     <MediaCard posterPath={movie.poster_path} title={movie.title} onClick={onClick} eager={eager} isSelected={isRecommendationSource} variant="md">
       {year && <p className="text-[11px] text-muted-foreground">{year}</p>}
-      <StarRating value={rating} onChange={onRate} size={14} />
+      <StarRating value={rating} onChange={onRate} size={14} ariaLabel={t('myList.rating')} />
       {showRecommendations && <Tooltip content={t('myList.recommendations.rateFirst')} disabled={!!onShowRecommendations} placement="top">
         <button
+          aria-label={`${t('myList.recommendations.similar')}: ${movie.title}`}
           onClick={onShowRecommendations ? (e) => { e.stopPropagation(); onShowRecommendations() } : undefined}
           disabled={!onShowRecommendations}
           className={`text-[10px] px-1.5 py-0.5 rounded-md border transition-colors cursor-pointer disabled:cursor-not-allowed ${

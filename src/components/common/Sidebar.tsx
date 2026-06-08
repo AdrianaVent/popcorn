@@ -134,11 +134,11 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
 
             const label = t(item.labelKey)
             const el = item.onClick ? (
-              <button onClick={item.onClick} aria-label={label} className={itemClass(isActive)}>
+              <button onClick={item.onClick} aria-label={label} data-cy={`nav-${item.key}`} className={itemClass(isActive)}>
                 {content}
               </button>
             ) : (
-              <Link href={item.href ?? '/'} aria-label={label} aria-current={isActive ? 'page' : undefined} className={itemClass(isActive)}>
+              <Link href={item.href ?? '/'} aria-label={label} data-cy={`nav-${item.key}`} aria-current={isActive ? 'page' : undefined} className={itemClass(isActive)}>
                 {content}
               </Link>
             )
@@ -157,6 +157,7 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
             <button
               onClick={onLogout}
               aria-label={t('topbar.logout')}
+              data-cy="logout-button"
               className={itemClass(false)}
               suppressHydrationWarning
             >

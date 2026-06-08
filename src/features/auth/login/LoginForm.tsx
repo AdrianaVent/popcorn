@@ -68,7 +68,7 @@ export default function LoginForm({
       >
       {successMessage && (
         <div role="alert" className="mb-2 rounded-md bg-green-500/10 hc:bg-transparent hc:border hc:border-green-500 px-3 py-2 text-center">
-          <p className="text-caption text-green-600 font-medium">
+          <p className="text-caption text-green-700 dark:text-green-400 font-medium">
             {t('auth.reset.messageSuccess')}
           </p>
         </div>
@@ -76,7 +76,7 @@ export default function LoginForm({
 
       {errorMessage && (
         <div role="alert" data-cy="login-error" className="rounded-md bg-destructive/10 hc:bg-transparent hc:border hc:border-destructive px-3 py-1.5">
-          <Text variant="caption" className="text-destructive font-medium leading-tight">
+          <Text variant="caption" className="text-red-700 dark:text-red-400 font-medium leading-tight">
             {errorMessage}
           </Text>
         </div>

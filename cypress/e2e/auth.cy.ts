@@ -22,7 +22,7 @@ describe('Auth', () => {
 
   it('logs out and redirects to /login', () => {
     cy.visitAsAdmin('/movies')
-    cy.contains('Log out').click()
+    cy.get('[data-cy="logout-button"]').click()
     cy.url().should('include', '/login')
   })
 
@@ -43,5 +43,30 @@ describe('Auth', () => {
     // Next navigation — middleware sees no token and redirects to /login
     cy.visit('/users')
     cy.url().should('include', '/login')
+  })
+
+  // ─── Accessibility ────────────────────────────────────────────
+
+  it('has no axe violations on the login page', () => {
+    cy.visitWithEnglish('/login')
+    cy.injectAxe()
+    cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+  })
+
+  it('has no axe violations on the reset password form', () => {
+    cy.visitWithEnglish('/login')
+    cy.contains('Forgot password?').click()
+    cy.injectAxe()
+    cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+  })
+
+  it('has no axe violations with login error visible', () => {
+    cy.visitWithEnglish('/login')
+    cy.get('#email').type('wronguser')
+    cy.get('#password').type('WrongPass1!')
+    cy.get('button[type="submit"]').click()
+    cy.get('[data-cy="login-error"]').should('be.visible')
+    cy.injectAxe()
+    cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
   })
 })

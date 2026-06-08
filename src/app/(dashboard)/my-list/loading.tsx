@@ -34,6 +34,8 @@ export default function Loading() {
       <Header title={t('myList.title')} start={<BookmarkIcon size={32} strokeWidth={1.5} />} end={tabSwitcher} />
 
       <div className="mt-3 flex-1 min-h-0 flex flex-col gap-4">
+        <div className="rounded-lg border border-border bg-card/60 h-14 animate-pulse" />
+
         <div className="flex flex-wrap gap-4 pt-0.5 px-0.5">
           {Array.from({ length: CARD_COUNT }).map((_, i) => (
             <div key={i} className="flex flex-col gap-2 w-24 items-center">

@@ -27,17 +27,21 @@ export default function SeriesCard({ series, watchedEpisodes, rating, onRate, on
   return (
     <MediaCard posterPath={series.poster_path} title={series.name} onClick={onClick} eager={eager} isSelected={isRecommendationSource} variant="md">
       {total > 0 && (
-        <span className={clsx(
-          'text-[10px] px-1.5 py-0 rounded border whitespace-nowrap',
-          completed
-            ? 'bg-primary/10 border-primary/30 text-primary hc:bg-primary hc:border-primary hc:text-primary-foreground'
-            : 'bg-muted border-border/50 hc:border-border text-muted-foreground'
-        )}>
-          {watchedEpisodes}/{total} ep.
+        <span
+          role="img"
+          aria-label={t('myList.episodesProgress', { watched: watchedEpisodes, total })}
+          className={clsx(
+            'text-[10px] px-1.5 py-0 rounded border whitespace-nowrap',
+            completed
+              ? 'bg-primary/10 border-primary/30 text-primary hc:bg-primary hc:border-primary hc:text-primary-foreground'
+              : 'bg-muted border-border/50 hc:border-border text-muted-foreground'
+          )}
+        >
+          <span aria-hidden="true">{watchedEpisodes}/{total} ep.</span>
         </span>
       )}
 
-      <StarRating value={rating} onChange={completed ? onRate : undefined} readonly={!completed} size={14} />
+      <StarRating value={rating} onChange={completed ? onRate : undefined} readonly={!completed} size={14} ariaLabel={t('myList.rating')} />
 
       <Tooltip
         content={completed ? t('myList.recommendations.rateFirst') : t('myList.finishToRate')}
@@ -45,6 +49,7 @@ export default function SeriesCard({ series, watchedEpisodes, rating, onRate, on
         placement="top"
       >
         <button
+          aria-label={`${t('myList.recommendations.similar')}: ${series.name}`}
           onClick={onShowRecommendations ? (e) => { e.stopPropagation(); onShowRecommendations() } : undefined}
           disabled={!onShowRecommendations}
           className={`text-[10px] px-1.5 py-0.5 rounded-md border transition-colors cursor-pointer disabled:cursor-not-allowed ${

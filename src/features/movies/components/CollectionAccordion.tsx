@@ -137,17 +137,20 @@ export default function CollectionAccordion({ collection, movieId, onMovieSelect
   const toggleMovie   = useWatchedStore((s) => s.toggleMovie)
 
   const today = new Date().toISOString().slice(0, 10)
-  const releasedParts = (detail?.parts ?? [])
-    .filter((p) => p.release_date && p.release_date <= today)
+  // All parts with a known date — shown in the list (includes future releases)
+  const partsWithDate = (detail?.parts ?? [])
+    .filter((p) => !!p.release_date)
     .sort((a, b) => a.release_date.localeCompare(b.release_date))
-  const allReleasedWatched = releasedParts.length > 0 && releasedParts.every((p) => !!watchedMovies?.[p.id])
+  // Only already-released parts — eligible for the "mark saga watched" toggle
+  const eligibleParts = partsWithDate.filter((p) => p.release_date <= today)
+  const allEligibleWatched = eligibleParts.length > 0 && eligibleParts.every((p) => !!watchedMovies?.[p.id])
 
-  if (!loading && releasedParts.length <= 1) return null
+  if (!loading && partsWithDate.length <= 1) return null
 
   const handleMarkSaga = () => {
-    const toToggle = allReleasedWatched
-      ? releasedParts
-      : releasedParts.filter((p) => !watchedMovies?.[p.id])
+    const toToggle = allEligibleWatched
+      ? eligibleParts
+      : eligibleParts.filter((p) => !watchedMovies?.[p.id])
     toToggle.forEach((p) => toggleMovie(userKey, {
       id: p.id,
       title: p.title,
@@ -158,6 +161,7 @@ export default function CollectionAccordion({ collection, movieId, onMovieSelect
       original_language: '',
       collection_id: collection.id,
       collection_name: collection.name,
+      genre_ids: p.genre_ids ?? [],
     }))
   }
 
@@ -173,14 +177,14 @@ export default function CollectionAccordion({ collection, movieId, onMovieSelect
           </Text>
         </div>
       }
-      actions={role !== 'admin' && releasedParts.length > 0 ? (
+      actions={role !== 'admin' && eligibleParts.length > 0 ? (
         <WatchedToggleButton
-          isWatched={allReleasedWatched}
-          label={allReleasedWatched ? t('movies.detail.watched') : t('movies.detail.markSagaWatched')}
+          isWatched={allEligibleWatched}
+          label={allEligibleWatched ? t('movies.detail.watched') : t('movies.detail.markSagaWatched')}
           onClick={handleMarkSaga}
         />
       ) : undefined}
-      items={releasedParts}
+      items={partsWithDate}
       loading={loading}
       renderItem={(part, i) => (
         <SagaMovieItem

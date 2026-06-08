@@ -15,13 +15,14 @@ const INPUT_CLS = 'px-2 py-1 text-xs border border-border rounded-md bg-backgrou
 const NO_SPIN = '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
 
 function NumberWithUnitsInput<T extends Record<string, unknown>>({
-  field, value, filters, onChange, t,
+  field, value, filters, onChange, t, ariaLabel,
 }: {
   field: FilterField<T>
   value: T[keyof T]
   filters: T
   onChange: (next: T) => void
   t: (k: string) => string
+  ariaLabel?: string
 }) {
   const units = field.units as FilterUnit[]
   const defaultUnit = units.find((u) => u.value === 'h') ?? units[units.length - 1]
@@ -34,6 +35,7 @@ function NumberWithUnitsInput<T extends Record<string, unknown>>({
     <div data-cy={`filter-${String(field.key)}`} className="flex items-center gap-1">
       <input
         type="number"
+        aria-label={ariaLabel}
         value={displayValue}
         min={field.min ?? 1}
         step={unit.multiplier === 1 ? 1 : 0.5}
@@ -46,6 +48,7 @@ function NumberWithUnitsInput<T extends Record<string, unknown>>({
       />
       <select
         value={unit.value}
+        aria-label={ariaLabel ? `${ariaLabel} unit` : undefined}
         onChange={(e) => {
           const next = units.find((u) => u.value === e.target.value) ?? defaultUnit
           setUnit(next)
@@ -66,9 +69,10 @@ type Props<T extends Record<string, unknown>> = {
   value: T[keyof T]
   filters: T
   onChange: (next: T) => void
+  ariaLabel?: string
 }
 
-export default function FilterFieldInput<T extends Record<string, unknown>>({ field, value, filters, onChange }: Props<T>) {
+export default function FilterFieldInput<T extends Record<string, unknown>>({ field, value, filters, onChange, ariaLabel }: Props<T>) {
   const { t } = useTranslation()
 
   switch (field.type) {
@@ -76,19 +80,21 @@ export default function FilterFieldInput<T extends Record<string, unknown>>({ fi
       return (
         <input
           data-cy={`filter-${String(field.key)}`}
+          aria-label={ariaLabel}
           value={typeof value === 'string' ? value : ''}
           onChange={(e) => onChange(updateFilterValue(filters, field.key, e.target.value as T[keyof T]))}
-          className="w-44 px-2 py-1 text-xs border border-border rounded-md bg-background text-foreground outline-none focus:border-primary/50 transition-colors"
+          className={`px-2 py-1 text-xs border border-border rounded-md bg-background text-foreground outline-none focus:border-primary/50 transition-colors ${field.grow ? 'w-full' : 'w-44'}`}
         />
       )
 
     case 'number':
       if (field.units?.length) {
-        return <NumberWithUnitsInput field={field} value={value} filters={filters} onChange={onChange} t={t} />
+        return <NumberWithUnitsInput field={field} value={value} filters={filters} onChange={onChange} t={t} ariaLabel={ariaLabel} />
       }
       return (
         <input
           type="number"
+          aria-label={ariaLabel}
           value={typeof value === 'number' ? value : ''}
           min={field.min}
           max={field.max}
@@ -101,17 +107,18 @@ export default function FilterFieldInput<T extends Record<string, unknown>>({ fi
 
     case 'star':
       return (
-        <div data-cy={`filter-${String(field.key)}`} className="flex items-center gap-1.5">
+        <div data-cy={`filter-${String(field.key)}`} role="group" aria-label={ariaLabel} className="flex items-center gap-1.5">
           <StarRating
             value={typeof value === 'number' && value > 0 ? tmdbToStarRating(value) : null}
             onChange={(rating) => onChange(updateFilterValue(filters, field.key, (rating * 2) as T[keyof T]))}
+            ariaLabel={ariaLabel}
             size={16}
           />
           {typeof value === 'number' && value > 0 && (
             <button
               onClick={() => onChange(updateFilterValue(filters, field.key, 0 as T[keyof T]))}
               className="text-[13px] leading-none text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Clear"
+              aria-label={t('common.clear')}
             >
               ×
             </button>
@@ -123,6 +130,7 @@ export default function FilterFieldInput<T extends Record<string, unknown>>({ fi
       return (
         <input
           type="checkbox"
+          aria-label={ariaLabel}
           checked={Boolean(value)}
           onChange={(e) => onChange(updateFilterValue(filters, field.key, e.target.checked as T[keyof T]))}
         />
@@ -133,6 +141,7 @@ export default function FilterFieldInput<T extends Record<string, unknown>>({ fi
         <DatePicker
           value={typeof value === 'string' && value ? value : undefined}
           onChange={(v) => onChange(updateFilterValue(filters, field.key, (v ?? '') as T[keyof T]))}
+          aria-label={ariaLabel}
         />
       )
 
@@ -141,6 +150,7 @@ export default function FilterFieldInput<T extends Record<string, unknown>>({ fi
       return (
         <select
           data-cy={`filter-${String(field.key)}`}
+          aria-label={ariaLabel}
           value={typeof value === 'string' ? value : ''}
           onChange={(e) =>
             onChange(updateFilterValue(filters, field.key, (e.target.value || undefined) as T[keyof T]))
@@ -165,6 +175,7 @@ export default function FilterFieldInput<T extends Record<string, unknown>>({ fi
           onChange={(next) => onChange(updateFilterValue(filters, field.key, (next ?? '') as T[keyof T]))}
           placeholder={t('common.all')}
           searchPlaceholder={t('common.search')}
+          ariaLabel={ariaLabel}
         />
       )
 
@@ -177,6 +188,7 @@ export default function FilterFieldInput<T extends Record<string, unknown>>({ fi
           valueTo={typeof filters[field.keyTo] === 'number' ? filters[field.keyTo] as number : null}
           onChangeFrom={(v) => onChange(updateFilterValue(filters, field.key, (v ?? '') as T[keyof T]))}
           onChangeTo={(v) => onChange(updateFilterValue(filters, field.keyTo!, (v ?? '') as T[keyof T]))}
+          ariaLabel={ariaLabel}
         />
       )
 
@@ -189,6 +201,7 @@ export default function FilterFieldInput<T extends Record<string, unknown>>({ fi
             value={Array.isArray(value) ? (value as number[]) : []}
             onChange={(next) => onChange(updateFilterValue(filters, field.key, next as T[keyof T]))}
             placeholder={t('common.all')}
+            ariaLabel={ariaLabel}
           />
         </div>
       )

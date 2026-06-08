@@ -33,7 +33,7 @@ export default function ResetPasswordForm({
       </Text>
 
       <div className="rounded-md bg-yellow-500/10 px-3 py-2">
-        <Text variant="caption" className="text-yellow-600 dark:text-yellow-400 font-medium">
+        <Text variant="caption" className="text-yellow-800 dark:text-yellow-300 font-medium">
           {t('login.resetMockNotice')}
         </Text>
       </div>

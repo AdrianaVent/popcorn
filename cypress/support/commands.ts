@@ -33,9 +33,13 @@ Cypress.Commands.add('login', (username: string, password: string) => {
   return cy.request({ method: 'POST', url: '/api/auth/login', body: { username, password } })
 })
 
-// Visit the login page — unauthenticated, no language override needed
+// Visit unauthenticated with English forced via localStorage
 Cypress.Commands.add('visitWithEnglish', (path: string) => {
-  cy.visit(path)
+  cy.visit(path, {
+    onBeforeLoad: (win: Window) => {
+      forceEnglish(win)
+    },
+  })
 })
 
 // Login + force English for that user + seed userStore + visit

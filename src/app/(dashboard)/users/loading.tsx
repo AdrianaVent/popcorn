@@ -5,8 +5,6 @@ import PageSkeleton from '@/components/ui/PageSkeleton'
 import ExportButton from '@/components/common/ExportButton'
 import IconButton from '@/components/ui/IconButton'
 import { PlusCircleIcon, UploadIcon } from '@/components/icons'
-import { staticUserFiltersSchema } from '@/features/users/userFilters.schema'
-import type { FilterField } from '@/types/table'
 
 export default function Loading() {
   const { t } = useTranslation()
@@ -32,8 +30,6 @@ export default function Loading() {
       }
       hasImage={false}
       cols={5}
-      filterTitleKey="users.filters.panel"
-      filterSchema={staticUserFiltersSchema as FilterField<Record<string, unknown>>[]}
     />
   )
 }
