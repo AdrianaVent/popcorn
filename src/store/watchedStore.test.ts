@@ -266,6 +266,112 @@ describe('per-season watched count derivation', () => {
   })
 })
 
+describe('purgeUpcomingMovies', () => {
+  const past   = '2020-01-01'
+  const future = '2099-01-01'
+
+  const pastMovie: StoredMovie   = { ...mockMovie, id: 2, release_date: past }
+  const futureMovie: StoredMovie = { ...mockMovie, id: 3, release_date: future }
+
+  it('removes a movie whose release_date is in the future', () => {
+    useWatchedStore.getState().toggleMovie('user1', futureMovie)
+    useWatchedStore.getState().purgeUpcomingMovies('user1')
+    expect(useWatchedStore.getState().movies['user1']?.[3]).toBeUndefined()
+  })
+
+  it('keeps a movie whose release_date is in the past', () => {
+    useWatchedStore.getState().toggleMovie('user1', pastMovie)
+    useWatchedStore.getState().purgeUpcomingMovies('user1')
+    expect(useWatchedStore.getState().movies['user1'][2]).toBeDefined()
+  })
+
+  it('keeps a movie with no release_date', () => {
+    const undated: StoredMovie = { ...mockMovie, id: 4, release_date: '' }
+    useWatchedStore.getState().toggleMovie('user1', undated)
+    useWatchedStore.getState().purgeUpcomingMovies('user1')
+    expect(useWatchedStore.getState().movies['user1'][4]).toBeDefined()
+  })
+
+  it('removes only future movies when past and future coexist', () => {
+    useWatchedStore.getState().toggleMovie('user1', pastMovie)
+    useWatchedStore.getState().toggleMovie('user1', futureMovie)
+    useWatchedStore.getState().purgeUpcomingMovies('user1')
+    expect(useWatchedStore.getState().movies['user1'][2]).toBeDefined()
+    expect(useWatchedStore.getState().movies['user1']?.[3]).toBeUndefined()
+  })
+
+  it('does not affect other users', () => {
+    useWatchedStore.getState().toggleMovie('user1', futureMovie)
+    useWatchedStore.getState().toggleMovie('user2', futureMovie)
+    useWatchedStore.getState().purgeUpcomingMovies('user1')
+    expect(useWatchedStore.getState().movies['user2'][3]).toBeDefined()
+  })
+
+  it('is a no-op when the user has no upcoming movies', () => {
+    useWatchedStore.getState().toggleMovie('user1', pastMovie)
+    useWatchedStore.getState().purgeUpcomingMovies('user1')
+    expect(useWatchedStore.getState().movies['user1'][2]).toBeDefined()
+  })
+
+  it('is a no-op when the user has no watched movies at all', () => {
+    expect(() => useWatchedStore.getState().purgeUpcomingMovies('user1')).not.toThrow()
+  })
+})
+
+describe('purgeUpcomingSeries', () => {
+  const past   = '2020-01-01'
+  const future = '2099-01-01'
+
+  const pastSeries: StoredSeries   = { ...mockSeries, id: 20, first_air_date: past }
+  const futureSeries: StoredSeries = { ...mockSeries, id: 21, first_air_date: future }
+
+  it('removes a series whose first_air_date is in the future', () => {
+    useWatchedStore.getState().toggleEpisode('user1', 21, 201, 1, futureSeries)
+    useWatchedStore.getState().purgeUpcomingSeries('user1')
+    expect(useWatchedStore.getState().seriesData['user1']?.[21]).toBeUndefined()
+    expect(useWatchedStore.getState().episodes['user1']?.[21]).toBeUndefined()
+  })
+
+  it('keeps a series whose first_air_date is in the past', () => {
+    useWatchedStore.getState().toggleEpisode('user1', 20, 101, 1, pastSeries)
+    useWatchedStore.getState().purgeUpcomingSeries('user1')
+    expect(useWatchedStore.getState().seriesData['user1'][20]).toBeDefined()
+    expect(useWatchedStore.getState().episodes['user1'][20]).toBeDefined()
+  })
+
+  it('keeps a series with no first_air_date', () => {
+    const undated: StoredSeries = { ...mockSeries, id: 22, first_air_date: '' }
+    useWatchedStore.getState().toggleEpisode('user1', 22, 301, 1, undated)
+    useWatchedStore.getState().purgeUpcomingSeries('user1')
+    expect(useWatchedStore.getState().seriesData['user1'][22]).toBeDefined()
+  })
+
+  it('removes only future series when past and future coexist', () => {
+    useWatchedStore.getState().toggleEpisode('user1', 20, 101, 1, pastSeries)
+    useWatchedStore.getState().toggleEpisode('user1', 21, 201, 1, futureSeries)
+    useWatchedStore.getState().purgeUpcomingSeries('user1')
+    expect(useWatchedStore.getState().seriesData['user1'][20]).toBeDefined()
+    expect(useWatchedStore.getState().seriesData['user1']?.[21]).toBeUndefined()
+  })
+
+  it('does not affect other users', () => {
+    useWatchedStore.getState().toggleEpisode('user1', 21, 201, 1, futureSeries)
+    useWatchedStore.getState().toggleEpisode('user2', 21, 201, 1, futureSeries)
+    useWatchedStore.getState().purgeUpcomingSeries('user1')
+    expect(useWatchedStore.getState().seriesData['user2'][21]).toBeDefined()
+  })
+
+  it('is a no-op when the user has no upcoming series', () => {
+    useWatchedStore.getState().toggleEpisode('user1', 20, 101, 1, pastSeries)
+    useWatchedStore.getState().purgeUpcomingSeries('user1')
+    expect(useWatchedStore.getState().seriesData['user1'][20]).toBeDefined()
+  })
+
+  it('is a no-op when the user has no watched series at all', () => {
+    expect(() => useWatchedStore.getState().purgeUpcomingSeries('user1')).not.toThrow()
+  })
+})
+
 describe('auto-remove from watchlist', () => {
   it('removes movie from watchlist when marked as watched', () => {
     useWatchlistStore.getState().toggleMovie('user1', watchlistMovie)

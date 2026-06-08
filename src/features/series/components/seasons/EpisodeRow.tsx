@@ -18,6 +18,8 @@ type Props = {
 export default function EpisodeRow({ episode, seriesId, userId, seasonNumber, seriesSnapshot, canWatch }: Props) {
   const watched = useWatchedStore((s) => !!s.episodes[userId]?.[seriesId]?.[episode.id])
   const num = String(episode.episode_number).padStart(2, '0')
+  const today = new Date().toISOString().slice(0, 10)
+  const hasAired = !episode.air_date || episode.air_date <= today
 
   return (
     <div className={clsx(
@@ -34,7 +36,7 @@ export default function EpisodeRow({ episode, seriesId, userId, seasonNumber, se
       {episode.runtime != null && (
         <span className="text-[11px] text-muted-foreground shrink-0">{episode.runtime} min</span>
       )}
-      {canWatch && episode.runtime != null && (
+      {canWatch && hasAired && episode.runtime != null && (
         <WatchedEpisodeButton
           episodeId={episode.id}
           seriesId={seriesId}

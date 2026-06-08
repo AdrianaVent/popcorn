@@ -1,4 +1,5 @@
 import './commands'
+import 'cypress-axe'
 
 // Disable CSS animations and transitions globally so tests don't flake on
 // opacity/transform states mid-animation (e.g. animate-fade-in on tab sections).

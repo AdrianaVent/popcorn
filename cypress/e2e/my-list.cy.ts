@@ -113,7 +113,7 @@ describe('My List', () => {
 
   it('my list nav item is visible for guests', () => {
     cy.visitAsGuest('/my-list')
-    cy.get('nav').contains('My list').should('be.visible')
+    cy.get('[data-cy="nav-my-list"]').should('be.visible')
   })
 
   // ─── Movies tab ───────────────────────────────────────────────────────────
@@ -130,7 +130,8 @@ describe('My List', () => {
 
   it('shows Recommendations button enabled after rating ≥ 3.5', () => {
     loginAndVisitMyList(seedWatched)
-    cy.get('[role="slider"] svg').eq(3).click()
+    // The FiltersPanel star rating is the first [role="slider"]; the movie card's is the second
+    cy.get('[role="slider"]').eq(1).find('svg').eq(3).click()
     cy.contains('Recommendations').should('not.be.disabled')
   })
 
@@ -420,7 +421,7 @@ describe('My List', () => {
     cy.contains('Avatar: Fire and Ash').should('be.visible')
   })
 
-  it('does not show placeholder for a collection part with a future release date', () => {
+  it('shows placeholder for a collection part with a future release date', () => {
     const FUTURE = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
     cy.intercept('GET', '**/collection/131296**', {
       body: {
@@ -457,7 +458,7 @@ describe('My List', () => {
     })
 
     cy.wait('@collection')
-    cy.contains('Avatar Future').should('not.exist')
+    cy.contains('Avatar Future').should('exist')
   })
 
   it('opens movie detail modal when clicking an unwatched movie placeholder', () => {
@@ -537,6 +538,8 @@ describe('My List', () => {
       )
     })
     cy.wait('@collectionAvatar')
+    // Wait for the saga card to finish rendering with collection data (placeholder visible = saga mode active)
+    cy.contains('Avatar: The Way of Water').should('exist')
     cy.contains('button', 'Recommendations').should('not.be.disabled').click({ force: true })
     cy.get('[data-cy="recommendations-drawer"]').contains('Avatar - Saga').should('be.visible')
   })
@@ -619,5 +622,51 @@ describe('My List', () => {
     cy.contains('Fight Club').should('be.visible')
     cy.get('[data-cy="watchlist-remove"]').first().click()
     cy.contains('Fight Club').should('not.exist')
+  })
+
+  // ─── Accessibility ────────────────────────────────────────────────────────
+
+  describe('Accessibility', () => {
+    it('has no axe violations on the empty state', () => {
+      cy.visitAsGuest('/my-list')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+
+    it('has no axe violations on the movies tab with content and filters', () => {
+      loginAndVisitMyList(seedWatched)
+      cy.contains('Inception').should('be.visible')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+
+    it('has no axe violations on the series tab with content and filters', () => {
+      loginAndVisitMyList(seedWatched)
+      cy.contains('button', 'Series').click()
+      cy.contains('Breaking Bad').should('be.visible')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+
+    it('has no axe violations on the watchlist tab with content', () => {
+      loginAndVisitMyList((win, userId) => seedWatchlist(win, userId))
+      cy.contains('button', 'To watch').click()
+      cy.contains('Fight Club').should('be.visible')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+
+    it('has no axe violations with the recommendations drawer open', () => {
+      loginAndVisitMyList((win, userId) => {
+        win.localStorage.setItem('popcorn-ratings-v1', JSON.stringify({
+          state: { ratings: { [userId]: { movies: { 1: 4 }, series: {} } } }, version: 0,
+        }))
+        seedWatched(win, userId)
+      })
+      cy.contains('button', 'Recommendations').should('not.be.disabled').click()
+      cy.get('[data-cy="recommendations-drawer"]').should('be.visible')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
   })
 })

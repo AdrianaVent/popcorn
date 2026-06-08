@@ -54,7 +54,7 @@ function ItemScore({ item, mode }: { item: Top10Item; mode: 'user' | 'global' })
   if (mode === 'user' && item.personalRating !== null) {
     const score = (item.personalRating * 2).toFixed(1)
     return (
-      <span aria-label={`${score} / 10`} className="text-xs font-semibold text-yellow-500 dark:text-yellow-300 hc:text-yellow-700 shrink-0 tabular-nums">
+      <span aria-label={`${score} / 10`} className="text-xs font-semibold text-yellow-500 dark:text-yellow-300 hc:text-amber-700 shrink-0 tabular-nums">
         <span aria-hidden="true">★ </span>{score}
       </span>
     )
@@ -64,7 +64,7 @@ function ItemScore({ item, mode }: { item: Top10Item; mode: 'user' | 'global' })
     <span aria-label={`${score} / 10`} className={`text-xs font-semibold shrink-0 tabular-nums ${
       mode === 'user'
         ? 'text-muted-foreground/40 hc:text-muted-foreground'
-        : 'text-yellow-500 dark:text-yellow-300 hc:text-yellow-700'
+        : 'text-yellow-500 dark:text-yellow-300 hc:text-amber-700'
     }`}>
       <span aria-hidden="true">★ </span>{score}
     </span>

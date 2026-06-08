@@ -41,8 +41,8 @@ export const useLanguageStore = create<LanguageState>()(
       },
       applyUserLanguage: (userId) => {
         const state = get()
-        const lang = userId ? (state.userLanguages[userId] ?? 'es') : 'es'
-        const region = userId ? (state.userRegions[userId] ?? 'ES') : 'ES'
+        const lang = userId ? (state.userLanguages[userId] ?? state.language) : state.language
+        const region = userId ? (state.userRegions[userId] ?? state.region) : state.region
         i18n.changeLanguage(lang)
         set({ language: lang, region })
       },

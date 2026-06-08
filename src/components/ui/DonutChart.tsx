@@ -13,16 +13,16 @@ import type { GenreEntry } from '@/features/home/hooks/useMovieGenres'
 // Interleaved order: each adjacent pair is ~180° apart on the hue wheel
 // to maximise contrast between neighbouring slices in the donut
 const COLORS_LIGHT = [
-  '#DC2626', // red       0°
-  '#1D4ED8', // blue    225°
-  '#EA580C', // orange   25°
-  '#CA8A04', // gold     43°
-  '#15803D', // green   142°
-  '#BE185D', // pink    331°
-  '#7C3AED', // violet  263°
-  '#0891B2', // cyan    197°
-  '#65A30D', // lime     87° (brighter/more yellow than green)
-  '#A21CAF', // fuchsia 296° (fills violet–pink gap, replaces brown)
+  '#DC2626', // red       0°   4.60:1 on card bg
+  '#1D4ED8', // blue    225°   6.32:1
+  '#C2410C', // orange   25°   4.91:1 (darker than EA580C which was 3.34:1)
+  '#92400E', // amber    43°   6.76:1 (darker than CA8A04 which was 2.76:1)
+  '#15803D', // green   142°   4.72:1
+  '#BE185D', // pink    331°   5.73:1
+  '#7C3AED', // violet  263°   5.36:1
+  '#0E7490', // cyan    197°   5.01:1 (darker than 0891B2 which was 3.43:1)
+  '#4D7C0F', // lime     87°   4.68:1 (darker than 65A30D which was 2.85:1)
+  '#A21CAF', // fuchsia 296°   5.94:1
 ]
 const COLORS_DARK = [
   '#FCA5A5', // coral     0°
@@ -176,8 +176,9 @@ export default function DonutChart({
           <div ref={containerRef} className="flex-1 min-h-0 flex items-center justify-center overflow-hidden" aria-hidden="true">
             <div className="relative" style={{ width: chartPx, height: chartPx }}>
               {chartPx > 0 && <ResponsiveContainer width={chartPx} height={chartPx}>
-                <PieChart>
+                <PieChart tabIndex={-1}>
                   <Pie
+                    rootTabIndex={-1}
                     data={data.map((d, i) => ({
                       ...d,
                       fill: colors[i % colors.length],

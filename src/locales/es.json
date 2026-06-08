@@ -21,6 +21,7 @@
     "inTheaters": "En cartelera",
     "errorBoundary": "Algo ha ido mal. Puedes volver a intentarlo o recargar la página.",
     "clearFilters": "Limpiar filtros",
+    "clear": "Borrar",
     "close": "Cerrar",
     "noOverview": "Sinopsis no disponible",
     "minuteUnit": "min",
@@ -280,7 +281,9 @@
     "emptySeries": "Todavía no has empezado ninguna serie",
     "watching": "Viendo",
     "rate": "Valórala",
+    "rating": "Valoración",
     "finishToRate": "Termínala para valorarla",
+    "episodesProgress": "{{watched}} de {{total}} episodios vistos",
     "noSaga": "Películas independientes",
     "recommendations": {
       "title": "Recomendaciones",
@@ -294,6 +297,13 @@
       "emptyMovies": "Aún no hay películas en tu lista",
       "emptySeries": "Aún no hay series en tu lista",
       "tab": "Por ver"
+    },
+    "filters": {
+      "search": "Buscar...",
+      "genres": "Géneros",
+      "minRating": "Valoración mín.",
+      "clearFilters": "Quitar filtros",
+      "noResults": "Ningún resultado coincide con los filtros"
     }
   },
   "dashboard": {

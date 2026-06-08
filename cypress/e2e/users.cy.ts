@@ -210,6 +210,30 @@ describe('Users', () => {
     cy.task('deleteUser', 'cy_import_2')
   })
 
+  // ─── Accessibility ────────────────────────────────────────────
+
+  describe('Accessibility', () => {
+    it('has no axe violations on the users list', () => {
+      cy.contains('cypress_admin').should('be.visible')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+
+    it('has no axe violations with the Add user modal open', () => {
+      cy.contains('Add user').click()
+      cy.get('[role="dialog"]').should('be.visible')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+
+    it('has no axe violations with the Import modal open', () => {
+      cy.contains('Import').click()
+      cy.get('[role="dialog"]').should('be.visible')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+  })
+
   after(() => {
     cy.task('deleteUser', 'cy_tempuser')
     cy.task('deleteUser', 'cy_renamed')

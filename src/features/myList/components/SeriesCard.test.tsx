@@ -66,14 +66,14 @@ describe('SeriesCard — rendering', () => {
     expect(screen.getByRole('button', { name: 'Breaking Bad' })).toBeInTheDocument()
   })
 
-  it('renders episode progress badge when total > 0', () => {
+  it('renders episode progress badge with aria-label when total > 0', () => {
     render(<SeriesCard series={makeSeries()} watchedEpisodes={10} rating={null} onRate={jest.fn()} onClick={jest.fn()} />)
-    expect(screen.getByText('10/62 ep.')).toBeInTheDocument()
+    expect(screen.getByLabelText('myList.episodesProgress')).toBeInTheDocument()
   })
 
   it('does not render episode badge when total is 0', () => {
     render(<SeriesCard series={makeSeries({ number_of_episodes: 0 })} watchedEpisodes={0} rating={null} onRate={jest.fn()} onClick={jest.fn()} />)
-    expect(screen.queryByText(/ep\./)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('myList.episodesProgress')).not.toBeInTheDocument()
   })
 
   it('StarRating is readonly when series is not completed', () => {
@@ -88,13 +88,13 @@ describe('SeriesCard — rendering', () => {
 
   it('Similar button is disabled when onShowRecommendations is not provided', () => {
     render(<SeriesCard series={makeSeries()} watchedEpisodes={0} rating={null} onRate={jest.fn()} onClick={jest.fn()} />)
-    expect(screen.getByRole('button', { name: 'myList.recommendations.similar' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'myList.recommendations.similar: Breaking Bad' })).toBeDisabled()
   })
 
   it('Similar button is enabled and calls handler when provided', () => {
     const onRec = jest.fn()
     render(<SeriesCard series={makeSeries()} watchedEpisodes={62} rating={4} onRate={jest.fn()} onClick={jest.fn()} onShowRecommendations={onRec} />)
-    const btn = screen.getByRole('button', { name: 'myList.recommendations.similar' })
+    const btn = screen.getByRole('button', { name: 'myList.recommendations.similar: Breaking Bad' })
     expect(btn).not.toBeDisabled()
     fireEvent.click(btn)
     expect(onRec).toHaveBeenCalledTimes(1)

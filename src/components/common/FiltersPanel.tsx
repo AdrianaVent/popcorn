@@ -190,24 +190,33 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
             </div>
           )}
 
-          <span
-            aria-hidden="true"
-            className={clsx('ml-auto shrink-0 text-muted-foreground transition-transform duration-200', open && 'rotate-180')}
-          >
-            <ChevronDownIcon size={15} />
-          </span>
-        </button>
+          <div className="ml-auto flex items-center gap-2 shrink-0">
+            <span
+              data-cy="clear-filters"
+              onClick={(e) => { e.stopPropagation(); handleClear() }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); handleClear() } }}
+              aria-label={t('common.clearFilters')}
+              className={clsx(
+                'flex items-center gap-1 text-[11px] border rounded-md px-1.5 py-0.5 transition-colors cursor-pointer',
+                activeCount > 0
+                  ? 'text-muted-foreground hover:text-foreground border-border hover:bg-muted'
+                  : 'invisible pointer-events-none border-transparent',
+              )}
+            >
+              <XIcon size={11} aria-hidden />
+              <span aria-hidden="true">{t('common.clearFilters')}</span>
+            </span>
 
-        {activeCount > 0 && (
-          <button
-            onClick={handleClear}
-            aria-label={t('common.clearFilters')}
-            className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground border border-border rounded-md px-1.5 py-0.5 hover:bg-muted transition-colors cursor-pointer shrink-0"
-          >
-            <XIcon size={11} aria-hidden />
-            <span aria-hidden="true">{t('common.clearFilters')}</span>
-          </button>
-        )}
+            <span
+              aria-hidden="true"
+              className={clsx('text-muted-foreground transition-transform duration-200', open && 'rotate-180')}
+            >
+              <ChevronDownIcon size={15} />
+            </span>
+          </div>
+        </button>
       </div>
 
       {/* Body */}
@@ -218,20 +227,27 @@ export default function FiltersPanel<T extends Record<string, unknown>>({
       >
         <div className="overflow-hidden min-h-0">
         <div
-          className="flex items-center gap-4 px-4 pb-3 border-t border-border pt-3 overflow-x-auto"
+          role="group"
+          aria-label={t(titleKey)}
+          className="overflow-x-auto px-4 pb-3 border-t border-border pt-3"
           style={{ opacity: open ? 1 : 0, transition: 'opacity 200ms ease-in-out' }}
         >
-          {schema.map((field, index) => (
-            <div key={String(field.key)} className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {t(field.label)}
-              </span>
-              <FilterFieldInput field={field} value={filters[field.key]} filters={filters} onChange={onChange} />
-              {index < schema.length - 1 && (
-                <div className="w-px h-6 bg-border mx-2" />
-              )}
-            </div>
-          ))}
+          <div className="flex items-center gap-4 min-w-max w-full">
+            {schema.map((field, index) => {
+              const fieldLabel = t(field.label)
+              return (
+                <div key={String(field.key)} className={clsx('flex items-center gap-2', field.grow && 'flex-1 min-w-45')}>
+                  <span aria-hidden="true" className="text-xs text-muted-foreground whitespace-nowrap">
+                    {fieldLabel}
+                  </span>
+                  <FilterFieldInput field={field} value={filters[field.key]} filters={filters} onChange={onChange} ariaLabel={fieldLabel} />
+                  {index < schema.length - 1 && (
+                    <div aria-hidden="true" className="w-px h-6 bg-border mx-2" />
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
         </div>
       </div>
