@@ -32,6 +32,19 @@ type Props = {
   onClose: () => void
 }
 
+function UpcomingBadge({ resolvedDate, language }: { resolvedDate: string | null; language: string }) {
+  const { t } = useTranslation()
+  return (
+    <div className="mt-2">
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-green-500/30 bg-green-100/60 dark:bg-green-900/20">
+        <span className="text-[10px] uppercase tracking-widest text-green-700 dark:text-green-300">{t('movies.detail.release')}</span>
+        <span className="h-3 w-px bg-green-300/60 dark:bg-green-700/50" />
+        <span className="text-sm font-semibold text-green-700 dark:text-green-300">{resolvedDate ? formatMonthYear(resolvedDate, language) : '—'}</span>
+      </div>
+    </div>
+  )
+}
+
 export default function MovieDetailModal({ movieId, onClose }: Props) {
   const { t } = useTranslation()
   const { language } = useLanguageStore()
@@ -175,24 +188,7 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
                 </Text>
               )}
 
-              {/* UPCOMING BADGE */}
-              {ui.isUpcoming && (
-                <div className="mt-2">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-green-500/30 bg-green-100/60 dark:bg-green-900/20">
-
-                    <span className="text-[10px] uppercase tracking-widest text-green-700 dark:text-green-300">
-                      {t('movies.detail.release')}
-                    </span>
-
-                    <span className="h-3 w-px bg-green-300/60 dark:bg-green-700/50" />
-
-                    <span className="text-sm font-semibold text-green-700 dark:text-green-300">
-                      {ui.resolvedDate ? formatMonthYear(ui.resolvedDate, language) : '—'}
-                    </span>
-
-                  </div>
-                </div>
-              )}
+              {ui.isUpcoming && <UpcomingBadge resolvedDate={ui.resolvedDate} language={language} />}
 
               {/* META GRID */}
               <MovieMetaGrid

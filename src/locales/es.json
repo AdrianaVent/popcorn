@@ -340,7 +340,11 @@
     "renewed": "Renovada",
     "prevMonth": "Mes anterior",
     "nextMonth": "Mes siguiente",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "reminders": "Recordatorios",
+    "remindersEmpty": "Sin próximos estrenos en tu lista",
+    "remindersUpcoming": "Próximamente",
+    "remindersTodayEmpty": "Sin estrenos hoy"
   },
   "topbar": {
     "search": "Buscar...",

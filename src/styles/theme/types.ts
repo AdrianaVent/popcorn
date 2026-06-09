@@ -1,1 +1,1 @@
-export type ThemeMode = 'light' | 'dark' | 'auto' | 'high-contrast' | 'high-contrast'
+export type ThemeMode = 'light' | 'dark' | 'auto' | 'high-contrast'

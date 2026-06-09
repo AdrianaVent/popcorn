@@ -13,9 +13,7 @@ import { getGenreIcon } from '@/config/genreIcons'
 import { fetchMovieVideos } from '@/features/movies/movies.service'
 import { fetchSeriesVideos, fetchSeasonVideos } from '@/features/series/series.service'
 import { useTrailer } from '@/hooks/useTrailer'
-import { useWatchlistStore } from '@/store/watchlistStore'
-import { useWatchedStore } from '@/store/watchedStore'
-import { useUserStore } from '@/store/userStore'
+import { useReleaseWatchlistToggle } from '@/features/home/hooks/useReleaseWatchlistToggle'
 import { HeartIcon } from '@/components/icons'
 import type { ReleaseEntry } from '@/services/tmdb/releases'
 
@@ -24,55 +22,17 @@ type Props = {
   genreMap: Record<number, string>
   onEntryClick?: (id: number) => void
   language: string
+  compact?: boolean
 }
 
-export default function CalendarReleaseItem({ release, genreMap, onEntryClick, language }: Props) {
+export default function CalendarReleaseItem({ release, genreMap, onEntryClick, language, compact = false }: Props) {
   const { t } = useTranslation()
   const [showTrailer, setShowTrailer] = useState(false)
   const trailerRef = useRef<HTMLDivElement>(null)
   const itemRef = useRef<HTMLDivElement>(null)
 
   const isSeries = release.season_number != null
-
-  const role    = useUserStore((s) => s.role)
-  const userId  = useUserStore((s) => s.userId)
-  const userKey = String(userId ?? 'guest')
-
-  const isWatched = useWatchedStore((s) =>
-    isSeries ? !!s.seriesData[userKey]?.[release.id] : !!s.movies[userKey]?.[release.id]
-  )
-  const isInWatchlist = useWatchlistStore((s) =>
-    isSeries ? !!s.series[userKey]?.[release.id] : !!s.movies[userKey]?.[release.id]
-  )
-  const toggleWatchlistMovie  = useWatchlistStore((s) => s.toggleMovie)
-  const toggleWatchlistSeries = useWatchlistStore((s) => s.toggleSeries)
-
-  const handleToggleWatchlist = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (isSeries) {
-      toggleWatchlistSeries(userKey, {
-        id: release.id,
-        name: release.title,
-        first_air_date: release.date,
-        poster_path: release.poster_path,
-        vote_average: 0,
-        vote_count: 0,
-        original_language: '',
-        addedAt: Date.now(),
-      })
-    } else {
-      toggleWatchlistMovie(userKey, {
-        id: release.id,
-        title: release.title,
-        release_date: release.date,
-        poster_path: release.poster_path,
-        vote_average: 0,
-        vote_count: 0,
-        original_language: '',
-        addedAt: Date.now(),
-      })
-    }
-  }
+  const { isWatched, isInWatchlist, handleToggleWatchlist, role } = useReleaseWatchlistToggle(release)
 
   const { trailer: seasonTrailer } = useTrailer(
     ['season-trailer', release.id, release.season_number ?? 0],
@@ -117,29 +77,27 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
         className="flex items-center gap-3 py-2.5 w-full text-left px-1 cursor-pointer hover:bg-cream-400 dark:hover:bg-gray-700/60 hc:hover:bg-muted rounded-lg transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset"
       >
         <MoviePoster posterPath={release.poster_path} title={release.title} variant="list" loading="eager" />
-        <div className="flex flex-col gap-1.5 min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="text-caption font-semibold uppercase tracking-[0.14em] text-primary leading-snug truncate">
-                {release.title}
-              </span>
+        <div className="flex flex-col gap-1 min-w-0 flex-1">
+          <span className="text-caption font-semibold uppercase tracking-[0.14em] text-primary leading-snug truncate">
+            {release.title}
+          </span>
+          <div className={`flex gap-2 ${compact ? 'items-center' : 'items-center justify-between'}`}>
+            <div className="flex items-center gap-1.5 min-w-0 flex-1">
               {release.season_number != null && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] text-muted-foreground font-medium">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[11px] text-muted-foreground font-medium truncate">
                     {t('calendar.season', { number: release.season_number })}
                     {release.episode_count != null && ` · ${t('calendar.episodes', { count: release.episode_count })}`}
                   </span>
                   {statusConfig && (
-                    <span className={`text-[10px] font-semibold px-1.5 py-px rounded-full border leading-none ${statusConfig.border} ${statusConfig.bg} ${statusConfig.text}`}>
+                    <span className={`text-[10px] font-semibold px-1.5 py-px rounded-full border leading-none shrink-0 ${statusConfig.border} ${statusConfig.bg} ${statusConfig.text}`}>
                       {t(statusConfig.labelKey)}
                     </span>
                   )}
                 </div>
               )}
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
               {genres.length > 0 && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   {genres.map(({ id, name }) => {
                     const Icon = getGenreIcon(id)
                     if (!Icon) return null
@@ -153,7 +111,9 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
                   })}
                 </div>
               )}
-              {trailer && (
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {!compact && trailer && (
                 <Tooltip content={t('common.trailer')} placement="top">
                   <IconToggleButton
                     data-cy="trailer-button"
@@ -187,9 +147,11 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
               )}
             </div>
           </div>
-          <Text variant="small" className={release.overview ? 'text-foreground leading-relaxed line-clamp-3' : 'text-muted-foreground italic'}>
-            {release.overview ?? t('calendar.noOverview')}
-          </Text>
+          {!compact && (
+            <Text variant="small" className={release.overview ? 'text-foreground leading-relaxed line-clamp-3' : 'text-muted-foreground italic'}>
+              {release.overview ?? t('calendar.noOverview')}
+            </Text>
+          )}
         </div>
       </div>
       {showTrailer && trailer && (

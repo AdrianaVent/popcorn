@@ -340,7 +340,11 @@
     "renewed": "Renewed",
     "prevMonth": "Previous month",
     "nextMonth": "Next month",
-    "close": "Close"
+    "close": "Close",
+    "reminders": "Reminders",
+    "remindersEmpty": "No upcoming releases in your watchlist",
+    "remindersUpcoming": "Upcoming",
+    "remindersTodayEmpty": "No releases today"
   },
   "topbar": {
     "search": "Search...",

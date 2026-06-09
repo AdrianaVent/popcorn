@@ -13,6 +13,7 @@ import { useGlobalMovieTop10, useGlobalSeriesTop10, useUserMovieTop10, useUserSe
 import Top10Card from '@/features/home/components/Top10Card'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useRatingsStore } from '@/store/ratingsStore'
+import { useWatchlistStore } from '@/store/watchlistStore'
 import { useUserStore } from '@/store/userStore'
 import { useLanguageStore } from '@/store/languageStore'
 import { TMDB_LANGUAGE } from '@/config/tmdb'
@@ -46,6 +47,8 @@ export default function HomeFeature() {
   const watchedEpisodes = useWatchedStore((s) => s.episodes[userId])
   const watchedSeries   = useWatchedStore((s) => s.seriesData[userId])
   const userRatings     = useRatingsStore((s) => s.ratings[userId])
+  const watchlistMovies = useWatchlistStore((s) => s.movies[userId])
+  const watchlistSeries = useWatchlistStore((s) => s.series[userId])
 
   const movieDefaultMode  = Object.keys(watchedMovies   ?? {}).length > 0 ? 'user' : 'global'
   const seriesDefaultMode = Object.keys(watchedEpisodes ?? {}).length > 0 ? 'user' : 'global'
@@ -78,6 +81,15 @@ export default function HomeFeature() {
   ) ? 'user' : 'global', [userRatings])
 
   const genreMap = useMemo(() => buildGenreMapForLanguage(language), [language])
+
+  const watchlistMovieIds = useMemo(
+    () => new Set(Object.keys(watchlistMovies ?? {}).map(Number)),
+    [watchlistMovies]
+  )
+  const watchlistSeriesIds = useMemo(
+    () => new Set(Object.keys(watchlistSeries ?? {}).map(Number)),
+    [watchlistSeries]
+  )
 
   const isGenreMovies = genreTab === 'movies'
   const calendarQuery = calendarTab === 'movies' ? movieReleases : seriesReleases
@@ -144,6 +156,8 @@ export default function HomeFeature() {
           onToday={handleToday}
           query={calendarQuery}
           genreMap={genreMap}
+          watchlistMovieIds={role !== 'admin' ? watchlistMovieIds : undefined}
+          watchlistSeriesIds={role !== 'admin' ? watchlistSeriesIds : undefined}
           onEntryClick={handleEntryClick}
           animateFrom={calendarDir ?? undefined}
         />

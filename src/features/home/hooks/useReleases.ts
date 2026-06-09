@@ -17,17 +17,20 @@ export function useMovieReleases(year: number, month: number) {
   })
 }
 
-export function useSeriesReleases(year: number, month: number) {
+export function useSeriesProviderIds(): string | undefined {
   const region = useLanguageStore((s) => s.region)
-  const language = useLanguageStore((s) => TMDB_LANGUAGE[s.language] ?? 'es-ES')
-
   const { data: providers } = useQuery<WatchProvider[]>({
     queryKey: ['series-provider-options', region],
     queryFn: () => fetchWatchProviderOptions(seriesService, region),
     staleTime: Infinity,
   })
+  return providers?.map((p) => p.provider_id).join('|')
+}
 
-  const providerIds = providers?.map((p) => p.provider_id).join('|')
+export function useSeriesReleases(year: number, month: number) {
+  const region = useLanguageStore((s) => s.region)
+  const language = useLanguageStore((s) => TMDB_LANGUAGE[s.language] ?? 'es-ES')
+  const providerIds = useSeriesProviderIds()
 
   return useQuery<ReleaseEntry[]>({
     queryKey: ['series-releases', year, month, region, language, providerIds],

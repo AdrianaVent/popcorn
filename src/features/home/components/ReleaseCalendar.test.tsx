@@ -13,10 +13,12 @@ jest.mock('react-i18next', () => ({
         'calendar.today':      'Today',
         'calendar.prevMonth':  'Previous month',
         'calendar.nextMonth':  'Next month',
-        'calendar.close':      'Close',
-        'calendar.error':      'Could not load releases',
-        'calendar.empty':      'No releases on this day',
-        'calendar.noOverview': 'No synopsis available',
+        'calendar.close':          'Close',
+        'calendar.error':          'Could not load releases',
+        'calendar.empty':          'No releases on this day',
+        'calendar.noOverview':     'No synopsis available',
+        'calendar.reminders':      'Reminders',
+        'calendar.remindersEmpty': 'No upcoming releases in your watchlist',
       }
       return map[key] ?? key
     },
@@ -44,6 +46,25 @@ jest.mock('@/components/icons', () => ({
   TvIcon: () => <span>tv</span>,
   XIcon: () => <span>close</span>,
   HeartIcon: () => <span>heart</span>,
+  BookmarkIcon: () => <span>bookmark</span>,
+}))
+
+jest.mock('@/features/home/components/RemindersPanel', () => ({
+  __esModule: true,
+  default: () => <div data-testid="reminders-panel">reminders</div>,
+}))
+
+jest.mock('@/components/ui/Tooltip', () => ({
+  __esModule: true,
+  default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
+jest.mock('@/components/ui/IconToggleButton', () => ({
+  __esModule: true,
+  default: (props: React.ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean; children?: React.ReactNode }) => {
+    const { active: _active, children, ...rest } = props
+    return <button {...rest}>{children}</button>
+  },
 }))
 
 jest.mock('@/store/userStore', () => ({
@@ -72,11 +93,6 @@ jest.mock('@/features/series/getSeriesUI', () => ({
 
 jest.mock('@/hooks/useTrailer', () => ({
   useTrailer: () => ({ trailer: null, isLoading: false }),
-}))
-
-jest.mock('@/components/ui/Tooltip', () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
 jest.mock('@/config/genreIcons', () => ({
@@ -210,6 +226,96 @@ describe('ReleaseCalendar', () => {
     })
   })
 })
+
+  describe('today highlight', () => {
+    beforeEach(() => {
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date('2025-05-15T12:00:00'))
+    })
+    afterEach(() => jest.useRealTimers())
+
+    it('applies ring-primary to today\'s cell without a release', () => {
+      render(<ReleaseCalendar {...BASE_PROPS} query={{ data: [], isLoading: false, isError: false }} />)
+      const today = screen.getByRole('button', { name: 'May 15, 2025' })
+      expect(today.classList.contains('ring-primary')).toBe(true)
+    })
+
+    it('applies ring-primary and bg-primary/15 to today\'s cell with a release', () => {
+      render(<ReleaseCalendar {...BASE_PROPS} />)
+      const today = screen.getByRole('button', { name: /May 15, 2025/ })
+      expect(today.classList.contains('ring-primary')).toBe(true)
+    })
+  })
+
+  describe('watchlist indicator', () => {
+    it('shows a heart icon when watchlistIds contains a release on that day', () => {
+      render(<ReleaseCalendar {...BASE_PROPS} watchlistMovieIds={new Set([1])} />)
+      const day15 = screen.getByRole('button', { name: /May 15, 2025/ })
+      const allText = Array.from(day15.querySelectorAll('[aria-hidden="true"]')).map((el) => el.textContent).join('')
+      expect(allText).toContain('heart')
+    })
+
+    it('does not show a heart icon when watchlistIds is not provided', () => {
+      render(<ReleaseCalendar {...BASE_PROPS} />)
+      const day15 = screen.getByRole('button', { name: /May 15, 2025/ })
+      // The only aria-hidden child is the day number span — no heart
+      const ariaHiddenChildren = day15.querySelectorAll('[aria-hidden="true"]')
+      const texts = Array.from(ariaHiddenChildren).map((el) => el.textContent)
+      expect(texts.join('')).not.toContain('heart')
+    })
+
+    it('does not show a heart icon when release id is not in watchlistIds', () => {
+      render(<ReleaseCalendar {...BASE_PROPS} watchlistMovieIds={new Set([999])} />)
+      const day15 = screen.getByRole('button', { name: /May 15, 2025/ })
+      const ariaHiddenChildren = day15.querySelectorAll('[aria-hidden="true"]')
+      const texts = Array.from(ariaHiddenChildren).map((el) => el.textContent)
+      expect(texts.join('')).not.toContain('heart')
+    })
+
+    it('passes axe with watchlist indicator shown', async () => {
+      const { container } = render(<ReleaseCalendar {...BASE_PROPS} watchlistMovieIds={new Set([1])} />)
+      expect(await axe(container, AXE_OPTS)).toHaveNoViolations()
+    })
+  })
+
+  describe('reminders panel', () => {
+    it('does not show the reminders button when no watchlist props are provided', () => {
+      render(<ReleaseCalendar {...BASE_PROPS} />)
+      expect(screen.queryByRole('button', { name: 'Reminders' })).not.toBeInTheDocument()
+    })
+
+    it('shows the reminders button when watchlistMovieIds is provided', () => {
+      render(<ReleaseCalendar {...BASE_PROPS} watchlistMovieIds={new Set([1])} />)
+      expect(screen.getByRole('button', { name: 'Reminders' })).toBeInTheDocument()
+    })
+
+    it('clicking the reminders button shows the reminders panel', () => {
+      render(<ReleaseCalendar {...BASE_PROPS} watchlistMovieIds={new Set([1])} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Reminders' }))
+      expect(screen.getByTestId('reminders-panel')).toBeInTheDocument()
+    })
+
+    it('hides the tab toggle when reminders panel is open', () => {
+      render(<ReleaseCalendar {...BASE_PROPS} watchlistMovieIds={new Set([1])} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Reminders' }))
+      expect(screen.queryByRole('button', { name: /movies/i })).not.toBeInTheDocument()
+    })
+
+    it('shows reminders label and close button when reminders panel is open', () => {
+      render(<ReleaseCalendar {...BASE_PROPS} watchlistMovieIds={new Set([1])} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Reminders' }))
+      expect(screen.getByText('Reminders')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
+    })
+
+    it('closes the reminders panel when X is clicked', () => {
+      render(<ReleaseCalendar {...BASE_PROPS} watchlistMovieIds={new Set([1])} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Reminders' }))
+      expect(screen.getByTestId('reminders-panel')).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+      expect(screen.queryByTestId('reminders-panel')).not.toBeInTheDocument()
+    })
+  })
 
 // ── axe accessibility ─────────────────────────────────────────────────────────
 

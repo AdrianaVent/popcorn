@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import MediaPoster from '@/components/common/MediaPoster'
@@ -61,6 +61,25 @@ export default function SeasonItem({ season, seriesId, isOpen, onToggle, userId,
   const totalCount = season.episode_count
   const allWatched = totalCount > 0 && watchedForSeason >= totalCount
   const year = season.air_date ? new Date(season.air_date).getFullYear() : null
+
+  const handleMarkSeason = useCallback(async () => {
+    let eps = episodes
+    if (eps === null) {
+      setMarkLoading(true)
+      try {
+        const detail = await fetchSeasonDetail(seriesId, season.season_number, language)
+        eps = detail.episodes
+        setEpisodes(eps)
+      } catch {
+        eps = []
+      } finally {
+        setMarkLoading(false)
+      }
+    }
+    const today = new Date().toISOString().slice(0, 10)
+    const airedIds = eps.filter((ep) => ep.air_date && ep.air_date <= today && ep.runtime != null).map((ep) => ep.id)
+    if (airedIds.length > 0) markSeason(userId, seriesId, season.season_number, airedIds, seriesSnapshot)
+  }, [episodes, seriesId, season.season_number, language, userId, seriesSnapshot, markSeason])
 
   const handleToggle = async () => {
     if (!isOpen && episodes === null) {
@@ -142,26 +161,7 @@ export default function SeasonItem({ season, seriesId, isOpen, onToggle, userId,
           <Tooltip content={allWatched ? t('series.detail.unmarkSeason') : t('series.detail.markSeasonWatched')} placement="top">
             <button
               data-cy="season-watched-btn"
-              onClick={async () => {
-                let eps = episodes
-                if (eps === null) {
-                  setMarkLoading(true)
-                  try {
-                    const detail = await fetchSeasonDetail(seriesId, season.season_number, language)
-                    eps = detail.episodes
-                    setEpisodes(eps)
-                  } catch {
-                    eps = []
-                  } finally {
-                    setMarkLoading(false)
-                  }
-                }
-                const today = new Date().toISOString().slice(0, 10)
-                const airedIds = eps.filter((ep) => ep.air_date && ep.air_date <= today && ep.runtime != null).map((ep) => ep.id)
-                if (airedIds.length > 0) {
-                  markSeason(userId, seriesId, season.season_number, airedIds, seriesSnapshot)
-                }
-              }}
+              onClick={handleMarkSeason}
               disabled={markLoading}
               className={clsx(
                 'shrink-0 mr-4 flex items-center justify-center transition-colors cursor-pointer',

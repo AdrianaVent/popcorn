@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.18.0-6B2737)
+![Version](https://img.shields.io/badge/version-0.19.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -456,9 +456,9 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-The project has two test layers: **924 unit/integration tests** (Jest) and **188 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+The project has two test layers: **946 unit/integration tests** (Jest) and **188 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 924 tests · 73 suites
+### Unit & integration tests (Jest) — 946 tests · 74 suites
 
 ```bash
 npm test           # run once
@@ -467,7 +467,7 @@ npm run test:watch # watch mode
 
 | Area | What's covered |
 |---|---|
-| Pure functions | `getMovieUI`, `getSeriesUI`, `formatDate`, `formatVoteCount`, `deduplicateProviders`, `buildGenreCounts`, `toCSV`, `pickYouTubeTrailer`, `findSeasonTrailerInList`, `filterNonSeasonTrailers`, `resolveSeasonFallback`, `resolveHeaderTrailer` |
+| Pure functions | `getMovieUI`, `getSeriesUI`, `formatDate`, `formatVoteCount`, `deduplicateProviders`, `buildGenreCounts`, `toCSV`, `pickYouTubeTrailer`, `findSeasonTrailerInList`, `filterNonSeasonTrailers`, `resolveSeasonFallback`, `resolveHeaderTrailer`, `parseJSON`, `parseCSV` |
 | Business logic | Client-side filters (movies + series), TMDB fetch error mapping, export utilities |
 | Stores | `watchedStore` (toggle movie/episode, season counts, auto-remove from watchlist), `watchlistStore` (toggleMovie/toggleSeries, removeMovie/removeSeries, per-user isolation), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
 | Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases`, `useTrailer` (language preference, YouTube filtering, allTrailers list), `useEnrichedTrailers` (YouTube oEmbed title enrichment, 24h cache), `useSeriesEnrichment` (status/totals/runtimes/genreIds backfill, stable-reference pattern), `useMovieRuntimeEnrichment` (Promise.allSettled backfill, null on fail), `useFilters` (initial state, setFilters, reference identity) |
@@ -593,11 +593,13 @@ src/
 ├── db/                 # client.ts (SQLite singleton) · users.ts (typed queries)
 ├── features/
 │   ├── auth/login/     # LoginFeature · useLogin · login.service.ts
-│   ├── home/           # HomeFeature · useMovieGenres · useSeriesGenres · ReleaseCalendar · CalendarReleaseItem
-│   ├── movies/         # MoviesFeature · hooks · components · service
-│   ├── myList/         # MyListFeature · myListUtils · MovieCard · SeriesCard · SagaCard · WatchlistSagaCard · UnwatchedMoviePlaceholder · RecommendationsDrawer · hooks (tabs, saga grouping, watchedAt ordering, ratings)
-│   ├── series/         # SeriesFeature · hooks · components · service
-│   └── users/          # UsersFeature · UserFormModal · ImportUsersModal · users.service.ts
+│   ├── home/           # HomeFeature · useMovieGenres · useSeriesGenres · ReleaseCalendar · CalendarGrid · CalendarReleaseItem · Top10Card · GenreDropdown
+│   ├── movies/         # MoviesFeature · useMovieColumns · useMovieExport · useMovieRuntimeEnrichment · CollectionAccordion · SagaMovieItem · service
+│   ├── myList/         # MyListFeature · myListUtils · MoviesTabPanel · SeriesTabPanel · WatchlistTabPanel
+│   │                   # MovieCard · SeriesCard · SagaCard · WatchlistSagaCard · UnwatchedMoviePlaceholder · RecommendationsDrawer · WatchlistCard
+│   │                   # hooks: useMovieRecommendations · useSeriesRecommendations
+│   ├── series/         # SeriesFeature · useSeriesColumns · useSeriesExport · useSeriesMarkAll · useSeriesEnrichment · components · service
+│   └── users/          # UsersFeature · useUserColumns · useUserExport · UserFormModal · ImportUsersModal · users.service.ts
 ├── hooks/              # useFilters · useWatchProviders · useTruncated · useTrailer · useEnrichedTrailers
 ├── locales/            # en.json · es.json
 ├── middleware.ts        # JWT verification + route protection
@@ -607,7 +609,7 @@ src/
 │   ├── auth/           # authService — bcrypt verify, JWT sign/refresh
 │   └── tmdb/           # TMDB client — movies, series, search
 ├── store/              # themeStore · languageStore · userStore · watchedStore · watchlistStore · ratingsStore · toastStore
-└── utils/              # formatDate · formatNumber · exportData · getTMDBImageUrl · ...
+└── utils/              # formatDate · formatNumber · exportData · importUtils · getTMDBImageUrl · ...
 cypress/
 ├── e2e/                # auth · home · movies · series · my-list · users · settings
 ├── fixtures/           # mocked TMDB responses
