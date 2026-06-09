@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import clsx from 'clsx'
 
 import Table from '@/components/ui/Table/Table'
 import IconButton from '@/components/ui/IconButton'
@@ -13,37 +12,26 @@ import LoadingOverlay from '@/components/ui/LoadingOverlay'
 import UserFormModal from './UserFormModal'
 import ImportUsersModal from './ImportUsersModal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
-import { PlusCircleIcon, TrashIcon, PencilIcon, UploadIcon, UsersIcon } from '@/components/icons'
+import PageLayout from '@/components/layouts/PageLayout'
+import { PlusCircleIcon, TrashIcon, UploadIcon, UsersIcon } from '@/components/icons'
 
 import { useUserStore } from '@/store/userStore'
-import { useLanguageStore } from '@/store/languageStore'
-import { useToastStore } from '@/store/toastStore'
-import { fetchUsers, createUser, updateUser, deleteUser, deleteUsers, type CreateUserInput, type UpdateUserInput, type UsersPage } from './users.service'
-import { exportAsJSON, exportAsCSV } from '@/utils/exportData'
-import { formatShortDate } from '@/utils/formatDate'
 import { useFilters } from '@/hooks/useFilters'
+import { fetchUsers, createUser, updateUser, deleteUser, deleteUsers, type UpdateUserInput, type UsersPage } from './users.service'
+import { useUserColumns } from './hooks/useUserColumns'
+import { useUserExport } from './hooks/useUserExport'
+import { useToastStore } from '@/store/toastStore'
 import { staticUserFiltersSchema, INITIAL_USER_FILTERS, type UserFilters } from './userFilters.schema'
 import type { PublicUser } from '@/types/user'
-import type { Column } from '@/types/table'
-import PageLayout from '@/components/layouts/PageLayout'
 
 type UserRow = PublicUser & { _checkbox: null; _actions: null }
 
-type ModalState =
-  | { mode: 'add' }
-  | { mode: 'edit'; user: PublicUser }
-  | { mode: 'import' }
-  | null
-
-type ConfirmDeleteState =
-  | { type: 'one'; userId: string; username: string }
-  | { type: 'many'; count: number }
-  | null
+type ModalState = { mode: 'add' } | { mode: 'edit'; user: PublicUser } | { mode: 'import' } | null
+type ConfirmDeleteState = { type: 'one'; userId: string; username: string } | { type: 'many'; count: number } | null
 
 export default function UsersFeature() {
   const { t } = useTranslation()
   const { userId: currentUserId } = useUserStore()
-  const { language } = useLanguageStore()
   const addToast = useToastStore((s) => s.addToast)
 
   const toastError = (e: unknown) => {
@@ -52,46 +40,34 @@ export default function UsersFeature() {
   }
 
   const pendingToast = useRef<(() => void) | null>(null)
+  const queryClient  = useQueryClient()
+  const [page, setPage]           = useState(1)
+  const [selected, setSelected]   = useState<Set<string>>(new Set())
+  const [modal, setModal]         = useState<ModalState>(null)
+  const [confirmDelete, setConfirmDelete] = useState<ConfirmDeleteState>(null)
 
-  const queryClient = useQueryClient()
-  const [page, setPage] = useState(1)
   const { filters, setFilters } = useFilters(INITIAL_USER_FILTERS)
-
-  const handleSetFilters = (newFilters: UserFilters) => {
-    setFilters(newFilters)
-    setPage(1)
-  }
+  const handleSetFilters = (f: UserFilters) => { setFilters(f); setPage(1) }
 
   const { data, isLoading, isError } = useQuery<UsersPage>({
     queryKey: ['users', page, filters],
     queryFn: () => fetchUsers(page, filters),
   })
 
-  const users = useMemo(() => data?.users ?? [], [data])
+  const users      = useMemo(() => data?.users ?? [], [data])
   const totalPages = data?.totalPages ?? 1
-  const error = isError ? t('users.error') : null
+  const error      = isError ? t('users.error') : null
   const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: ['users'] })
-
-  const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [modal, setModal] = useState<ModalState>(null)
-  const [confirmDelete, setConfirmDelete] = useState<ConfirmDeleteState>(null)
-  const [isExporting, setIsExporting] = useState(false)
 
   const createMutation = useMutation({
     mutationFn: createUser,
-    onSuccess: () => {
-      invalidateUsers()
-      pendingToast.current = () => addToast('success', t('users.success.created'))
-    },
+    onSuccess: () => { invalidateUsers(); pendingToast.current = () => addToast('success', t('users.success.created')) },
     onError: (e: Error) => { if (e.message !== 'USERNAME_TAKEN') toastError(e) },
   })
 
   const updateMutation = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: UpdateUserInput }) => updateUser(id, patch),
-    onSuccess: () => {
-      invalidateUsers()
-      pendingToast.current = () => addToast('success', t('users.success.updated'))
-    },
+    onSuccess: () => { invalidateUsers(); pendingToast.current = () => addToast('success', t('users.success.updated')) },
     onError: (e: Error) => { if (e.message !== 'USERNAME_TAKEN') toastError(e) },
   })
 
@@ -99,8 +75,7 @@ export default function UsersFeature() {
     mutationFn: (id: string) => deleteUser(id),
     onSuccess: (_, id) => {
       setSelected((prev) => { const next = new Set(prev); next.delete(id); return next })
-      invalidateUsers()
-      setConfirmDelete(null)
+      invalidateUsers(); setConfirmDelete(null)
       addToast('success', t('users.success.deleted'))
     },
     onError: (e) => toastError(e),
@@ -109,236 +84,47 @@ export default function UsersFeature() {
   const deleteManyMutation = useMutation({
     mutationFn: (ids: string[]) => deleteUsers(ids),
     onSuccess: (_, ids) => {
-      setSelected(new Set())
-      invalidateUsers()
-      setConfirmDelete(null)
+      setSelected(new Set()); invalidateUsers(); setConfirmDelete(null)
       addToast('success', t('users.success.deletedMany', { count: ids.length }))
     },
     onError: (e) => toastError(e),
   })
 
-  const closeModal = () => {
-    setModal(null)
-    pendingToast.current?.()
-    pendingToast.current = null
-  }
+  const closeModal = () => { setModal(null); pendingToast.current?.(); pendingToast.current = null }
 
-  const creatorsById = useMemo(
-    () => new Map((data?.creators ?? []).map((c) => [c.id, c.username])),
-    [data?.creators]
-  )
+  const creatorsById = useMemo(() => new Map((data?.creators ?? []).map((c) => [c.id, c.username])), [data?.creators])
 
   const filtersSchema = useMemo(() => {
     const creatorOptions = (data?.creators ?? []).map((c) => ({ value: c.id, label: c.username }))
-    return staticUserFiltersSchema.map((field) =>
-      field.key === 'created_by' ? { ...field, options: creatorOptions } : field
-    )
+    return staticUserFiltersSchema.map((f) => f.key === 'created_by' ? { ...f, options: creatorOptions } : f)
   }, [data?.creators])
 
-  const selectableUsers = useMemo(
-    () => users.filter((u) => u.id !== currentUserId),
-    [users, currentUserId]
-  )
-
-  const allSelected = selectableUsers.length > 0 && selectableUsers.every((u) => selected.has(u.id))
+  const selectableUsers = useMemo(() => users.filter((u) => u.id !== currentUserId), [users, currentUserId])
+  const allSelected  = selectableUsers.length > 0 && selectableUsers.every((u) => selected.has(u.id))
   const someSelected = selected.size > 0
 
-  const toggleSelect = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) { next.delete(id) } else { next.add(id) }
-      return next
-    })
-  }
-
-  const toggleAll = () => {
-    setSelected(allSelected ? new Set() : new Set(selectableUsers.map((u) => u.id)))
-  }
-
-  const handleCreate = (data: CreateUserInput) => createMutation.mutateAsync(data)
-
-  const handleUpdate = (user: PublicUser) => (data: CreateUserInput) =>
-    updateMutation.mutateAsync({
-      id: user.id,
-      patch: {
-        username: data.username !== user.username ? data.username : undefined,
-        password: data.password || undefined,
-        role: data.role !== user.role ? data.role : undefined,
-      },
-    })
-
-  const handleDeleteOne = (id: string) => {
+  const onToggle    = useCallback((id: string) => setSelected((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next }), [])
+  const onToggleAll = useCallback(() => setSelected(allSelected ? new Set() : new Set(selectableUsers.map((u) => u.id))), [allSelected, selectableUsers])
+  const onEdit      = useCallback((user: PublicUser) => setModal({ mode: 'edit', user }), [])
+  const onDelete    = useCallback((id: string) => {
     const user = users.find((u) => u.id === id)
     if (user) setConfirmDelete({ type: 'one', userId: id, username: user.username })
-  }
+  }, [users])
 
-  const handleDeleteSelected = () => {
-    setConfirmDelete({ type: 'many', count: selected.size })
-  }
+  const columns  = useUserColumns({ selected, allSelected, someSelected, creatorsById, onToggle, onToggleAll, onEdit, onDelete })
+  const { isExporting, handleExport } = useUserExport()
 
-  const handleConfirmDelete = () => {
-    if (!confirmDelete) return
-    if (confirmDelete.type === 'one') {
-      deleteOneMutation.mutate(confirmDelete.userId)
-    } else {
-      deleteManyMutation.mutate(Array.from(selected))
-    }
-  }
-
-  const handleExport = async (format: 'json' | 'csv') => {
-    setIsExporting(true)
-    try {
-      const allData = await fetchUsers(1, {}, 9999)
-      const allCreators = new Map(allData.creators.map((c) => [c.id, c.username]))
-      const date = new Date().toISOString().split('T')[0]
-      if (format === 'json') {
-        const rows = allData.users.map((u) => ({
-          username: u.username,
-          role: u.role,
-          created_at: u.created_at ? new Date(u.created_at).toISOString() : null,
-          created_by: u.created_by ? (allCreators.get(u.created_by) ?? u.created_by) : null,
-        }))
-        exportAsJSON(rows, `users-${date}.json`)
-      } else {
-        const rows = allData.users.map((u) => ({
-          username: u.username,
-          role: u.role,
-          created_at: u.created_at ? formatShortDate(new Date(u.created_at).toISOString(), language) : '',
-          created_by: u.created_by ? (allCreators.get(u.created_by) ?? '') : '',
-        }))
-        exportAsCSV(rows, ['username', 'role', 'created_at', 'created_by'], `users-${date}.csv`, [
-          t('users.columns.username'),
-          t('users.columns.role'),
-          t('users.columns.createdAt'),
-          t('users.columns.createdBy'),
-        ])
-      }
-      addToast('success', t('export.success'))
-    } catch {
-      addToast('error', t('export.error'))
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
-  const userRows = useMemo(
-    () => users.map((u): UserRow => ({ ...u, _checkbox: null, _actions: null })),
-    [users]
-  )
+  const userRows = useMemo(() => users.map((u): UserRow => ({ ...u, _checkbox: null, _actions: null })), [users])
 
   const emptyMessage = data?.totalResults === 0
     ? (Object.values(filters).some(Boolean) ? t('users.noResults') : t('users.empty'))
     : t('users.empty')
 
-  const columns: Column<UserRow>[] = [
-    {
-      key: '_checkbox',
-      header: '',
-      headerNode: (
-        <input
-          type="checkbox"
-          aria-label={t('users.columns.username')}
-          checked={allSelected}
-          ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected }}
-          onChange={toggleAll}
-          className="accent-primary cursor-pointer"
-        />
-      ),
-      className: 'w-10',
-      align: 'center',
-      render: (row) => row.id === currentUserId ? null : (
-        <input
-          type="checkbox"
-          aria-label={row.username}
-          checked={selected.has(row.id)}
-          onChange={() => toggleSelect(row.id)}
-          className="accent-primary cursor-pointer"
-        />
-      ),
-    },
-    {
-      key: 'username',
-      header: t('users.columns.username'),
-      width: 'flex',
-      align: 'left',
-      render: (row) => (
-        <span className="font-medium text-foreground">
-          {row.username}
-          {row.id === currentUserId && (
-            <span className="ml-2 text-[10px] text-muted-foreground">({t('users.self')})</span>
-          )}
-        </span>
-      ),
-    },
-    {
-      key: 'role',
-      header: t('users.columns.role'),
-      width: 'sm',
-      align: 'center',
-      render: (row) => (
-        <span className={clsx(
-          'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold',
-          row.role === 'admin'
-            ? 'bg-primary/10 text-primary hc:bg-primary hc:text-primary-foreground'
-            : 'bg-muted text-muted-foreground'
-        )}>
-          {t(`users.roles.${row.role}`)}
-        </span>
-      ),
-    },
-    {
-      key: 'created_at',
-      header: t('users.columns.createdAt'),
-      width: 'md',
-      align: 'center',
-      render: (row) => (
-        <span className="text-muted-foreground">
-          {row.created_at ? formatShortDate(new Date(row.created_at).toISOString(), language) : '—'}
-        </span>
-      ),
-    },
-    {
-      key: 'created_by',
-      header: t('users.columns.createdBy'),
-      width: 'md',
-      align: 'center',
-      render: (row) => (
-        <span className="text-muted-foreground">
-          {row.created_by ? (creatorsById.get(row.created_by) ?? '—') : '—'}
-        </span>
-      ),
-    },
-    {
-      key: '_actions',
-      header: t('users.columns.actions'),
-      width: 'sm',
-      align: 'center',
-      render: (row) => (
-        <div className="flex items-center justify-end gap-1">
-          <IconButton
-            data-cy="edit-user-btn"
-            icon={<PencilIcon size={14} />}
-            label={t('users.actions.edit')}
-            variant="ghost"
-            tooltipSide="top"
-            onClick={() => setModal({ mode: 'edit', user: row })}
-            className="hover:text-blue-500 hover:bg-blue-500/10"
-          />
-          {row.id !== currentUserId && (
-            <IconButton
-              data-cy="delete-user-btn"
-              icon={<TrashIcon size={14} />}
-              label={t('users.actions.delete')}
-              variant="ghost"
-              tooltipSide="top"
-              onClick={() => handleDeleteOne(row.id)}
-              className="hover:text-destructive hover:bg-destructive/8"
-            />
-          )}
-        </div>
-      ),
-    },
-  ]
+  const handleConfirmDelete = () => {
+    if (!confirmDelete) return
+    if (confirmDelete.type === 'one') deleteOneMutation.mutate(confirmDelete.userId)
+    else deleteManyMutation.mutate(Array.from(selected))
+  }
 
   return (
     <>
@@ -347,7 +133,7 @@ export default function UsersFeature() {
         start={<span aria-hidden="true"><UsersIcon size={32} strokeWidth={1.5} /></span>}
         end={
           <div className="flex items-center gap-2">
-            <ExportButton onExport={handleExport} disabled={isLoading} />
+            <ExportButton onExport={handleExport} disabled={isLoading || isExporting} />
             <button
               aria-label={t('users.import.button')}
               onClick={() => setModal({ mode: 'import' })}
@@ -356,24 +142,15 @@ export default function UsersFeature() {
               <span aria-hidden="true"><UploadIcon size={15} /></span>
               <span className="hidden md:inline" aria-hidden="true">{t('users.import.button')}</span>
             </button>
-            <IconButton
-              icon={<PlusCircleIcon size={15} />}
-              label={t('users.addUser')}
-              onClick={() => setModal({ mode: 'add' })}
-            />
+            <IconButton icon={<PlusCircleIcon size={15} />} label={t('users.addUser')} onClick={() => setModal({ mode: 'add' })} />
           </div>
         }
       >
-        <FiltersPanel
-          schema={filtersSchema}
-          filters={filters}
-          onChange={handleSetFilters}
-          titleKey="users.filters.panel"
-        />
+        <FiltersPanel schema={filtersSchema} filters={filters} onChange={handleSetFilters} titleKey="users.filters.panel" />
 
         {someSelected && (
           <button
-            onClick={handleDeleteSelected}
+            onClick={() => setConfirmDelete({ type: 'many', count: selected.size })}
             className="group self-start flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium text-destructive border border-destructive/40 hover:bg-destructive hover:text-white transition-colors shrink-0"
           >
             <span aria-hidden="true"><TrashIcon size={12} /></span>
@@ -394,14 +171,7 @@ export default function UsersFeature() {
             data={userRows}
             columns={columns}
             getRowKey={(row) => row.id}
-            footer={{
-              page,
-              totalPages,
-              onPrev: () => setPage((p) => Math.max(1, p - 1)),
-              onNext: () => setPage((p) => Math.min(totalPages, p + 1)),
-              onPageChange: setPage,
-              disabled: isLoading,
-            }}
+            footer={{ page, totalPages, onPrev: () => setPage((p) => Math.max(1, p - 1)), onNext: () => setPage((p) => Math.min(totalPages, p + 1)), onPageChange: setPage, disabled: isLoading }}
           />
         </div>
       </PageLayout>
@@ -409,11 +179,7 @@ export default function UsersFeature() {
       {confirmDelete && (
         <ConfirmModal
           title={t(confirmDelete.type === 'one' ? 'users.confirm.titleOne' : 'users.confirm.titleMany')}
-          description={
-            confirmDelete.type === 'one'
-              ? t('users.confirm.bodyOne', { username: confirmDelete.username })
-              : t('users.confirm.bodyMany', { count: confirmDelete.count })
-          }
+          description={confirmDelete.type === 'one' ? t('users.confirm.bodyOne', { username: confirmDelete.username }) : t('users.confirm.bodyMany', { count: confirmDelete.count })}
           confirmLabel={t('users.actions.delete')}
           loading={deleteOneMutation.isPending || deleteManyMutation.isPending}
           onConfirm={handleConfirmDelete}
@@ -421,27 +187,9 @@ export default function UsersFeature() {
         />
       )}
 
-      {modal?.mode === 'add' && (
-        <UserFormModal
-          isSelf={false}
-          onClose={closeModal}
-          onSubmit={handleCreate}
-        />
-      )}
-      {modal?.mode === 'edit' && (
-        <UserFormModal
-          user={modal.user}
-          isSelf={modal.user.id === currentUserId}
-          onClose={closeModal}
-          onSubmit={handleUpdate(modal.user)}
-        />
-      )}
-      {modal?.mode === 'import' && (
-        <ImportUsersModal
-          onClose={() => setModal(null)}
-          onDone={invalidateUsers}
-        />
-      )}
+      {modal?.mode === 'add'    && <UserFormModal isSelf={false} onClose={closeModal} onSubmit={(d) => createMutation.mutateAsync(d)} />}
+      {modal?.mode === 'edit'   && <UserFormModal user={modal.user} isSelf={modal.user.id === currentUserId} onClose={closeModal} onSubmit={(d) => updateMutation.mutateAsync({ id: modal.user.id, patch: { username: d.username !== modal.user.username ? d.username : undefined, password: d.password || undefined, role: d.role !== modal.user.role ? d.role : undefined } })} />}
+      {modal?.mode === 'import' && <ImportUsersModal onClose={() => setModal(null)} onDone={invalidateUsers} />}
 
       {isExporting && <LoadingOverlay message={t('export.loading')} />}
     </>

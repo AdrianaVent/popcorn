@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import MediaPoster from './MediaPoster'
 
-/* eslint-disable @next/next/no-img-element */
 jest.mock('next/image', () => ({
   __esModule: true,
   default: ({ src, alt, loading, onError, width, height, className }: {
@@ -9,7 +8,6 @@ jest.mock('next/image', () => ({
     width: number; height: number; className: string
   }) => <img src={src} alt={alt} data-loading={loading} onError={onError} width={width} height={height} className={className} />,
 }))
-/* eslint-enable @next/next/no-img-element */
 
 jest.mock('@/utils/tmdb', () => ({
   getTMDBImageUrl: (path: string | null) => (path ? `https://image.tmdb.org/t/p/w92${path}` : null),

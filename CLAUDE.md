@@ -66,7 +66,8 @@ src/
 │                               # StarRating (5-star, half-star; value: 0.5–5 | null),
 │                               # Tooltip (portal-based, 150ms delay, placement: top/right/bottom/left),
 │                               # TrailerPlayer (YouTube iframe embed; optional onClose × button),
-│                               # IconToggleButton (28×28px icon button with active/inactive toggle state — used for trailer + watchlist buttons)
+│                               # IconToggleButton (28×28px icon button with active/inactive toggle state — used for trailer + watchlist buttons),
+│                               # donutColors.ts (COLORS_LIGHT / COLORS_DARK / COLORS_HC — interleaved hue palettes for DonutChart)
 ├── config/
 │   ├── auth.ts                 # TOKEN_MAX_TIME, REFRESH_TOKEN_MAX_TIME, JWT_SECRET
 │   ├── constants.ts            # DEFAULT_LANGUAGE, ALLOWED_ORIGINAL_LANGUAGES
@@ -79,19 +80,23 @@ src/
 │   ├── auth/login/             # LoginFeature, LoginForm, useLogin, login.service.ts
 │   ├── home/                   # HomeFeature — genre donut charts + Top10 cards + release calendar
 │   │   ├── components/         # ReleaseCalendar (month grid, dots on release days, navigation),
+│   │   │                       # CalendarGrid (weekday headers + day cells; owns releaseDays/watchlistDays memos),
 │   │   │                       # CalendarReleaseItem (single release entry with trailer, genre icons, status),
-│   │   │                       # Top10Card (ranked list with poster, year, genre icons, star rating;
-│   │   │                       #   genre filter via portal dropdown — data-cy="top10-genre-dropdown")
+│   │   │                       # Top10Card (ranked list with poster, year, genre icons, star rating),
+│   │   │                       # GenreDropdown (portal-based genre filter dropdown for Top10Card; owns all dropdown state)
 │   │   └── hooks/              # useMovieGenres (user + global), useSeriesGenres (user + global),
 │   │                           # buildGenreCounts (shared genre aggregation utility — deduplicates same-named genres per entry),
 │   │                           # useMovieReleases, useSeriesReleases (monthly TMDB releases),
 │   │                           # useUserMovieTop10, useUserSeriesTop10 (TanStack Query enrichment — backfills genre_ids)
 │   ├── movies/
 │   │   ├── components/         # MovieDetailModal, MovieMetaGrid,
-│   │   │                       # CollectionAccordion (each saga item has inline trailer)
+│   │   │                       # CollectionAccordion (saga list with mark-all toggle),
+│   │   │                       # SagaMovieItem (individual saga entry with inline trailer)
 │   │   ├── hooks/              # useMovies, useMovieDetail, useCollectionDetail,
 │   │   │                       # useMovieInTheaters,
-│   │   │                       # useMovieRuntimeEnrichment (Promise.allSettled runtime backfill via AbortController)
+│   │   │                       # useMovieRuntimeEnrichment (Promise.allSettled runtime backfill via AbortController),
+│   │   │                       # useMovieColumns (6-column definition; reads role/language/watched stores internally),
+│   │   │                       # useMovieExport (export logic + isExporting state; reads stores internally)
 │   │   ├── MoviesFeature.tsx
 │   │   ├── movies.service.ts   # fetchMovies, fetchMovieDetail, fetchCollectionDetail,
 │   │   │                       # fetchMovieWatchProviders, fetchMovieWatchProviderOptions,
@@ -106,7 +111,10 @@ src/
 │   │   │                       # seasons/EpisodeRow (episode with watched state + WatchedEpisodeButton),
 │   │   │                       # seasons/WatchedEpisodeButton (toggle episode watched)
 │   │   ├── hooks/              # useSeries, useSeriesDetail,
-│   │   │                       # useSeriesEnrichment (Promise.allSettled status/totals/runtimes/genreIds backfill)
+│   │   │                       # useSeriesEnrichment (Promise.allSettled status/totals/runtimes/genreIds backfill),
+│   │   │                       # useSeriesColumns (7-column definition; reads role/language/watched stores internally),
+│   │   │                       # useSeriesExport (export logic + isExporting state; reads stores internally),
+│   │   │                       # useSeriesMarkAll (async mark-all seasons logic; date-gated, toggle when all done)
 │   │   ├── SeriesFeature.tsx
 │   │   ├── series.service.ts   # fetchSeries, fetchSeriesDetail, fetchSeasonDetail,
 │   │   │                       # fetchSeriesWatchProviders, fetchSeriesWatchProviderOptions,
@@ -115,8 +123,12 @@ src/
 │   │   ├── getSeriesUI.ts      # status badge config; resolveSeriesGenreName — static ES translation map (TV genre IDs)
 │   │   └── index.ts
 │   ├── myList/                 # MyListFeature — Movies/Series/Por ver tabs, saga grouping (bin-packing layout), watchedAt ordering, recommendations drawer
-│   │   ├── myListUtils.ts      # RATING_THRESHOLD, SagaGroup, WatchlistSagaGroup, RecommendationSource types; formatSagaName
-│   │   ├── components/         # MovieCard (poster, year, StarRating, always-visible Recommendations button + Tooltip),
+│   │   ├── myListUtils.ts      # RATING_THRESHOLD, SagaGroup, WatchlistSagaGroup, RecommendationSource types; formatSagaName;
+│   │   │                       # groupAndSortMovies, computeSagasFirst, groupWatchlistMovies, binPackSagas, SAGA_PX, SAGA_GAP
+│   │   ├── components/         # MoviesTabPanel (owns filter state, saga grouping, bin-packing layout, collectionResults, scroll effect),
+│   │   │                       # SeriesTabPanel (owns filter state, series list, episode counts, scroll effect),
+│   │   │                       # WatchlistTabPanel (reads watchlist + watched stores; renders movies + series columns),
+│   │   │                       # MovieCard (poster, year, StarRating, always-visible Recommendations button + Tooltip),
 │   │   │                       # SeriesCard (ribbon, episode progress, StarRating, always-visible Recommendations button + Tooltip),
 │   │   │                       # SagaCard (collection query + bin-packing row; uses full watchedMovies store for watched state),
 │   │   │                       # WatchlistSagaCard (3 states: watched/watchlisted/placeholder; date-gated to released parts),
@@ -125,8 +137,10 @@ src/
 │   │   │                       # WatchlistCard (poster, year, remove heart button — used in Por ver tab)
 │   │   └── hooks/              # useMovieRecommendations, useSeriesRecommendations (useQueries per source, ≥3.5★ filter, excludes watched)
 │   └── users/                  # UsersFeature, UserFormModal, ImportUsersModal,
-│                               # users.service.ts (fetchUsers — server-side paginated + filtered),
-│                               # userFilters.schema.ts, index.ts
+│   │                           # users.service.ts (fetchUsers — server-side paginated + filtered),
+│   │                           # userFilters.schema.ts, index.ts
+│   │   └── hooks/              # useUserColumns (6-column definition; reads language/userStore internally; selection callbacks via params),
+│   │                           # useUserExport (fetches all users, exports JSON/CSV; reads language/toastStore internally)
 ├── hooks/
 │   ├── useFilters.ts
 │   ├── useMounted.ts           # returns false on server / during hydration, true after mount
@@ -161,6 +175,7 @@ src/
     ├── formatDate.ts           # formatShortDate(dateStr, language) → "dd mon yyyy"
     ├── formatNumber.ts         # formatVoteCount(n, language) — regex-based thousands separator
     ├── getTMDBImageUrl.ts
+    ├── importUtils.ts          # parseJSON, parseCSV — shared parsers for ImportModal (CSV handles passwords with commas)
     ├── updateFilterValue.ts    # immutable filter key update
     └── watchProviders.ts       # deduplicateProviders — prefix-based variant removal;
 │                               # fetchWatchProviderOptions — shared fetch + dedup logic for movies and series
@@ -249,6 +264,7 @@ data/
 | MyList component extraction — SagaCard, WatchlistSagaCard, UnwatchedMoviePlaceholder extracted to separate files; shared types in myListUtils.ts | Done |
 | FiltersPanel clear-filters button repositioned left of chevron; always rendered (invisible when inactive) to prevent layout jump; data-cy="clear-filters" | Done |
 | Cypress cypress-axe — imported in support/e2e.ts; accessibility.cy.ts checks login, home, movies, series, my-list pages (wcag2a + wcag2aa) | Done |
+| Release calendar — today cell highlighted with solid bg-primary fill (was subtle ring); watchlist reminder dot (yellow) on days with a watchlist release (guest only) | Done |
 
 ---
 
@@ -364,7 +380,7 @@ npm run test:watch  # watch mode
 
 | Area | What's covered |
 |---|---|
-| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `tmdbToStarRating` (TMDB 0–10 → Rating 0.5–5), `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10; per-entry name dedup), `applyRuntimeFilter` (undefined/0 threshold → passthrough, empty runtimes map → passthrough, filters by total duration, exact threshold kept, null rt passes through, missing from map passes through), `binPackSagas` (empty input, single row, two groups fitting/not fitting, gap-filling before new row, displayedCounts used for width), `computeSagasFirst` (sagas-first when saga watchedAt > standalone; standalone-first when no sagas; tie-break by most-recent watchedAt), `computeAllMovies` (SagaCard helper — rating-filtered watched movies still show as watched via full store; genuinely unwatched returns null; regression test for old group.movies approach) |
+| Pure functions | `getMovieUI`, `getSeriesUI`, `updateFilterValue`, `getTMDBImageUrl`, `resolveMode`, `formatVoteCount`, `formatShortDate`, `tmdbToStarRating` (TMDB 0–10 → Rating 0.5–5), `deduplicateProviders` (generic, subtype preservation), `buildGenreCounts` (aggregate, sort, slice top-10; per-entry name dedup), `applyRuntimeFilter` (undefined/0 threshold → passthrough, empty runtimes map → passthrough, filters by total duration, exact threshold kept, null rt passes through, missing from map passes through), `binPackSagas` (empty input, single row, two groups fitting/not fitting, gap-filling before new row, displayedCounts used for width), `computeSagasFirst` (sagas-first when saga watchedAt > standalone; standalone-first when no sagas; tie-break by most-recent watchedAt), `computeAllMovies` (SagaCard helper — rating-filtered watched movies still show as watched via full store; genuinely unwatched returns null; regression test for old group.movies approach), `parseJSON` (valid array, non-array throws, malformed throws), `parseCSV` (3-col, header-only, empty input, commas in password ×2, 5-col, 5-col with commas, trims whitespace) |
 | Business logic | `applyClientFilters` (movies + series + language filter), `tmdbFetch` error mapping, `toCSV` (headers, quoting, empty rows) |
 | Store | `watchedStore` — `toggleMovie`, `toggleEpisode` (seasonNumber, watchedAt), `markSeason` (watchedAt), per-season count derivation, auto-remove from watchlist on mark (movie/episode/season); `watchlistStore` — `toggleMovie` (add, addedAt, remove, per-user isolation), `toggleSeries` (add, addedAt, remove, per-user isolation), `removeMovie`/`removeSeries` (no-op safety); `toastStore` — addToast, timers, removeToast; `ratingsStore` — setRating, removeRating, per-user isolation |
 | Hooks | `useMovieDetail`, `useSeriesDetail` (conditional fetch via `enabled`), `useWatchProviders` (flatrate/rent/buy merge, dedup, source tagging, loading), `useMovieInTheaters` (type 3 release, 90-day window), `useMovieReleases` (service call args), `useSeriesReleases` (disabled when no providers, enabled with providers), `useUserMovieTop10` / `useUserSeriesTop10` (genre_ids backfill via detail fetch, staleTime 5min), `useTrailer` (language preference via iso_639_1, YouTube filter, allTrailers list; disabled/enabled), `useEnrichedTrailers` (YouTube oEmbed batch fetch, replaces TMDB names with real YouTube titles, 24h cache), `useMovieRuntimeEnrichment` (empty map, populates runtime, null when no runtime, null on fetch fail, multiple movies, mixed success/failure), `useFilters` (initial state, setFilters, replaces entire object, preserves initial reference, exposes function) — all wrapped in `QueryClientProvider` with `retry: false` |
