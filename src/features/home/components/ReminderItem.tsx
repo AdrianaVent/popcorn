@@ -21,10 +21,11 @@ export default function ReminderItem({ release, onEntryClick }: Props) {
 
   const { ref: titleRef, isTruncated } = useTruncated<HTMLSpanElement>(release.title)
 
-  const genreIcons = (release.genre_ids ?? [])
-    .slice(0, 3)
-    .map((id) => getGenreIcon(id))
-    .filter((Icon): Icon is NonNullable<typeof Icon> => Icon !== null)
+  const genreIcons = [...new Set(
+    (release.genre_ids ?? [])
+      .map((id) => getGenreIcon(id))
+      .filter((Icon): Icon is NonNullable<typeof Icon> => Icon !== null),
+  )].slice(0, 3)
 
   const isSeries = release.season_number != null
   const seasonLabel = isSeries

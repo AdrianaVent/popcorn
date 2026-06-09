@@ -11,7 +11,7 @@ type UserRatings = {
 }
 type RatingsMap = Record<string, UserRatings>
 
-interface RatingsState {
+export interface RatingsState {
   ratings: RatingsMap
   setRating: (userId: string, type: 'movie' | 'series', id: number, rating: Rating) => void
   removeRating: (userId: string, type: 'movie' | 'series', id: number) => void

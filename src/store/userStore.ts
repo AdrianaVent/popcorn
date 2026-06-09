@@ -5,7 +5,7 @@ import type { UserRole } from '@/db/users'
 
 export type { UserRole }
 
-interface UserState {
+export interface UserState {
   userId: string | null
   role: UserRole | null
   setUser: (id: string, role: UserRole) => void

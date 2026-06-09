@@ -67,4 +67,37 @@ export const usersDb = {
     const placeholders = ids.map(() => '?').join(', ')
     db.prepare(`DELETE FROM users WHERE id IN (${placeholders})`).run(...ids)
   },
+
+  getStats: (): { total: number; guests: number; admins: number; thisMonth: number; byMonth: { month: string; count: number }[]; byWeek: { start: number; count: number }[]; byDay: { start: number; count: number }[] } => {
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime()
+    const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+    const DAY_MS  = 24 * 60 * 60 * 1000
+
+    const countBetween = (start: number, end: number): number =>
+      (db.prepare('SELECT COUNT(*) as count FROM users WHERE created_at >= ? AND created_at < ?').get(start, end) as { count: number }).count
+
+    const monthBuckets = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
+      return { key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, start: d.getTime(), end: new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime() }
+    })
+
+    const { total, guests, admins } = db.prepare(
+      `SELECT COUNT(*) as total,
+        SUM(CASE WHEN role = 'guest' THEN 1 ELSE 0 END) as guests,
+        SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as admins
+       FROM users`
+    ).get() as { total: number; guests: number; admins: number }
+
+    const { thisMonth } = db.prepare(
+      'SELECT COUNT(*) as thisMonth FROM users WHERE created_at >= ?'
+    ).get(startOfMonth) as { thisMonth: number }
+
+    const byMonth = monthBuckets.map(({ key, start, end }) => ({ month: key, count: countBetween(start, end) }))
+    const byWeek  = Array.from({ length: 6 }, (_, i) => { const end = tomorrow - (5 - i) * WEEK_MS; const start = end - WEEK_MS; return { start, count: countBetween(start, end) } })
+    const byDay   = Array.from({ length: 6 }, (_, i) => { const end = tomorrow - (5 - i) * DAY_MS;  const start = end - DAY_MS;  return { start, count: countBetween(start, end) } })
+
+    return { total, guests, admins, thisMonth, byMonth, byWeek, byDay }
+  },
 }
