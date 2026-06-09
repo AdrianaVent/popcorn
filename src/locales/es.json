@@ -325,6 +325,30 @@
       "title": "Top 10",
       "empty": "Marca algunos títulos como vistos para ver tu top 10",
       "allGenres": "Todos los géneros"
+    },
+    "stats": {
+      "titleGuest": "Mi actividad",
+      "titleAdmin": "Usuarios",
+      "movies": "Películas",
+      "series": "Series",
+      "episodes": "Episodios",
+      "avgRating": "Valoración media",
+      "hoursWatched": "Horas vistas",
+      "totalUsers": "Usuarios totales",
+      "guests": "Invitados",
+      "admins": "Administradores",
+      "newThisMonth": "Nuevos este mes",
+      "sagas": "Sagas",
+      "activityChart": "Actividad",
+      "period": {
+        "daily": "día",
+        "weekly": "sem",
+        "monthly": "mes"
+      },
+      "registrationsChart": "Registros",
+      "noActivity": "Marca algunos títulos como vistos para ver tu actividad",
+      "noUsers": "Aún no hay usuarios registrados",
+      "titles": "títulos"
     }
   },
   "calendar": {

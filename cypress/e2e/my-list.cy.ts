@@ -376,6 +376,89 @@ describe('My List', () => {
       cy.get('[data-cy="drawer-close"]').click()
       cy.get('[data-cy="recommendations-drawer"]').should('not.exist')
     })
+
+    it('closes when Escape key is pressed', () => {
+      cy.contains('button', 'Recommendations').should('not.be.disabled').click()
+      cy.get('[data-cy="recommendations-drawer"]').should('be.visible')
+      cy.get('body').type('{esc}')
+      cy.get('[data-cy="recommendations-drawer"]').should('not.exist')
+    })
+
+    it('shows recommendation items from TMDB and hides already-watched ones', () => {
+      cy.intercept('GET', /\/movie\/1\/recommendations/, {
+        body: {
+          page: 1,
+          results: [
+            { id: 2, title: 'The Dark Knight', poster_path: null, release_date: '2008-07-18', vote_average: 9.0, vote_count: 30000, genre_ids: [28, 18, 53] },
+            { id: 1, title: 'Inception', poster_path: null, release_date: '2010-07-16', vote_average: 8.8, vote_count: 35000, genre_ids: [28, 878] },
+          ],
+          total_pages: 1, total_results: 2,
+        },
+      }).as('movieRec')
+      cy.contains('button', 'Recommendations').should('not.be.disabled').click()
+      cy.wait('@movieRec')
+      cy.get('[data-cy="recommendations-drawer"]').contains('The Dark Knight').should('be.visible')
+      // Inception (id 1) is already watched — it should be filtered out
+      cy.get('[data-cy="recommendations-drawer"]').find('button').filter(':contains("Inception")').should('not.exist')
+    })
+
+    it('clicking a recommendation item opens the detail modal', () => {
+      cy.intercept('GET', /\/movie\/1\/recommendations/, {
+        body: {
+          page: 1,
+          results: [
+            { id: 2, title: 'The Dark Knight', poster_path: null, release_date: '2008-07-18', vote_average: 9.0, vote_count: 30000, genre_ids: [] },
+          ],
+          total_pages: 1, total_results: 1,
+        },
+      }).as('movieRec')
+      cy.intercept('GET', /\/movie\/2/, {
+        body: { id: 2, title: 'The Dark Knight', poster_path: null, release_date: '2008-07-18', vote_average: 9.0, vote_count: 30000, genre_ids: [], genres: [], runtime: 152, overview: 'A test overview.', release_dates: { results: [] } },
+      }).as('movieDetail')
+      cy.contains('button', 'Recommendations').should('not.be.disabled').click()
+      cy.wait('@movieRec')
+      cy.get('[data-cy="recommendations-drawer"]').contains('The Dark Knight').click()
+      cy.get('[role="dialog"]').should('be.visible')
+    })
+  })
+
+  describe('recommendations drawer — series with rating', () => {
+    beforeEach(() => {
+      loginAndVisitMyList((win, userId) => {
+        win.localStorage.setItem('popcorn-ratings-v1', JSON.stringify({
+          state: { ratings: { [userId]: { movies: {}, series: { 10: 4 } } } }, version: 0,
+        }))
+        win.localStorage.setItem('popcorn-watched-v3', JSON.stringify({
+          state: {
+            movies: {},
+            episodes: { [userId]: { 10: { 101: { seasonNumber: 1 } } } },
+            seriesData: {
+              [userId]: {
+                10: { id: 10, name: 'Breaking Bad', poster_path: null, first_air_date: '2008-01-20', number_of_episodes: 1, vote_average: 9.5, vote_count: 100000, original_language: 'en', watchedAt: NOW },
+              },
+            },
+          },
+          version: 0,
+        }))
+      })
+    })
+
+    it('shows series recommendation items from TMDB', () => {
+      cy.intercept('GET', /\/tv\/10\/recommendations/, {
+        body: {
+          page: 1,
+          results: [
+            { id: 1396, name: 'Breaking Bad', poster_path: null, first_air_date: '2008-01-20', vote_average: 9.5, vote_count: 200000, genre_ids: [18, 80] },
+            { id: 57243, name: 'Doctor Who', poster_path: null, first_air_date: '2005-03-26', vote_average: 8.2, vote_count: 9000, genre_ids: [10759, 10765] },
+          ],
+          total_pages: 1, total_results: 2,
+        },
+      }).as('seriesRec')
+      cy.contains('button', 'Series').click()
+      cy.contains('button', 'Recommendations').should('not.be.disabled').click()
+      cy.wait('@seriesRec')
+      cy.get('[data-cy="recommendations-drawer"]').contains('Doctor Who').should('be.visible')
+    })
   })
 
   // ─── Unwatched movie placeholders ────────────────────────────────────────────

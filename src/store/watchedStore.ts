@@ -40,7 +40,7 @@ type EpisodesMap = Record<string, Record<number, Record<number, EpisodeData>>>
 type MoviesMap   = Record<string, Record<number, StoredMovie>>
 type SeriesMap   = Record<string, Record<number, StoredSeries>>
 
-interface WatchedState {
+export interface WatchedState {
   episodes:   EpisodesMap
   movies:     MoviesMap
   seriesData: SeriesMap

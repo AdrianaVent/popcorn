@@ -61,10 +61,17 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
     }
   }, [showTrailer])
 
-  const genres = (release.genre_ids ?? [])
-    .slice(0, 2)
-    .map((id) => ({ id, name: genreMap[id] }))
-    .filter((g): g is { id: number; name: string } => Boolean(g.name))
+  const genres = (() => {
+    const seen = new Set()
+    return (release.genre_ids ?? [])
+      .map((id) => ({ id, name: genreMap[id], Icon: getGenreIcon(id) }))
+      .filter((g): g is { id: number; name: string; Icon: NonNullable<ReturnType<typeof getGenreIcon>> } => {
+        if (!g.name || !g.Icon || seen.has(g.Icon)) return false
+        seen.add(g.Icon)
+        return true
+      })
+      .slice(0, 2)
+  })()
 
   const statusConfig = release.series_status ? getStatusConfig(release.series_status) : null
 
@@ -98,17 +105,13 @@ export default function CalendarReleaseItem({ release, genreMap, onEntryClick, l
               )}
               {genres.length > 0 && (
                 <div className="flex items-center gap-1 shrink-0">
-                  {genres.map(({ id, name }) => {
-                    const Icon = getGenreIcon(id)
-                    if (!Icon) return null
-                    return (
-                      <Tooltip key={id} content={name} placement="top">
-                        <span aria-hidden="true" className="text-muted-foreground">
-                          <Icon size={12} strokeWidth={1.5} />
-                        </span>
-                      </Tooltip>
-                    )
-                  })}
+                  {genres.map(({ id, name, Icon }) => (
+                    <Tooltip key={id} content={name} placement="top">
+                      <span aria-hidden="true" className="text-muted-foreground">
+                        <Icon size={12} strokeWidth={1.5} />
+                      </span>
+                    </Tooltip>
+                  ))}
                 </div>
               )}
             </div>
