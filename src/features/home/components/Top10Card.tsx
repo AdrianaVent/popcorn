@@ -1,17 +1,17 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react'
-import { createPortal } from 'react-dom'
+import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, LayoutGrid } from 'lucide-react'
+import clsx from 'clsx'
 import ContentTabToggle, { type ContentTab } from '@/components/ui/ContentTabToggle'
 import Text from '@/components/ui/Text'
 import ToggleSwitch from '@/components/ui/ToggleSwitch'
 import MediaPoster from '@/components/common/MediaPoster'
 import { useLanguageStore } from '@/store/languageStore'
 import { TMDB_LANGUAGE } from '@/config/tmdb'
-import { resolveGenreName, MOVIE_GENRE_IDS, SERIES_GENRE_IDS } from '@/config/genres'
+import { MOVIE_GENRE_IDS, SERIES_GENRE_IDS } from '@/config/genres'
 import { getGenreIcon } from '@/config/genreIcons'
+import GenreDropdown from './GenreDropdown'
 import {
   useGlobalMovieTop10ByGenre,
   useGlobalSeriesTop10ByGenre,
@@ -19,7 +19,6 @@ import {
   useUserSeriesTop10ByGenre,
   type Top10Item,
 } from '@/features/home/hooks/useTop10'
-
 
 type Props = {
   tab: ContentTab
@@ -51,21 +50,18 @@ function ItemSkeleton() {
 }
 
 function ItemScore({ item, mode }: { item: Top10Item; mode: 'user' | 'global' }) {
-  if (mode === 'user' && item.personalRating !== null) {
-    const score = (item.personalRating * 2).toFixed(1)
-    return (
-      <span aria-label={`${score} / 10`} className="text-xs font-semibold text-yellow-500 dark:text-yellow-300 hc:text-amber-700 shrink-0 tabular-nums">
-        <span aria-hidden="true">★ </span>{score}
-      </span>
-    )
-  }
-  const score = item.tmdbScore.toFixed(1)
+  const hasPersonal = mode === 'user' && item.personalRating !== null
+  const score = hasPersonal ? (item.personalRating! * 2).toFixed(1) : item.tmdbScore.toFixed(1)
   return (
-    <span aria-label={`${score} / 10`} className={`text-xs font-semibold shrink-0 tabular-nums ${
-      mode === 'user'
-        ? 'text-muted-foreground/40 hc:text-muted-foreground'
-        : 'text-yellow-500 dark:text-yellow-300 hc:text-amber-700'
-    }`}>
+    <span
+      aria-label={`${score} / 10`}
+      className={clsx(
+        'text-xs font-semibold shrink-0 tabular-nums',
+        hasPersonal || mode === 'global'
+          ? 'text-yellow-500 dark:text-yellow-300 hc:text-amber-700'
+          : 'text-muted-foreground/40 hc:text-muted-foreground',
+      )}
+    >
       <span aria-hidden="true">★ </span>{score}
     </span>
   )
@@ -83,203 +79,62 @@ export default function Top10Card({
   defaultMode = 'global',
   showUserToggle = true,
   onItemClick,
-  className = '',
+  className,
 }: Props) {
   const { t } = useTranslation()
   const { language } = useLanguageStore()
   const tmdbLang = TMDB_LANGUAGE[language] ?? 'es-ES'
-  const [mode, setMode] = useState<'user' | 'global'>(showUserToggle ? defaultMode : 'global')
+  const [mode, setMode]                   = useState<'user' | 'global'>(showUserToggle ? defaultMode : 'global')
   const [selectedGenreId, setSelectedGenreId] = useState<number | null>(null)
-  const [isGenreOpen, setIsGenreOpen] = useState(false)
-  const genreRef = useRef<HTMLDivElement>(null)
-  const genreTriggerRef = useRef<HTMLButtonElement>(null)
-  const genreDropdownRef = useRef<HTMLDivElement>(null)
-  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({})
 
   const isMovies = tab === 'movies'
-  const globalQuery   = isMovies ? globalMovieQuery : globalSeriesQuery
-  const userBaseItems = isMovies ? userMovieItems   : userSeriesItems
 
   const handleTabChange = useCallback((newTab: ContentTab) => {
     onTabChange(newTab)
     setSelectedGenreId(null)
-    setIsGenreOpen(false)
   }, [onTabChange])
 
   const handleModeChange = useCallback((next: 'user' | 'global') => {
     setMode(next)
     setSelectedGenreId(null)
-    setIsGenreOpen(false)
   }, [])
 
-  // Base top 10 (no genre filter)
-  const baseItems   = mode === 'user' ? userBaseItems : (globalQuery.data ?? [])
-  const baseLoading = mode === 'global' && globalQuery.isLoading
-  const baseError   = mode === 'global' && globalQuery.isError
+  const globalQuery   = isMovies ? globalMovieQuery : globalSeriesQuery
+  const userBaseItems = isMovies ? userMovieItems   : userSeriesItems
+  const baseItems     = mode === 'user' ? userBaseItems : (globalQuery.data ?? [])
+  const baseLoading   = mode === 'global' && globalQuery.isLoading
+  const baseError     = mode === 'global' && globalQuery.isError
 
-  // Genre-specific queries — enabled only when a genre is selected and the tab matches
-  const genreMovieQuery      = useGlobalMovieTop10ByGenre(
-    tmdbLang,
-    mode === 'global' && isMovies ? selectedGenreId : null
-  )
-  const genreSeriesQuery     = useGlobalSeriesTop10ByGenre(
-    tmdbLang,
-    mode === 'global' && !isMovies ? selectedGenreId : null
-  )
-  const userGenreMovieQuery  = useUserMovieTop10ByGenre(
-    mode === 'user' && isMovies  ? userMoviePool  : [],
-    mode === 'user' && isMovies  ? selectedGenreId : null,
-    tmdbLang
-  )
-  const userGenreSeriesQuery = useUserSeriesTop10ByGenre(
-    mode === 'user' && !isMovies ? userSeriesPool : [],
-    mode === 'user' && !isMovies ? selectedGenreId : null,
-    tmdbLang
-  )
+  const genreMovieQuery      = useGlobalMovieTop10ByGenre(tmdbLang, mode === 'global' && isMovies ? selectedGenreId : null)
+  const genreSeriesQuery     = useGlobalSeriesTop10ByGenre(tmdbLang, mode === 'global' && !isMovies ? selectedGenreId : null)
+  const userGenreMovieQuery  = useUserMovieTop10ByGenre(mode === 'user' && isMovies ? userMoviePool : [], mode === 'user' && isMovies ? selectedGenreId : null, tmdbLang)
+  const userGenreSeriesQuery = useUserSeriesTop10ByGenre(mode === 'user' && !isMovies ? userSeriesPool : [], mode === 'user' && !isMovies ? selectedGenreId : null, tmdbLang)
 
   const activeGenreQuery = mode === 'user'
     ? (isMovies ? userGenreMovieQuery : userGenreSeriesQuery)
     : (isMovies ? genreMovieQuery     : genreSeriesQuery)
 
-  // Resolved display values
-  const items = selectedGenreId !== null
-    ? (activeGenreQuery.data ?? [])
-    : baseItems
+  const items   = selectedGenreId !== null ? (activeGenreQuery.data ?? []) : baseItems
+  const loading = selectedGenreId !== null ? activeGenreQuery.isLoading    : baseLoading
+  const error   = selectedGenreId !== null ? activeGenreQuery.isError      : baseError
+  const empty   = !loading && !error && items.length === 0
 
-  const loading = selectedGenreId !== null
-    ? activeGenreQuery.isLoading
-    : baseLoading
-
-  const error = selectedGenreId !== null
-    ? activeGenreQuery.isError
-    : baseError
-
-  // All genre IDs for the current tab
   const genreIds = (isMovies ? MOVIE_GENRE_IDS : SERIES_GENRE_IDS).filter((id) => id !== 10770)
 
-  const openDropdown = useCallback(() => {
-    const rect = genreTriggerRef.current?.getBoundingClientRect()
-    if (rect) setDropdownStyle({ top: rect.bottom + 4, left: rect.left })
-    setIsGenreOpen(true)
-  }, [])
-
-  useLayoutEffect(() => {
-    if (!isGenreOpen || !genreDropdownRef.current || !genreTriggerRef.current) return
-    const drop = genreDropdownRef.current.getBoundingClientRect()
-    const trigger = genreTriggerRef.current.getBoundingClientRect()
-    let { top, left } = dropdownStyle as { top: number; left: number }
-    if (drop.bottom > window.innerHeight) top = trigger.top - drop.height - 4
-    if (drop.right > window.innerWidth) left = window.innerWidth - drop.width - 8
-    if (top !== (dropdownStyle as { top: number }).top || left !== (dropdownStyle as { left: number }).left) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDropdownStyle({ top, left })
-    }
-  }, [isGenreOpen, dropdownStyle])
-
-  useEffect(() => {
-    if (!isGenreOpen) return
-    function handleOutside(e: MouseEvent) {
-      if (
-        !genreTriggerRef.current?.contains(e.target as Node) &&
-        !genreDropdownRef.current?.contains(e.target as Node)
-      ) setIsGenreOpen(false)
-    }
-    document.addEventListener('mousedown', handleOutside)
-    return () => document.removeEventListener('mousedown', handleOutside)
-  }, [isGenreOpen])
-
-  const empty = !loading && !error && items.length === 0
-
-  const activeGenreName = selectedGenreId !== null
-    ? resolveGenreName(selectedGenreId, language)
-    : t('dashboard.top10.allGenres')
-
   return (
-    <div className={`flex flex-col gap-2 rounded-xl border border-border bg-card p-3 select-none${className ? ` ${className}` : ''}`}>
+    <div className={clsx('flex flex-col gap-2 rounded-xl border border-border bg-card p-3 select-none', className)}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Text variant="body" className="font-semibold text-foreground">
-            {t('dashboard.top10.title')}
-          </Text>
+          <Text variant="body" className="font-semibold text-foreground">{t('dashboard.top10.title')}</Text>
           <ContentTabToggle tab={tab} onTabChange={handleTabChange} />
         </div>
         <div className="flex items-center gap-2">
-          {/* Genre picker */}
-          <div ref={genreRef}>
-            <button
-              ref={genreTriggerRef}
-              type="button"
-              aria-expanded={isGenreOpen}
-              onClick={() => isGenreOpen ? setIsGenreOpen(false) : openDropdown()}
-              className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md border transition-colors cursor-pointer ${
-                selectedGenreId !== null
-                  ? 'border-primary bg-primary/10 hc:bg-primary hc:text-primary-foreground text-primary'
-                  : 'border-border bg-muted text-foreground hover:bg-muted/60 hc:hover:bg-muted'
-              }`}
-            >
-              <span aria-hidden="true">
-                {[selectedGenreId].map((id) => {
-                  if (id === null) return <LayoutGrid key="default" size={12} className="shrink-0" />
-                  const Icon = getGenreIcon(id)
-                  return Icon ? <Icon key={id} size={12} className="shrink-0" /> : <LayoutGrid key="default" size={12} className="shrink-0" />
-                })}
-              </span>
-              <span className="max-w-35 truncate">{activeGenreName}</span>
-              <span aria-hidden="true">
-                <ChevronDown
-                  size={11}
-                  className={`shrink-0 transition-transform duration-150 ${isGenreOpen ? 'rotate-180' : ''}`}
-                />
-              </span>
-            </button>
-
-            {isGenreOpen && typeof window !== 'undefined' && createPortal(
-              <div
-                ref={genreDropdownRef}
-                data-cy="top10-genre-dropdown"
-                className="animate-fade-in fixed z-9999 rounded-xl border border-border bg-card shadow-lg p-2 w-64"
-                style={dropdownStyle}
-              >
-                <button
-                  type="button"
-                  onClick={() => { setSelectedGenreId(null); setIsGenreOpen(false) }}
-                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium mb-1 transition-colors ${
-                    selectedGenreId === null
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted/60 hc:hover:bg-muted'
-                  }`}
-                >
-                  <span aria-hidden="true"><LayoutGrid size={12} className="shrink-0" /></span>
-                  {t('dashboard.top10.allGenres')}
-                </button>
-
-                <div className="grid grid-cols-2 gap-0.5">
-                  {genreIds.map((id) => {
-                    const Icon = getGenreIcon(id)
-                    const name = resolveGenreName(id, language)
-                    const isSelected = selectedGenreId === id
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => { setSelectedGenreId(id); setIsGenreOpen(false) }}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors text-left ${
-                          isSelected
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-foreground hover:bg-muted/60 hc:hover:bg-muted'
-                        }`}
-                      >
-                        {Icon && <span aria-hidden="true"><Icon size={12} className="shrink-0" /></span>}
-                        <span className="truncate">{name}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>,
-              document.body,
-            )}
-          </div>
-
+          <GenreDropdown
+            genreIds={genreIds}
+            selectedGenreId={selectedGenreId}
+            onSelect={setSelectedGenreId}
+            language={language}
+          />
           {showUserToggle && (
             <ToggleSwitch
               options={[
@@ -326,41 +181,20 @@ export default function Top10Card({
                     onClick={() => onItemClick(isMovies ? 'movie' : 'series', item.id)}
                     className="w-full flex items-center gap-2.5 py-1 rounded-lg px-1 hover:bg-muted/60 hc:hover:bg-muted transition-colors group text-left cursor-pointer"
                   >
-                    <span className="w-5 text-center text-xs font-semibold text-muted-foreground shrink-0 tabular-nums">
-                      {i + 1}
-                    </span>
-                    <MediaPoster
-                      posterPath={item.posterPath}
-                      title={item.title}
-                      variant="sm"
-                      loading={i < 3 ? 'eager' : 'lazy'}
-                    />
+                    <span className="w-5 text-center text-xs font-semibold text-muted-foreground shrink-0 tabular-nums">{i + 1}</span>
+                    <MediaPoster posterPath={item.posterPath} title={item.title} variant="sm" loading={i < 3 ? 'eager' : 'lazy'} />
                     <span className="flex-1 min-w-0">
                       <span className="block text-xs font-medium text-foreground leading-tight truncate group-hover:text-primary transition-colors">
                         {item.title}
                       </span>
                       <span className="flex items-center gap-1 mt-0.5">
-                        {item.year && (
-                          <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-                            {item.year}
-                          </span>
-                        )}
+                        {item.year && <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">{item.year}</span>}
                         {item.year && item.genre_ids.length > 0 && (
                           <span aria-hidden="true" className="text-muted-foreground/40 hc:text-muted-foreground text-[10px] shrink-0">·</span>
                         )}
-                        {Array.from(
-                          new Map(
-                            item.genre_ids
-                              .map((gid) => [getGenreIcon(gid), gid] as const)
-                              .filter(([Icon]) => Icon !== null)
-                          ).entries()
-                        ).slice(0, 3).map(([Icon, gid]) =>
-                          Icon ? (
-                            <span key={gid} aria-hidden="true">
-                              <Icon size={10} className="text-muted-foreground shrink-0" />
-                            </span>
-                          ) : null
-                        )}
+                        {Array.from(new Map(item.genre_ids.map((gid) => [getGenreIcon(gid), gid] as const).filter(([I]) => I !== null)).entries())
+                          .slice(0, 3)
+                          .map(([Icon, gid]) => Icon ? <span key={gid} aria-hidden="true"><Icon size={10} className="text-muted-foreground shrink-0" /></span> : null)}
                       </span>
                     </span>
                     <ItemScore item={item} mode={mode} />

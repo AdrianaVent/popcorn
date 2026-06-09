@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import Modal from '@/components/ui/Modal'
 import IconToggleButton from '@/components/ui/IconToggleButton'
@@ -8,7 +8,8 @@ import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 import { useSeriesDetail } from '@/features/series/hooks/useSeriesDetail'
 import { useWatchProviders } from '@/hooks/useWatchProviders'
-import { fetchSeriesWatchProviders, fetchSeasonDetail, fetchSeriesVideos } from '@/features/series/series.service'
+import { fetchSeriesWatchProviders, fetchSeriesVideos } from '@/features/series/series.service'
+import { useSeriesMarkAll } from '@/features/series/hooks/useSeriesMarkAll'
 import { getSeriesUI } from '@/features/series/getSeriesUI'
 import WatchProviders from '@/components/common/WatchProviders'
 import { useWatchedStore } from '@/store/watchedStore'
@@ -42,14 +43,12 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
   const userId = useUserStore((s) => s.userId)
   const role   = useUserStore((s) => s.role)
   const userKey = String(userId ?? 'guest')
-  const markSeason = useWatchedStore((s) => s.markSeason)
   const watchedCount = useWatchedStore((s) => Object.keys(s.episodes[userKey]?.[seriesId] ?? {}).length)
 
   const watchlistSeries = useWatchlistStore((s) => s.series[userKey])
   const toggleWatchlist = useWatchlistStore((s) => s.toggleSeries)
   const isInWatchlist   = !!watchlistSeries?.[seriesId]
 
-  const [markLoading, setMarkLoading] = useState(false)
   const [showTrailer, setShowTrailer] = useState(false)
   const { allTrailers: rawSeriesTrailers } = useTrailer(
     ['series-trailer', seriesId],
@@ -61,44 +60,14 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
   const trailer = resolveHeaderTrailer(seriesAllTrailers, language)
 
   const ui = getSeriesUI(detail)
-
-  const validSeasons = (detail?.seasons ?? []).filter((s) => s.air_date && s.season_number > 0)
+  const validSeasons = useMemo(
+    () => (detail?.seasons ?? []).filter((s) => s.air_date && s.season_number > 0),
+    [detail],
+  )
   const totalEpisodes = validSeasons.reduce((sum, s) => sum + s.episode_count, 0)
   const allWatched = totalEpisodes > 0 && watchedCount >= totalEpisodes
 
-  const handleMarkAll = async () => {
-    if (!detail || markLoading) return
-    setMarkLoading(true)
-    try {
-      const results = await Promise.allSettled(
-        validSeasons.map((s) => fetchSeasonDetail(seriesId, s.season_number, language))
-      )
-      const today = new Date().toISOString().slice(0, 10)
-      const storeEps = useWatchedStore.getState().episodes[userKey]?.[seriesId] ?? {}
-      const fulfilled = results
-        .map((result, i) => {
-          if (result.status !== 'fulfilled') return null
-          const epIds = result.value.episodes
-            .filter((e) => e.air_date && e.air_date <= today && e.runtime != null)
-            .map((e) => e.id)
-          return epIds.length > 0 ? { season: validSeasons[i], epIds } : null
-        })
-        .filter((x): x is { season: typeof validSeasons[0]; epIds: number[] } => x !== null)
-
-      const seriesFullyWatched = fulfilled.every(({ epIds }) => epIds.every((id) => !!storeEps[id]))
-
-      fulfilled.forEach(({ season, epIds }) => {
-        const seasonFullyWatched = epIds.every((id) => !!storeEps[id])
-        if (seriesFullyWatched || !seasonFullyWatched) {
-          markSeason(userKey, seriesId, season.season_number, epIds, seriesSnapshot)
-        }
-      })
-    } finally {
-      setMarkLoading(false)
-    }
-  }
-
-  const seriesSnapshot: StoredSeries | undefined = detail ? {
+  const seriesSnapshot: StoredSeries | undefined = useMemo(() => detail ? {
     id: detail.id,
     name: detail.name,
     first_air_date: detail.first_air_date,
@@ -108,7 +77,9 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
     original_language: detail.original_language,
     number_of_episodes: detail.number_of_episodes,
     genre_ids: detail.genres?.map((g) => g.id) ?? [],
-  } : undefined
+  } : undefined, [detail])
+
+  const { markLoading, handleMarkAll } = useSeriesMarkAll(seriesId, validSeasons, userKey, seriesSnapshot, language)
 
   return (
     <Modal title={detail?.name ?? '...'} onClose={onClose} maxWidth="44rem">

@@ -1,6 +1,6 @@
-import { formatSagaName, groupAndSortMovies, computeSagasFirst, binPackSagas } from './MyListFeature'
+import { formatSagaName, groupAndSortMovies, computeSagasFirst, binPackSagas } from './myListUtils'
 import type { StoredMovie } from '@/store/watchedStore'
-import type { SagaGroup } from './MyListFeature'
+import type { SagaGroup } from './myListUtils'
 
 const makeMovie = (overrides: Partial<StoredMovie> & { id: number }): StoredMovie => ({
   title: `Movie ${overrides.id}`,
