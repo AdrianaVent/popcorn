@@ -5,7 +5,7 @@ import i18n from '@/config/i18n'
 
 export type Language = 'en' | 'es'
 
-interface LanguageState {
+export interface LanguageState {
   language: Language
   userLanguages: Record<string, Language>
   region: string

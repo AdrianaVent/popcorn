@@ -12,7 +12,7 @@ export default function Loading() {
       <Header title={t('nav.home')} start={<HomeIcon size={32} strokeWidth={1.5} />} />
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 auto-rows-[50vh] lg:auto-rows-[calc(50vh-3.5rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 auto-rows-[50vh] lg:auto-rows-[calc(50vh-3.5rem)]">
 
           {/* Top 10 skeleton */}
           <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3">
@@ -56,6 +56,20 @@ export default function Loading() {
               {Array.from({ length: 35 }).map((_, i) => (
                 <div key={i} className="rounded-md bg-border animate-pulse" />
               ))}
+            </div>
+          </div>
+
+          {/* Stats skeleton */}
+          <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3">
+            <div className="h-4 w-24 rounded bg-border animate-pulse" />
+            <div className="flex gap-1.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex-1 h-12 rounded-lg bg-border animate-pulse" />
+              ))}
+            </div>
+            <div className="flex-1 flex flex-col justify-end gap-1">
+              <div className="h-3 w-20 rounded bg-border animate-pulse" />
+              <div className="flex-1 rounded-lg bg-border animate-pulse" />
             </div>
           </div>
 

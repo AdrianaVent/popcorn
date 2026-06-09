@@ -11,6 +11,7 @@ import { useUserSeriesGenres, useGlobalSeriesGenres } from '@/features/home/hook
 import { useMovieReleases, useSeriesReleases } from '@/features/home/hooks/useReleases'
 import { useGlobalMovieTop10, useGlobalSeriesTop10, useUserMovieTop10, useUserSeriesTop10, buildUserMoviePool, buildUserSeriesPool } from '@/features/home/hooks/useTop10'
 import Top10Card from '@/features/home/components/Top10Card'
+import StatsCard from '@/features/home/components/StatsCard'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useRatingsStore } from '@/store/ratingsStore'
 import { useWatchlistStore } from '@/store/watchlistStore'
@@ -127,7 +128,7 @@ export default function HomeFeature() {
   return (
     <PageLayout title={t('nav.home')} start={<HomeIcon size={32} strokeWidth={1.5} />}>
       <div className="flex-1 min-h-0 overflow-y-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 auto-rows-[50vh] lg:auto-rows-[calc(50vh-3.5rem)]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 auto-rows-[50vh] lg:auto-rows-[calc(50vh-3.5rem)]">
         {/* Top 10 card */}
         <Top10Card
           tab={top10Tab}
@@ -161,6 +162,9 @@ export default function HomeFeature() {
           onEntryClick={handleEntryClick}
           animateFrom={calendarDir ?? undefined}
         />
+
+        {/* Stats card */}
+        <StatsCard className="animate-fade-in" />
 
         {/* Genres card */}
         <DonutChart
