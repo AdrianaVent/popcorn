@@ -2,8 +2,12 @@
 
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { GripVertical } from 'lucide-react'
+import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable'
 import DonutChart from '@/components/ui/DonutChart'
 import ReleaseCalendar from '@/features/home/components/ReleaseCalendar'
+import DraggableCard from '@/features/home/components/DraggableCard'
 import MovieDetailModal from '@/features/movies/components/MovieDetailModal'
 import SeriesDetailModal from '@/features/series/components/SeriesDetailModal'
 import { useUserMovieGenres, useGlobalMovieGenres } from '@/features/home/hooks/useMovieGenres'
@@ -22,6 +26,7 @@ import { buildGenreMapForLanguage } from '@/config/genres'
 import { getGenreIconByName } from '@/config/genreIcons'
 import PageLayout from '@/components/layouts/PageLayout'
 import { HomeIcon } from '@/components/icons'
+import { useHomeStore, DEFAULT_CARD_ORDER, type CardId } from '@/store/homeStore'
 
 import { type ContentTab } from '@/components/ui/ContentTabToggle'
 
@@ -39,8 +44,33 @@ export default function HomeFeature() {
   const [calendarDir, setCalendarDir] = useState<'left' | 'right' | null>(null)
   const [selectedMovieId, setSelectedMovieId]   = useState<number | null>(null)
   const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null)
+  const [isDragMode, setIsDragMode] = useState(false)
+  const [draftOrder, setDraftOrder] = useState<CardId[]>(DEFAULT_CARD_ORDER)
 
   const userId   = useUserStore((s) => s.userId) ?? ''
+
+  const cardOrders   = useHomeStore((s) => s.cardOrders)
+  const setCardOrder = useHomeStore((s) => s.setCardOrder)
+  const cardOrder    = cardOrders[userId] ?? DEFAULT_CARD_ORDER
+
+  const toggleDragMode = () => {
+    if (!isDragMode) {
+      setDraftOrder(cardOrder)
+    } else {
+      setCardOrder(userId, draftOrder)
+    }
+    setIsDragMode((v) => !v)
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      const oldIndex = draftOrder.indexOf(active.id as CardId)
+      const newIndex = draftOrder.indexOf(over.id as CardId)
+      setDraftOrder(arrayMove(draftOrder, oldIndex, newIndex))
+    }
+  }
+
   const role     = useUserStore((s) => s.role)
   const language = useLanguageStore((s) => s.language)
   const tmdbLang = TMDB_LANGUAGE[language] ?? 'es-ES'
@@ -125,62 +155,95 @@ export default function HomeFeature() {
     else setSelectedSeriesId(id)
   }
 
+  const dragCardCls = isDragMode
+    ? '!border-2 !border-dashed !border-primary/50 hc:!border-primary'
+    : ''
+
+  const cards: Record<CardId, React.ReactNode> = {
+    top10: (
+      <Top10Card
+        tab={top10Tab}
+        onTabChange={setTop10Tab}
+        globalMovieQuery={globalMovieTop10}
+        globalSeriesQuery={globalSeriesTop10}
+        userMovieItems={userMovieTop10}
+        userSeriesItems={userSeriesTop10}
+        userMoviePool={userMoviePool}
+        userSeriesPool={userSeriesPool}
+        defaultMode={top10DefaultMode}
+        showUserToggle={role !== 'admin'}
+        onItemClick={handleTop10Click}
+        className={`h-full animate-fade-in ${dragCardCls}`}
+      />
+    ),
+    calendar: (
+      <ReleaseCalendar
+        key={`${calendar.year}-${calendar.month}-${calendarTab}`}
+        year={calendar.year}
+        month={calendar.month}
+        tab={calendarTab}
+        onTabChange={handleCalendarTabChange}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
+        onToday={handleToday}
+        query={calendarQuery}
+        genreMap={genreMap}
+        watchlistMovieIds={role !== 'admin' ? watchlistMovieIds : undefined}
+        watchlistSeriesIds={role !== 'admin' ? watchlistSeriesIds : undefined}
+        onEntryClick={handleEntryClick}
+        animateFrom={calendarDir ?? undefined}
+        className={`h-full ${dragCardCls}`}
+      />
+    ),
+    stats: <StatsCard className={`h-full animate-fade-in ${dragCardCls}`} />,
+    genres: (
+      <DonutChart
+        key={genreTab}
+        title={t('dashboard.genres')}
+        tooltipLabel={isGenreMovies ? t('dashboard.chart.movies') : t('dashboard.chart.series')}
+        tab={genreTab}
+        onTabChange={setGenreTab}
+        userQuery={isGenreMovies ? userMovieGenres : userSeriesGenres}
+        globalQuery={isGenreMovies ? globalMovieGenres : globalSeriesGenres}
+        defaultMode={isGenreMovies ? movieDefaultMode : seriesDefaultMode}
+        showUserToggle={role !== 'admin'}
+        getRowIcon={getGenreIconByName}
+        className={`h-full animate-fade-in ${dragCardCls}`}
+      />
+    ),
+  }
+
+  const dragToggle = (
+    <button
+      data-cy="drag-mode-toggle"
+      onClick={toggleDragMode}
+      aria-label={t('dashboard.dragMode')}
+      aria-pressed={isDragMode}
+      className={`flex items-center gap-1.5 text-[12px] px-2.5 py-1 rounded-md border transition-colors ${
+        isDragMode
+          ? 'border-primary bg-primary/10 text-primary font-medium hc:bg-primary hc:text-primary-foreground hc:border-primary'
+          : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
+      }`}
+    >
+      <GripVertical size={14} strokeWidth={1.5} aria-hidden="true" />
+      {t('dashboard.dragMode')}
+    </button>
+  )
+
   return (
-    <PageLayout title={t('nav.home')} start={<HomeIcon size={32} strokeWidth={1.5} />}>
+    <PageLayout title={t('nav.home')} start={<HomeIcon size={32} strokeWidth={1.5} />} end={dragToggle}>
       <div className="flex-1 min-h-0 overflow-y-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 auto-rows-[50vh] lg:auto-rows-[calc(50vh-3.5rem)]">
-        {/* Top 10 card */}
-        <Top10Card
-          tab={top10Tab}
-          onTabChange={setTop10Tab}
-          globalMovieQuery={globalMovieTop10}
-          globalSeriesQuery={globalSeriesTop10}
-          userMovieItems={userMovieTop10}
-          userSeriesItems={userSeriesTop10}
-          userMoviePool={userMoviePool}
-          userSeriesPool={userSeriesPool}
-          defaultMode={top10DefaultMode}
-          showUserToggle={role !== 'admin'}
-          onItemClick={handleTop10Click}
-          className="animate-fade-in"
-        />
-
-        {/* Calendar card */}
-        <ReleaseCalendar
-          key={`${calendar.year}-${calendar.month}-${calendarTab}`}
-          year={calendar.year}
-          month={calendar.month}
-          tab={calendarTab}
-          onTabChange={handleCalendarTabChange}
-          onPrevMonth={handlePrevMonth}
-          onNextMonth={handleNextMonth}
-          onToday={handleToday}
-          query={calendarQuery}
-          genreMap={genreMap}
-          watchlistMovieIds={role !== 'admin' ? watchlistMovieIds : undefined}
-          watchlistSeriesIds={role !== 'admin' ? watchlistSeriesIds : undefined}
-          onEntryClick={handleEntryClick}
-          animateFrom={calendarDir ?? undefined}
-        />
-
-        {/* Stats card */}
-        <StatsCard className="animate-fade-in" />
-
-        {/* Genres card */}
-        <DonutChart
-          key={genreTab}
-          title={t('dashboard.genres')}
-          tooltipLabel={isGenreMovies ? t('dashboard.chart.movies') : t('dashboard.chart.series')}
-          tab={genreTab}
-          onTabChange={setGenreTab}
-          userQuery={isGenreMovies ? userMovieGenres : userSeriesGenres}
-          globalQuery={isGenreMovies ? globalMovieGenres : globalSeriesGenres}
-          defaultMode={isGenreMovies ? movieDefaultMode : seriesDefaultMode}
-          showUserToggle={role !== 'admin'}
-          getRowIcon={getGenreIconByName}
-          className="animate-fade-in"
-        />
-      </div>
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={isDragMode ? draftOrder : cardOrder} strategy={rectSortingStrategy}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 auto-rows-[50vh] lg:auto-rows-[calc(50vh-3.5rem)]">
+            {(isDragMode ? draftOrder : cardOrder).map((id) => (
+              <DraggableCard key={id} id={id} isDragMode={isDragMode}>
+                {cards[id]}
+              </DraggableCard>
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
       </div>
 
       {selectedMovieId !== null && (

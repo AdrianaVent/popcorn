@@ -326,6 +326,7 @@
       "empty": "Marca algunos títulos como vistos para ver tu top 10",
       "allGenres": "Todos los géneros"
     },
+    "dragMode": "Organizar",
     "stats": {
       "titleGuest": "Mi actividad",
       "titleAdmin": "Usuarios",

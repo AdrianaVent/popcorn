@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.20.0-6B2737)
+![Version](https://img.shields.io/badge/version-0.21.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -25,6 +25,7 @@ Personal movie & series dashboard. Track what you watch, explore collections, an
 | Home dashboard — release calendar | ✓ | ✓ |
 | Home dashboard — user stats (total, guests, admins, registrations chart with daily/weekly/monthly toggle) | ✓ | — |
 | Home dashboard — personal activity stats (movies, sagas, episodes, avg rating, activity chart with daily/weekly/monthly toggle) | — | ✓ |
+| Home dashboard — drag-and-drop card reordering (per-user, persisted) | ✓ | ✓ |
 | Mark movies and episodes as watched | — | ✓ |
 | Add titles to watchlist via heart button (movies, series, calendar) | — | ✓ |
 | View and rate watched titles (My list) | — | ✓ |
@@ -201,6 +202,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser and sign in 
 
 The landing page after login. It shows four cards in a responsive grid: a Top 10 ranking, a genre distribution chart, a release calendar, and a stats card. The grid adapts to the available width — cards stack in a single column on narrow viewports and expand to multiple columns on wider screens.
 
+The card order can be rearranged per user — click **Organizar** (top-right of the page header) to enter drag mode and drag any card to a new position. The layout is saved automatically when you exit drag mode. The order is stored individually per account and persists across sessions.
+
 **Top 10**
 
 A ranked list of the top 10 movies or series by rating. Each entry shows the poster, title, release year, genre icons and score.
@@ -244,6 +247,12 @@ A monthly calendar showing upcoming movie and series releases from TMDB (English
 - Click the play button on an entry to watch its trailer inline (series entries prefer the season-specific trailer, falling back to the series trailer).
 - Use the **←** and **→** arrows to navigate between months. The **Today** button returns to the current month.
 - Switch between **Movies** and **Series** with the icon buttons in the card header.
+
+**Arrange cards**
+
+![Home — drag mode active](docs/screenshots/home-drag-mode.png)
+
+Click **Organizar** in the page header to enter drag mode. Each card dims and shows a grip handle in the centre — drag it to reorder. The layout is saved automatically when you exit drag mode. The order is stored per user.
 
 **Reminders** *(guest only)*
 
