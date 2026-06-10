@@ -326,6 +326,7 @@
       "empty": "Mark some titles as watched to build your top 10",
       "allGenres": "All genres"
     },
+    "dragMode": "Arrange",
     "stats": {
       "titleGuest": "My activity",
       "titleAdmin": "Users",

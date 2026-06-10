@@ -696,3 +696,41 @@ describe('Release calendar — reminders panel', () => {
     })
   })
 })
+
+describe('Drag mode toggle', () => {
+  it('shows the Organizar button with aria-pressed="false" by default', () => {
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="drag-mode-toggle"]')
+      .should('be.visible')
+      .and('have.attr', 'aria-pressed', 'false')
+  })
+
+  it('activates drag mode and shows 4 drag handles', () => {
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="drag-mode-toggle"]').click()
+    cy.get('[aria-label="Drag to reorder"]').should('have.length', 4)
+    cy.get('[data-cy="drag-mode-toggle"]').should('have.attr', 'aria-pressed', 'true')
+  })
+
+  it('exits drag mode on second click and hides drag handles', () => {
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="drag-mode-toggle"]').click()
+    cy.get('[aria-label="Drag to reorder"]').should('have.length', 4)
+    cy.get('[data-cy="drag-mode-toggle"]').click()
+    cy.get('[aria-label="Drag to reorder"]').should('not.exist')
+    cy.get('[data-cy="drag-mode-toggle"]').should('have.attr', 'aria-pressed', 'false')
+  })
+
+  it('is also visible for admin', () => {
+    cy.visitAsAdmin('/home')
+    cy.get('[data-cy="drag-mode-toggle"]').should('be.visible')
+  })
+
+  it('has no axe violations in drag mode', () => {
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="drag-mode-toggle"]').click()
+    cy.get('[aria-label="Drag to reorder"]').should('have.length', 4)
+    cy.injectAxe()
+    cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+  })
+})
