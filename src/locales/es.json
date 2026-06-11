@@ -400,5 +400,100 @@
     "reset": {
       "messageSuccess": "Correo de recuperación enviado"
     }
+  },
+  "profile": {
+    "title": "Mi perfil",
+    "saving": "Guardando...",
+    "avatar": {
+      "title": "Avatar",
+      "hello": "Hola, {{name}}",
+      "edit": "Editar avatar",
+      "save": "Guardar avatar",
+      "saved": "Avatar actualizado",
+      "error": "No se pudo guardar el avatar",
+      "skin": {
+        "label": "Tono de piel",
+        "light": "Claro",
+        "warm": "Cálido",
+        "tan": "Bronceado",
+        "medium": "Medio",
+        "brown": "Marrón",
+        "richBrown": "Marrón oscuro",
+        "dark": "Oscuro",
+        "deepDark": "Muy oscuro"
+      },
+      "hairColor": {
+        "label": "Color de pelo",
+        "black": "Negro",
+        "brown": "Castaño",
+        "chestnut": "Avellana",
+        "blonde": "Rubio",
+        "red": "Pelirrojo",
+        "silver": "Plateado",
+        "blue": "Azul",
+        "pink": "Rosa"
+      },
+      "hair": {
+        "label": "Estilo de pelo",
+        "short": "Corto",
+        "long": "Largo",
+        "messy": "Despeinado",
+        "slick": "Liso",
+        "mohawk": "Cresta",
+        "bald": "Calvo"
+      },
+      "shirt": {
+        "label": "Color de camiseta",
+        "black": "Negro",
+        "white": "Blanco",
+        "blue": "Azul",
+        "red": "Rojo",
+        "green": "Verde",
+        "yellow": "Amarillo",
+        "purple": "Morado",
+        "pink": "Rosa"
+      },
+      "glasses": {
+        "label": "Gafas",
+        "none": "Ninguna",
+        "round": "Redondas",
+        "square": "Cuadradas"
+      },
+      "glassesColor": {
+        "label": "Color de gafas",
+        "black": "Negro",
+        "brown": "Marrón",
+        "silver": "Plateado",
+        "blue": "Azul",
+        "green": "Verde",
+        "purple": "Morado",
+        "pink": "Rosa",
+        "red": "Rojo"
+      },
+      "mouth": {
+        "label": "Expresión",
+        "smile": "Sonrisa",
+        "laughing": "Riendo",
+        "smirk": "Pícaro",
+        "surprised": "Sorprendido",
+        "nervous": "Nervioso",
+        "sad": "Triste"
+      }
+    },
+    "password": {
+      "title": "Contraseña",
+      "current": "Contraseña actual",
+      "new": "Nueva contraseña",
+      "confirm": "Confirmar contraseña",
+      "save": "Guardar contraseña",
+      "hint": "Mín. 8 caracteres, 1 mayúscula, 1 número, 1 carácter especial.",
+      "changed": "Contraseña actualizada",
+      "error": "No se pudo cambiar la contraseña",
+      "currentRequired": "Introduce tu contraseña actual",
+      "newRequired": "Introduce una nueva contraseña",
+      "weak": "La contraseña no cumple los requisitos",
+      "mismatch": "Las contraseñas no coinciden",
+      "wrongCurrent": "Contraseña actual incorrecta"
+    }
   }
 }

@@ -9,6 +9,7 @@ export interface DbUser {
   role: UserRole
   created_at: number
   created_by: string | null
+  avatar: string | null
 }
 
 export const usersDb = {
@@ -43,15 +44,15 @@ export const usersDb = {
       'SELECT u.id, u.username FROM users u WHERE u.id IN (SELECT DISTINCT created_by FROM users WHERE created_by IS NOT NULL) ORDER BY u.username'
     ).all() as Pick<DbUser, 'id' | 'username'>[],
 
-  create: (user: Omit<DbUser, 'created_at'> & { created_at?: number }): DbUser => {
+  create: (user: Omit<DbUser, 'created_at' | 'avatar'> & { created_at?: number; avatar?: string | null }): DbUser => {
     const now = user.created_at ?? Date.now()
     db.prepare(
-      'INSERT INTO users (id, username, password, role, created_at, created_by) VALUES (?, ?, ?, ?, ?, ?)'
-    ).run(user.id, user.username, user.password, user.role, now, user.created_by ?? null)
-    return { ...user, created_at: now }
+      'INSERT INTO users (id, username, password, role, created_at, created_by, avatar) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).run(user.id, user.username, user.password, user.role, now, user.created_by ?? null, user.avatar ?? null)
+    return { ...user, created_at: now, avatar: user.avatar ?? null }
   },
 
-  update: (id: string, fields: Partial<Pick<DbUser, 'username' | 'password' | 'role'>>): void => {
+  update: (id: string, fields: Partial<Pick<DbUser, 'username' | 'password' | 'role' | 'avatar'>>): void => {
     const entries = Object.entries(fields).filter(([, v]) => v !== undefined)
     if (!entries.length) return
     const setClauses = entries.map(([k]) => `${k} = ?`).join(', ')

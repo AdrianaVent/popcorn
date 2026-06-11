@@ -7,7 +7,9 @@ export type LoginResult = {
   accessToken: string
   refreshToken: string
   userId: string
+  username: string
   role: UserRole
+  avatar: string | null
 }
 
 export type RefreshResult = {
@@ -49,7 +51,7 @@ export const authService = {
       signRefreshToken(user.id),
     ])
 
-    return { accessToken, refreshToken, userId: user.id, role: user.role }
+    return { accessToken, refreshToken, userId: user.id, username: user.username, role: user.role, avatar: user.avatar }
   },
 
   refresh: async (refreshToken: string): Promise<RefreshResult> => {

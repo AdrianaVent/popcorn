@@ -11,6 +11,7 @@ interface LanguageProviderProps {
 
 export default function LanguageProvider({ children }: LanguageProviderProps) {
   const applyUserLanguage    = useLanguageStore((s) => s.applyUserLanguage)
+  const userLanguages        = useLanguageStore((s) => s.userLanguages)
   const userId               = useUserStore((s) => s.userId)
   const purgeUpcomingMovies  = useWatchedStore((s) => s.purgeUpcomingMovies)
   const purgeUpcomingSeries  = useWatchedStore((s) => s.purgeUpcomingSeries)
@@ -21,7 +22,7 @@ export default function LanguageProvider({ children }: LanguageProviderProps) {
       purgeUpcomingMovies(String(userId))
       purgeUpcomingSeries(String(userId))
     }
-  }, [userId, applyUserLanguage, purgeUpcomingMovies, purgeUpcomingSeries])
+  }, [userId, userLanguages, applyUserLanguage, purgeUpcomingMovies, purgeUpcomingSeries])
 
   return <>{children}</>
 }

@@ -10,9 +10,10 @@ import type { UserRole } from '@/db/users'
 type Props = {
   children: ReactNode
   serverRole: UserRole | null
+  serverUsername: string | null
 }
 
-export default function DashboardGroupLayoutClient({ children, serverRole }: Props) {
+export default function DashboardGroupLayoutClient({ children, serverRole, serverUsername }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const clearUser = useUserStore((s) => s.clearUser)
@@ -33,7 +34,7 @@ export default function DashboardGroupLayoutClient({ children, serverRole }: Pro
 
   return (
     <DashboardRoleContext.Provider value={serverRole}>
-      <DashboardLayout activeNav={activeNav} onLogout={handleLogout} serverRole={serverRole}>
+      <DashboardLayout activeNav={activeNav} onLogout={handleLogout} serverRole={serverRole} serverUsername={serverUsername}>
         {children}
       </DashboardLayout>
     </DashboardRoleContext.Provider>
