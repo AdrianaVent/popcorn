@@ -78,13 +78,15 @@ describe('Dashboard', () => {
 
   it('renders the genre chart when global data loads', () => {
     cy.wait('@discoverMovies')
-    cy.get('svg').should('exist')
+    cy.contains('Most watched genres').parents('.rounded-xl').first()
+      .find('svg.recharts-surface').should('exist')
   })
 
   it('shows the series chart after switching to the Series icon', () => {
-    cy.get('[aria-label="Series"]').first().click()
+    const genreCard = () => cy.contains('Most watched genres').parents('.rounded-xl').first()
+    genreCard().find('[aria-label="Series"]').click()
     cy.wait('@discoverTV')
-    cy.get('svg').should('exist')
+    genreCard().find('svg.recharts-surface').should('exist')
   })
 
   // ─── Release calendar ─────────────────────────────────────────

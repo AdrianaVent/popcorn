@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { loginRequest } from './login.service'
 import { useUserStore } from '@/store/userStore'
 import { useLanguageStore } from '@/store/languageStore'
+import { parseAvatar } from '@/config/avatars'
 
 type LoginForm = {
   email: string
@@ -86,11 +87,11 @@ export function useLogin(): UseLoginReturn {
     setErrorMessage(null)
 
     try {
-      const { ok, code, userId, role } = await loginRequest(form)
+      const { ok, code, userId, username, role, avatar } = await loginRequest(form)
 
       if (ok) {
-        if (userId && role) {
-          setUser(userId, role)
+        if (userId && role && username) {
+          setUser(userId, role, username, parseAvatar(avatar))
           applyUserLanguage(userId)
         }
         router.refresh()

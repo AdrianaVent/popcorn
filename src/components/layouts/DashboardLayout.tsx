@@ -10,12 +10,13 @@ type DashboardLayoutProps = {
   activeNav?: string
   onLogout?: () => void
   serverRole: UserRole | null
+  serverUsername?: string | null
 }
 
-export default function DashboardLayout({ children, activeNav, onLogout, serverRole }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, activeNav, onLogout, serverRole, serverUsername }: DashboardLayoutProps) {
   return (
     <div className="flex h-screen">
-      <Sidebar activeKey={activeNav} serverRole={serverRole} onLogout={onLogout} />
+      <Sidebar activeKey={activeNav} serverRole={serverRole} serverUsername={serverUsername} onLogout={onLogout} />
       <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
       <ToastContainer />
     </div>
