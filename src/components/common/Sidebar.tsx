@@ -26,10 +26,11 @@ type NavItem = {
 type SidebarProps = {
   activeKey?: string
   serverRole: UserRole | null
+  serverUsername?: string | null
   onLogout?: () => void
 }
 
-export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout }: SidebarProps) {
+export default function Sidebar({ activeKey = 'dashboard', serverRole, serverUsername, onLogout }: SidebarProps) {
   const { t } = useTranslation()
   const storeRole = useUserStore((s) => s.role)
 
@@ -38,9 +39,11 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
   // storeRole takes over on login/logout without a page reload.
   const role = storeRole ?? serverRole
 
-  const userId   = useUserStore((s) => s.userId) ?? ''
-  const username = useUserStore((s) => s.username) ?? ''
-  const avatar   = useUserStore((s) => s.avatar)
+  const userId        = useUserStore((s) => s.userId) ?? ''
+  const storeUsername = useUserStore((s) => s.username)
+  const avatar        = useUserStore((s) => s.avatar)
+  // storeUsername is set after login; serverUsername is the fallback for direct visits
+  const username      = storeUsername ?? serverUsername ?? ''
 
   const [collapsed, setCollapsed] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
