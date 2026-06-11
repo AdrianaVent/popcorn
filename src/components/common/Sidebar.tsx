@@ -6,6 +6,8 @@ import clsx from 'clsx'
 import Link from 'next/link'
 import { FilmIcon, TvIcon, GearIcon, UsersIcon, HomeIcon, LogOutIcon, ChevronLeftIcon, ChevronRightIcon, BookmarkIcon } from '@/components/icons'
 import SettingsModal from './SettingsModal'
+import ProfileModal from './ProfileModal'
+import AvatarDisplay from '@/components/ui/AvatarDisplay'
 import Tooltip from '@/components/ui/Tooltip'
 import Image from 'next/image'
 import { useUserStore } from '@/store/userStore'
@@ -36,8 +38,13 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
   // storeRole takes over on login/logout without a page reload.
   const role = storeRole ?? serverRole
 
+  const userId   = useUserStore((s) => s.userId) ?? ''
+  const username = useUserStore((s) => s.username) ?? ''
+  const avatar   = useUserStore((s) => s.avatar)
+
   const [collapsed, setCollapsed] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
 
   /* ─── Auto collapse (iPad / tablet) ─── */
   useEffect(() => {
@@ -151,8 +158,27 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="p-2 border-t border-border">
+        {/* Avatar + Logout */}
+        <div className="p-2 border-t border-border flex flex-col gap-2">
+          <Tooltip content={username || t('profile.title')} placement="right" disabled={!collapsed} className="w-full">
+            <button
+              onClick={() => setProfileOpen(true)}
+              aria-label={t('profile.title')}
+              data-cy="profile-button"
+              className={clsx(
+                'w-full rounded-lg transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset',
+                'hover:bg-muted',
+                collapsed ? 'flex justify-center py-2' : 'flex flex-col items-center gap-1.5 py-3'
+              )}
+            >
+              <AvatarDisplay opts={avatar} seed={userId} size={collapsed ? 36 : 52} />
+              {!collapsed && (
+                <span className="text-[11px] italic text-muted-foreground truncate max-w-full px-1" suppressHydrationWarning>
+                  {t('profile.avatar.hello', { name: username })}
+                </span>
+              )}
+            </button>
+          </Tooltip>
           <Tooltip content={t('topbar.logout')} placement="right" disabled={!collapsed} className="w-full">
             <button
               onClick={onLogout}
@@ -169,6 +195,7 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, onLogout 
       </aside>
 
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
+      {profileOpen  && <ProfileModal  onClose={() => setProfileOpen(false)} />}
     </>
   )
 }

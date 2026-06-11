@@ -475,6 +475,15 @@ Click the gear icon in the sidebar to open the settings panel.
 
 ---
 
+### Profile
+
+Click the avatar button at the bottom of the sidebar to open the profile panel.
+
+- **Avatar** — click the pencil icon to customise your avatar: choose skin tone, hair colour, hair style, shirt colour, and optional glasses. A live preview updates as you make changes. Click the pencil again to discard, or click **Save avatar** to persist the selection.
+- **Password** — enter your current password and a new password (min 8 characters, 1 uppercase, 1 number, 1 special character) to change it. Each field has an eye toggle to show/hide the value. Validation errors appear inline; success and error banners appear above the form.
+
+---
+
 ### Session management
 
 The access token expires after 1 hour. When that happens the app automatically requests a new token in the background — the current action is retried transparently and you will not be interrupted. If the refresh also fails (e.g. the refresh token has expired after 7 days), you are redirected to the login page.
@@ -483,9 +492,9 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-The project has two test layers: **986 unit/integration tests** (Jest) and **215 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+The project has two test layers: **1043 unit/integration tests** (Jest) and **234 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 986 tests · 77 suites
+### Unit & integration tests (Jest) — 1043 tests · 83 suites
 
 ```bash
 npm test           # run once
@@ -498,11 +507,11 @@ npm run test:watch # watch mode
 | Business logic | Client-side filters (movies + series), TMDB fetch error mapping, export utilities |
 | Stores | `watchedStore` (toggle movie/episode, season counts, auto-remove from watchlist), `watchlistStore` (toggleMovie/toggleSeries, removeMovie/removeSeries, per-user isolation), `toastStore` (queue, timers), `ratingsStore` (per-user isolation) |
 | Hooks | `useMovieDetail`, `useSeriesDetail`, `useWatchProviders`, `useMovieInTheaters`, `useMovieReleases`, `useSeriesReleases`, `useTrailer` (language preference, YouTube filtering, allTrailers list), `useEnrichedTrailers` (YouTube oEmbed title enrichment, 24h cache), `useSeriesEnrichment` (status/totals/runtimes/genreIds backfill, stable-reference pattern), `useMovieRuntimeEnrichment` (Promise.allSettled backfill, null on fail), `useFilters` (initial state, setFilters, reference identity) |
-| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar` (7 axe states, ARIA region/labels/day buttons), `CalendarReleaseItem` (heart visible/hidden by role and watched state, watchlist toggle aria-pressed, calls toggleMovie, genre icon deduplication — one icon when two genre_ids share the same icon), `ReminderItem` (role="button" + tabIndex, Enter/Space keyboard nav, heart visibility by role/watched state, aria-pressed states, calls handleToggleWatchlist, genre icon deduplication), `StatsCard` — guest (title, 5 chips, empty state, movie count, avg dash/star, activity chart, period toggle aria-pressed weekly default, period toggle update) — admin (title, 4 chips, registrations chart, period toggle aria-pressed monthly default, period toggle update, loading skeleton, error state), `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button), `SearchableSelect` (open/close, search, selection, clear), `YearRangePicker` (cross-filtering, null callbacks), `FilterFieldInput` (all field types, null guards), `ToggleSwitch` (active style, onChange, role="group"), `MediaTableCells` (TitleCell tooltip guard, GenresCell deduplication by icon), `StatusBadge` (all status variants), `MediaCard`, `MovieCard`, `SeriesCard`, `WatchlistCard`, `RecommendationsDrawer` (axe, ARIA, saga siblings exclusion) |
+| Components | `Button`, `Modal`, `FiltersPanel`, `StarRating`, `ConfirmModal`, `UserFormModal`, `ImportModal`, `WatchProviders`, `MediaPoster`, `ReleaseCalendar` (7 axe states, ARIA region/labels/day buttons), `CalendarReleaseItem` (heart visible/hidden by role and watched state, watchlist toggle aria-pressed, calls toggleMovie, genre icon deduplication — one icon when two genre_ids share the same icon), `ReminderItem` (role="button" + tabIndex, Enter/Space keyboard nav, heart visibility by role/watched state, aria-pressed states, calls handleToggleWatchlist, genre icon deduplication), `StatsCard` — guest (title, 5 chips, empty state, movie count, avg dash/star, activity chart, period toggle aria-pressed weekly default, period toggle update) — admin (title, 4 chips, registrations chart, period toggle aria-pressed monthly default, period toggle update, loading skeleton, error state), `ErrorBoundary`, `ToastItem`, `ContentTabToggle`, `GenreGrid` (name deduplication), `TrailerPlayer` (iframe, close button), `SearchableSelect` (open/close, search, selection, clear), `YearRangePicker` (cross-filtering, null callbacks), `FilterFieldInput` (all field types, null guards), `ToggleSwitch` (active style, onChange, role="group"), `MediaTableCells` (TitleCell tooltip guard, GenresCell deduplication by icon), `StatusBadge` (all status variants), `MediaCard`, `MovieCard`, `SeriesCard`, `WatchlistCard`, `RecommendationsDrawer` (axe, ARIA, saga siblings exclusion), `AvatarDisplay` (correct src, null opts → DEFAULT_AVATAR, size as px, initial letter fallback on error, aria-hidden wrapper), `ColorSwatchGrid` (button per color, aria-label, aria-pressed on selected, checkmark, onSelect callback, background color style, cols prop), `ProfileModal` (axe collapsed + expanded; avatar preview, pencil aria-pressed/expanded, color groups role=group+aria-label, save success/error, password inputs, eye toggle, empty form validation, WRONG_PASSWORD inline, success/error banners, fields clear on success, pw-hint aria-describedby) |
 | Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
 | API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date), `/api/users/stats` (requireAdmin guard, returns stats, 401 response) |
 
-### End-to-end tests (Cypress) — 215 tests · 8 suites
+### End-to-end tests (Cypress) — 234 tests · 9 suites
 
 In CI, Cypress runs against the production build automatically. Locally, run against the dev server:
 
@@ -527,6 +536,7 @@ npm run cypress:run
 | `my-list.cy.ts` | 39 | Tabs, empty state, nav access control, watched movie, Recommendations button (disabled/enabled), saga name formatting, single-released-movie collection as standalone, section ordering (standalone-first/saga-first), series tab + episode progress, "Finish to rate", recommendations drawer (open, header, close via X/Escape, items, excludes watched, click opens modal), unwatched saga placeholders, future-release placeholder visible, click placeholder opens modal, Watchlist tab (visible, empty state, movie/series visible, count badge, remove on heart click) |
 | `settings.cy.ts` | 6 | Theme switching (light / dark / high contrast), language switching (EN / ES) |
 | `accessibility.cy.ts` | 12 | axe-core wcag2a + wcag2aa checks on login, home, movies, series, my-list pages |
+| `profile.cy.ts` | 19 | Profile button visible + aria-label; modal open/close; pencil toggle (aria-pressed + aria-expanded); color groups (role=group + aria-label); save avatar (PATCH /api/profile + body.avatar, editing closes on success); error alert on failed save; password section landmark; type=password inputs; eye toggle; empty form validation errors; WRONG_PASSWORD inline; success/error banners; fields cleared on success; Hi greeting in sidebar |
 
 Cypress creates and cleans up its own test users in the local database automatically. TMDB calls are intercepted — no real API key needed to run the E2E suite.
 

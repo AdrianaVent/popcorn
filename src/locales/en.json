@@ -400,5 +400,91 @@
     "reset": {
       "messageSuccess": "A recovery email has been sent"
     }
+  },
+  "profile": {
+    "title": "My profile",
+    "saving": "Saving...",
+    "avatar": {
+      "title": "Avatar",
+      "hello": "Hi, {{name}}",
+      "edit": "Edit avatar",
+      "save": "Save avatar",
+      "saved": "Avatar updated",
+      "error": "Could not save avatar",
+      "skin": {
+        "label": "Skin tone",
+        "light": "Light",
+        "warm": "Warm",
+        "tan": "Tan",
+        "medium": "Medium",
+        "brown": "Brown",
+        "richBrown": "Rich brown",
+        "dark": "Dark",
+        "deepDark": "Deep dark"
+      },
+      "hairColor": {
+        "label": "Hair color",
+        "black": "Black",
+        "brown": "Brown",
+        "chestnut": "Chestnut",
+        "blonde": "Blonde",
+        "red": "Red",
+        "silver": "Silver",
+        "blue": "Blue",
+        "pink": "Pink"
+      },
+      "hair": {
+        "label": "Hair style",
+        "short": "Short",
+        "long": "Long",
+        "messy": "Messy",
+        "slick": "Slick",
+        "mohawk": "Mohawk",
+        "bald": "Bald"
+      },
+      "shirt": {
+        "label": "Shirt color",
+        "black": "Black",
+        "white": "White",
+        "blue": "Blue",
+        "red": "Red",
+        "green": "Green",
+        "yellow": "Yellow",
+        "purple": "Purple",
+        "pink": "Pink"
+      },
+      "glasses": {
+        "label": "Glasses",
+        "none": "None",
+        "round": "Round",
+        "square": "Square"
+      },
+      "glassesColor": {
+        "label": "Glasses color",
+        "black": "Black",
+        "brown": "Brown",
+        "silver": "Silver",
+        "blue": "Blue",
+        "green": "Green",
+        "purple": "Purple",
+        "pink": "Pink",
+        "red": "Red"
+      }
+    },
+    "password": {
+      "title": "Password",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm password",
+      "save": "Save password",
+      "hint": "Min. 8 characters, 1 uppercase, 1 number, 1 special character.",
+      "changed": "Password updated",
+      "error": "Could not change password",
+      "currentRequired": "Enter your current password",
+      "newRequired": "Enter a new password",
+      "weak": "Password does not meet the requirements",
+      "mismatch": "Passwords do not match",
+      "wrongCurrent": "Incorrect current password"
+    }
   }
 }

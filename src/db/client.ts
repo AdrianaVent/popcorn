@@ -19,8 +19,12 @@ db.exec(`
     password   TEXT NOT NULL,
     role       TEXT NOT NULL CHECK(role IN ('admin', 'guest')),
     created_at INTEGER NOT NULL,
-    created_by TEXT
+    created_by TEXT,
+    avatar     TEXT
   )
 `)
+
+// Migration: add avatar column to databases created before this column existed
+try { db.exec('ALTER TABLE users ADD COLUMN avatar TEXT') } catch { /* already exists */ }
 
 export default db
