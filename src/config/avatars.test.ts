@@ -49,6 +49,31 @@ describe('parseAvatar', () => {
   it('converts glasses: false to null', () => {
     expect(parseAvatar(JSON.stringify({ glasses: false }))).toMatchObject({ glasses: null })
   })
+
+  it('preserves a valid mouth value', () => {
+    expect(parseAvatar(JSON.stringify({ mouth: 'laughing' }))).toMatchObject({ mouth: 'laughing' })
+  })
+
+  it('falls back to default mouth for unknown mouth value', () => {
+    expect(parseAvatar(JSON.stringify({ mouth: 'wink' }))).toMatchObject({ mouth: DEFAULT_AVATAR.mouth })
+  })
+
+  it('falls back to default mouth when mouth is missing (legacy avatar)', () => {
+    const legacy = JSON.stringify({ hair: 'fonze', skinColor: 'ae5d29' })
+    expect(parseAvatar(legacy)).toMatchObject({ mouth: DEFAULT_AVATAR.mouth })
+  })
+
+  it('preserves a valid glassesColor value', () => {
+    expect(parseAvatar(JSON.stringify({ glassesColor: '3b82f6' }))).toMatchObject({ glassesColor: '3b82f6' })
+  })
+
+  it('falls back to default glassesColor for a removed color (e.g. green)', () => {
+    expect(parseAvatar(JSON.stringify({ glassesColor: '22c55e' }))).toMatchObject({ glassesColor: DEFAULT_AVATAR.glassesColor })
+  })
+
+  it('falls back to default glassesColor when missing', () => {
+    expect(parseAvatar(JSON.stringify({ hair: 'fonze' }))).toMatchObject({ glassesColor: DEFAULT_AVATAR.glassesColor })
+  })
 })
 
 describe('serializeAvatar', () => {
@@ -60,6 +85,7 @@ describe('serializeAvatar', () => {
       shirtColor: 'ef4444',
       glasses: 'round',
       glassesColor: '3b82f6',
+      mouth: 'laughing',
     }
     expect(parseAvatar(serializeAvatar(opts))).toEqual(opts)
   })
@@ -77,6 +103,16 @@ describe('buildAvatarUrl', () => {
     expect(url).toContain(`hairColor[]=${DEFAULT_AVATAR.hairColor}`)
     expect(url).toContain(`baseColor[]=${DEFAULT_AVATAR.skinColor}`)
     expect(url).toContain(`shirtColor[]=${DEFAULT_AVATAR.shirtColor}`)
+  })
+
+  it('includes mouth in url', () => {
+    const url = buildAvatarUrl(DEFAULT_AVATAR, 'u')
+    expect(url).toContain(`mouth[]=${DEFAULT_AVATAR.mouth}`)
+  })
+
+  it('reflects changed mouth value', () => {
+    const url = buildAvatarUrl({ ...DEFAULT_AVATAR, mouth: 'surprised' }, 'u')
+    expect(url).toContain('mouth[]=surprised')
   })
 
   it('sets glassesProbability=0 when no glasses', () => {

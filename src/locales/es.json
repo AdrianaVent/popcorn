@@ -469,6 +469,15 @@
         "purple": "Morado",
         "pink": "Rosa",
         "red": "Rojo"
+      },
+      "mouth": {
+        "label": "Expresión",
+        "smile": "Sonrisa",
+        "laughing": "Riendo",
+        "smirk": "Pícaro",
+        "surprised": "Sorprendido",
+        "nervous": "Nervioso",
+        "sad": "Triste"
       }
     },
     "password": {

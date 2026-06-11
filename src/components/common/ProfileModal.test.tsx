@@ -49,14 +49,19 @@ jest.mock('@/components/icons', () => ({
 
 const mockSetAvatar = jest.fn()
 
+type StoreState = {
+  userId: string
+  role: 'guest' | 'admin'
+  username: string
+  avatar: typeof DEFAULT_AVATAR
+  setAvatar: typeof mockSetAvatar
+}
+
+let mockRole: 'guest' | 'admin' = 'guest'
+
 jest.mock('@/store/userStore', () => ({
-  useUserStore: (sel: (s: {
-    userId: string
-    username: string
-    avatar: typeof DEFAULT_AVATAR
-    setAvatar: typeof mockSetAvatar
-  }) => unknown) =>
-    sel({ userId: 'u1', username: 'adriana', avatar: DEFAULT_AVATAR, setAvatar: mockSetAvatar }),
+  useUserStore: (sel: (s: StoreState) => unknown) =>
+    sel({ userId: 'u1', role: mockRole, username: 'adriana', avatar: DEFAULT_AVATAR, setAvatar: mockSetAvatar }),
 }))
 
 const mockFetch = jest.fn()
@@ -68,6 +73,7 @@ const AXE_OPTS: Parameters<JestAxe>[1] = {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockRole = 'guest'
   mockFetch.mockResolvedValue({ ok: true, json: async () => ({}) })
 })
 
@@ -112,6 +118,7 @@ describe('ProfileModal — avatar section', () => {
     expect(screen.getByRole('group', { name: 'profile.avatar.shirt.label' })).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'profile.avatar.hair.label' })).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'profile.avatar.glasses.label' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'profile.avatar.mouth.label' })).toBeInTheDocument()
   })
 
   it('closing pencil hides customization options', () => {
@@ -140,6 +147,13 @@ describe('ProfileModal — avatar section', () => {
       const alert = screen.getByRole('alert')
       expect(alert).toHaveTextContent('profile.avatar.error')
     })
+  })
+
+  it('does not render avatar section for admin', () => {
+    mockRole = 'admin'
+    render(<ProfileModal onClose={jest.fn()} />)
+    expect(screen.queryByRole('button', { name: 'profile.avatar.edit' })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('avatar-u1')).not.toBeInTheDocument()
   })
 })
 

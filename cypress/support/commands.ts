@@ -5,7 +5,7 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
     interface Chainable {
-      login(username: string, password: string): Cypress.Chainable<Cypress.Response<{ userId: string; role: string }>>
+      login(username: string, password: string): Cypress.Chainable<Cypress.Response<{ userId: string; username: string; role: string }>>
       visitWithEnglish(path: string): void
       visitAsAdmin(path: string): void
       visitAsGuest(path: string): void
@@ -21,10 +21,10 @@ const forceEnglish = (win: Window, userId?: string) => {
   )
 }
 
-const setUserStore = (win: Window, userId: string, role: string) => {
+const setUserStore = (win: Window, userId: string, role: string, username: string) => {
   win.localStorage.setItem(
     'popcorn-user',
-    JSON.stringify({ state: { userId, role }, version: 0 })
+    JSON.stringify({ state: { userId, role, username }, version: 0 })
   )
 }
 
@@ -45,11 +45,11 @@ Cypress.Commands.add('visitWithEnglish', (path: string) => {
 // Login + force English for that user + seed userStore + visit
 Cypress.Commands.add('visitAsAdmin', (path: string) => {
   cy.login('cypress_admin', 'CypressAdmin1!').then((resp) => {
-    const { userId, role } = resp.body
+    const { userId, role, username } = resp.body
     cy.visit(path, {
       onBeforeLoad: (win: Window) => {
         forceEnglish(win, userId)
-        setUserStore(win, userId, role)
+        setUserStore(win, userId, role, username)
       },
     })
   })
@@ -58,11 +58,11 @@ Cypress.Commands.add('visitAsAdmin', (path: string) => {
 // Login as guest + force English for that user + seed userStore + visit
 Cypress.Commands.add('visitAsGuest', (path: string) => {
   cy.login('cypress_guest', 'CypressGuest1!').then((resp) => {
-    const { userId, role } = resp.body
+    const { userId, role, username } = resp.body
     cy.visit(path, {
       onBeforeLoad: (win: Window) => {
         forceEnglish(win, userId)
-        setUserStore(win, userId, role)
+        setUserStore(win, userId, role, username)
       },
     })
   })

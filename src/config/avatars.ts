@@ -1,5 +1,6 @@
 export type AvatarHair    = 'pixie' | 'dannyPhantom' | 'fonze' | 'full' | 'mrT' | 'dougFunny'
 export type AvatarGlasses = 'round' | 'square'
+export type AvatarMouth   = 'laughing' | 'nervous' | 'sad' | 'smile' | 'smirk' | 'surprised'
 
 export type AvatarOptions = {
   hair: AvatarHair
@@ -8,6 +9,7 @@ export type AvatarOptions = {
   shirtColor: string
   glasses: AvatarGlasses | null
   glassesColor: string
+  mouth: AvatarMouth
 }
 
 export const DEFAULT_AVATAR: AvatarOptions = {
@@ -17,6 +19,7 @@ export const DEFAULT_AVATAR: AvatarOptions = {
   shirtColor: '3b82f6',
   glasses: null,
   glassesColor: '111827',
+  mouth: 'smirk',
 }
 
 export const SKIN_COLORS: { value: string; labelKey: string }[] = [
@@ -72,10 +75,17 @@ export const GLASSES_COLORS: { value: string; labelKey: string }[] = [
   { value: '92400e', labelKey: 'profile.avatar.glassesColor.brown' },
   { value: 'a8aab4', labelKey: 'profile.avatar.glassesColor.silver' },
   { value: '3b82f6', labelKey: 'profile.avatar.glassesColor.blue' },
-  { value: '22c55e', labelKey: 'profile.avatar.glassesColor.green' },
   { value: 'a855f7', labelKey: 'profile.avatar.glassesColor.purple' },
-  { value: 'ec4899', labelKey: 'profile.avatar.glassesColor.pink' },
   { value: 'ef4444', labelKey: 'profile.avatar.glassesColor.red' },
+]
+
+export const MOUTH_STYLES: { value: AvatarMouth; labelKey: string }[] = [
+  { value: 'smirk',     labelKey: 'profile.avatar.mouth.smile' },
+  { value: 'laughing',  labelKey: 'profile.avatar.mouth.laughing' },
+  { value: 'smile',     labelKey: 'profile.avatar.mouth.smirk' },
+  { value: 'surprised', labelKey: 'profile.avatar.mouth.surprised' },
+  { value: 'nervous',   labelKey: 'profile.avatar.mouth.nervous' },
+  { value: 'sad',       labelKey: 'profile.avatar.mouth.sad' },
 ]
 
 export function buildAvatarUrl(opts: AvatarOptions, seed: string): string {
@@ -85,6 +95,7 @@ export function buildAvatarUrl(opts: AvatarOptions, seed: string): string {
     `hairColor[]=${opts.hairColor}`,
     `baseColor[]=${opts.skinColor}`,
     `shirtColor[]=${opts.shirtColor}`,
+    `mouth[]=${opts.mouth}`,
     `glassesProbability=${opts.glasses ? '100' : '0'}`,
   ]
   if (opts.glasses) {
@@ -102,7 +113,15 @@ export function parseAvatar(raw: string | null | undefined): AvatarOptions {
     let glasses: AvatarGlasses | null = null
     if (rawGlasses === true || rawGlasses === 'true') glasses = 'round'
     else if (rawGlasses && typeof rawGlasses === 'string') glasses = rawGlasses as AvatarGlasses
-    return { ...DEFAULT_AVATAR, ...parsed, glasses }
+    const mouth: AvatarMouth =
+      typeof parsed.mouth === 'string' && MOUTH_STYLES.some((m) => m.value === parsed.mouth)
+        ? (parsed.mouth as AvatarMouth)
+        : DEFAULT_AVATAR.mouth
+    const glassesColor: string =
+      typeof parsed.glassesColor === 'string' && GLASSES_COLORS.some((c) => c.value === parsed.glassesColor)
+        ? parsed.glassesColor
+        : DEFAULT_AVATAR.glassesColor
+    return { ...DEFAULT_AVATAR, ...parsed, glasses, mouth, glassesColor }
   } catch {
     return DEFAULT_AVATAR
   }

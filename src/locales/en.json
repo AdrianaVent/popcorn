@@ -469,6 +469,15 @@
         "purple": "Purple",
         "pink": "Pink",
         "red": "Red"
+      },
+      "mouth": {
+        "label": "Expression",
+        "smile": "Smile",
+        "laughing": "Laughing",
+        "smirk": "Smirk",
+        "surprised": "Surprised",
+        "nervous": "Nervous",
+        "sad": "Sad"
       }
     },
     "password": {
