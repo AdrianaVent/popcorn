@@ -4,7 +4,8 @@ import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import { useLanguageStore } from '@/store/languageStore'
-import { ChevronLeftIcon, ChevronRightIcon, XIcon, BookmarkIcon } from '@/components/icons'
+import { useUserStore } from '@/store/userStore'
+import { ChevronLeftIcon, ChevronRightIcon, XIcon, BookmarkIcon, StarIcon } from '@/components/icons'
 import ContentTabToggle, { type ContentTab } from '@/components/ui/ContentTabToggle'
 import IconToggleButton from '@/components/ui/IconToggleButton'
 import Text from '@/components/ui/Text'
@@ -12,6 +13,7 @@ import Tooltip from '@/components/ui/Tooltip'
 import CalendarGrid from './CalendarGrid'
 import CalendarReleaseItem from './CalendarReleaseItem'
 import RemindersPanel from './RemindersPanel'
+import SeasonalPanel from './SeasonalPanel'
 import type { ReleaseEntry } from '@/services/tmdb/releases'
 
 type Props = {
@@ -27,6 +29,7 @@ type Props = {
   watchlistMovieIds?: Set<number>
   watchlistSeriesIds?: Set<number>
   onEntryClick?: (id: number) => void
+  onSeriesEntryClick?: (id: number) => void
   animateFrom?: 'left' | 'right'
   className?: string
 }
@@ -54,11 +57,13 @@ function CloseBar({ label, closeLabel, onClose, dataCy }: {
   )
 }
 
-export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevMonth, onNextMonth, onToday, query, genreMap = DEFAULT_GENRE_MAP, watchlistMovieIds, watchlistSeriesIds, onEntryClick, animateFrom, className }: Props) {
+export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevMonth, onNextMonth, onToday, query, genreMap = DEFAULT_GENRE_MAP, watchlistMovieIds, watchlistSeriesIds, onEntryClick, onSeriesEntryClick, animateFrom, className }: Props) {
   const { t } = useTranslation()
   const language = useLanguageStore((s) => s.language)
-  const [selectedDay, setSelectedDay]     = useState<number | null>(null)
+  const role = useUserStore((s) => s.role)
+  const [selectedDay, setSelectedDay]   = useState<number | null>(null)
   const [showReminders, setShowReminders] = useState(false)
+  const [showSeasonal, setShowSeasonal]   = useState(false)
 
   const locale   = language === 'en' ? 'en-US' : 'es-ES'
   const weekdays = WEEKDAY_NAMES[language] ?? WEEKDAY_NAMES.en
@@ -91,10 +96,18 @@ export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevM
     : ''
 
   const showingReleases = selectedDay !== null
+  const showingPanel    = showReminders || showSeasonal
 
   const handleOpenReminders = () => {
     setSelectedDay(null)
+    setShowSeasonal(false)
     setShowReminders(true)
+  }
+
+  const handleOpenSeasonal = () => {
+    setSelectedDay(null)
+    setShowReminders(false)
+    setShowSeasonal(true)
   }
 
   return (
@@ -110,7 +123,7 @@ export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevM
       <div className="flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-2">
           <Text variant="body" className="font-semibold text-foreground">{t('calendar.title')}</Text>
-          {!showReminders && (
+          {!showingPanel && (
             <ContentTabToggle tab={tab} onTabChange={(t) => { onTabChange(t); setSelectedDay(null) }} />
           )}
         </div>
@@ -118,6 +131,8 @@ export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevM
         <div className="flex items-center gap-2">
           {showReminders ? (
             <CloseBar label={t('calendar.reminders')} closeLabel={t('calendar.close')} onClose={() => setShowReminders(false)} />
+          ) : showSeasonal ? (
+            <CloseBar label={t('seasonal.panelTitle')} closeLabel={t('calendar.close')} onClose={() => setShowSeasonal(false)} />
           ) : showingReleases ? (
             <CloseBar label={selectedDateLabel} closeLabel={t('calendar.close')} onClose={() => setSelectedDay(null)} dataCy="calendar-close" />
           ) : (
@@ -139,20 +154,34 @@ export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevM
                   <span aria-hidden="true"><ChevronRightIcon size={14} /></span>
                 </button>
               </div>
-              {(watchlistMovieIds !== undefined || watchlistSeriesIds !== undefined) && (
-                <Tooltip content={t('calendar.reminders')} placement="top">
-                  <IconToggleButton
-                    data-cy="calendar-reminders"
-                    active={showReminders}
-                    aria-label={t('calendar.reminders')}
-                    aria-pressed={showReminders}
-                    onClick={handleOpenReminders}
-                    className="shrink-0 ml-0.5"
-                  >
-                    <span aria-hidden="true"><BookmarkIcon size={13} strokeWidth={1.5} /></span>
-                  </IconToggleButton>
-                </Tooltip>
-              )}
+              <div className="flex items-center gap-0.5 ml-0.5">
+                {role === 'guest' && (
+                  <Tooltip content={t('seasonal.panelTitle')} placement="top">
+                    <IconToggleButton
+                      data-cy="calendar-seasonal"
+                      active={showSeasonal}
+                      aria-label={t('seasonal.panelTitle')}
+                      aria-pressed={showSeasonal}
+                      onClick={handleOpenSeasonal}
+                    >
+                      <span aria-hidden="true"><StarIcon size={13} strokeWidth={1.5} /></span>
+                    </IconToggleButton>
+                  </Tooltip>
+                )}
+                {(watchlistMovieIds !== undefined || watchlistSeriesIds !== undefined) && (
+                  <Tooltip content={t('calendar.reminders')} placement="top">
+                    <IconToggleButton
+                      data-cy="calendar-reminders"
+                      active={showReminders}
+                      aria-label={t('calendar.reminders')}
+                      aria-pressed={showReminders}
+                      onClick={handleOpenReminders}
+                    >
+                      <span aria-hidden="true"><BookmarkIcon size={13} strokeWidth={1.5} /></span>
+                    </IconToggleButton>
+                  </Tooltip>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -161,8 +190,8 @@ export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevM
       {/* Content area — relative so panels can overlay the calendar */}
       <div className="relative flex flex-col gap-2 flex-1 overflow-hidden">
 
-        {/* Calendar (always mounted to preserve height; invisible when a panel overlays) */}
-        <div className={`flex flex-col gap-2 flex-1${showingReleases ? ' invisible' : ''}${showReminders ? ' hidden' : ''}`}>
+        {/* Calendar (always mounted to preserve height) */}
+        <div className={`flex flex-col gap-2 flex-1${showingReleases ? ' invisible' : ''}${showingPanel ? ' hidden' : ''}`}>
           <CalendarGrid
             query={query}
             year={year}
@@ -176,8 +205,8 @@ export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevM
           />
         </div>
 
-        {/* Releases panel — overlays the calendar, same bounding box */}
-        {showingReleases && !showReminders && (
+        {/* Releases panel — overlays the calendar */}
+        {showingReleases && !showingPanel && (
           <div key={selectedDay} className="absolute inset-0 overflow-y-auto animate-slide-from-bottom">
             {selectedReleases.length === 0 ? (
               <div className="flex h-full items-center justify-center">
@@ -199,7 +228,17 @@ export default function ReleaseCalendar({ year, month, tab, onTabChange, onPrevM
           </div>
         )}
 
-        {/* Reminders panel — flex sibling (fills remaining space, no absolute gap) */}
+        {/* Seasonal panel */}
+        {showSeasonal && (
+          <SeasonalPanel
+            month={month}
+            onMovieClick={onEntryClick}
+            onSeriesClick={onSeriesEntryClick}
+            className="flex-1 min-h-0"
+          />
+        )}
+
+        {/* Reminders panel */}
         {showReminders && (
           <RemindersPanel
             watchlistMovieIds={watchlistMovieIds ?? EMPTY_SET}

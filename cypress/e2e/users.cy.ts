@@ -77,6 +77,59 @@ describe('Users', () => {
     })
   })
 
+  // ─── Self password change ─────────────────────────────────────
+
+  it('shows 3-field password section when editing own account', () => {
+    cy.contains('tr', 'cypress_admin').within(() => cy.get('[data-cy="edit-user-btn"]').click())
+    cy.get('[role="dialog"]').within(() => {
+      cy.get('[id="pw-current"]').should('exist')
+      cy.get('[id="pw-new"]').should('exist')
+      cy.get('[id="pw-confirm"]').should('exist')
+    })
+  })
+
+  it('does not show single password field when editing own account', () => {
+    cy.contains('tr', 'cypress_admin').within(() => cy.get('[data-cy="edit-user-btn"]').click())
+    cy.get('[role="dialog"]').within(() => {
+      cy.get('[id="password"]').should('not.exist')
+    })
+  })
+
+  it('does not show password field when editing another user', () => {
+    cy.task('seedUser', { username: 'cy_nopw_test', password: 'NoPwTest1!', role: 'guest' as const })
+    cy.reload()
+    cy.contains('tr', 'cy_nopw_test').within(() => cy.get('[data-cy="edit-user-btn"]').click())
+    cy.get('[role="dialog"]').within(() => {
+      cy.get('[id="password"]').should('not.exist')
+      cy.get('[id="pw-current"]').should('not.exist')
+    })
+    cy.contains('button', 'Cancel').click()
+    cy.task('deleteUser', 'cy_nopw_test')
+  })
+
+  it('shows WRONG_PASSWORD error inline when changing own password with wrong current', () => {
+    cy.intercept('PATCH', '/api/profile', { statusCode: 400, body: { code: 'WRONG_PASSWORD' } }).as('wrongPw')
+    cy.contains('tr', 'cypress_admin').within(() => cy.get('[data-cy="edit-user-btn"]').click())
+    cy.get('[id="pw-current"]').click().type('WrongPass1!')
+    cy.get('[id="pw-new"]').click().type('NewPass1!')
+    cy.get('[id="pw-confirm"]').click().type('NewPass1!')
+    cy.contains('button', 'Accept').click()
+    cy.wait('@wrongPw')
+    cy.contains('Incorrect current password').should('be.visible')
+  })
+
+  it('closes modal after successful own password change', () => {
+    cy.intercept('PATCH', '/api/profile', { statusCode: 200, body: { code: 'PASSWORD_CHANGED' } }).as('changePw')
+    cy.intercept('PATCH', /\/api\/users\//, { statusCode: 200, body: {} }).as('updateUser')
+    cy.contains('tr', 'cypress_admin').within(() => cy.get('[data-cy="edit-user-btn"]').click())
+    cy.get('[id="pw-current"]').click().type('OldPass1!')
+    cy.get('[id="pw-new"]').click().type('NewPass1!')
+    cy.get('[id="pw-confirm"]').click().type('NewPass1!')
+    cy.contains('button', 'Accept').click()
+    cy.wait('@changePw')
+    cy.get('[role="dialog"]').should('not.exist')
+  })
+
   // ─── Filters ─────────────────────────────────────────────────
 
   it('filters users by username', () => {
@@ -244,5 +297,6 @@ describe('Users', () => {
     cy.task('deleteUser', 'cy_role_test')
     cy.task('deleteUser', 'cy_import_1')
     cy.task('deleteUser', 'cy_import_2')
+    cy.task('deleteUser', 'cy_nopw_test')
   })
 })

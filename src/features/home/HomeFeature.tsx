@@ -191,6 +191,7 @@ export default function HomeFeature() {
         watchlistMovieIds={role !== 'admin' ? watchlistMovieIds : undefined}
         watchlistSeriesIds={role !== 'admin' ? watchlistSeriesIds : undefined}
         onEntryClick={handleEntryClick}
+        onSeriesEntryClick={setSelectedSeriesId}
         animateFrom={calendarDir ?? undefined}
         className={`h-full ${dragCardCls}`}
       />

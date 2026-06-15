@@ -163,25 +163,27 @@ export default function Sidebar({ activeKey = 'dashboard', serverRole, serverUse
 
         {/* Avatar + Logout */}
         <div className="p-2 border-t border-border flex flex-col gap-2">
-          <Tooltip content={username || t('profile.title')} placement="right" disabled={!collapsed} className="w-full">
-            <button
-              onClick={() => setProfileOpen(true)}
-              aria-label={t('profile.title')}
-              data-cy="profile-button"
-              className={clsx(
-                'w-full rounded-lg transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset',
-                'hover:bg-muted',
-                collapsed ? 'flex justify-center py-2' : 'flex flex-col items-center gap-1.5 py-3'
-              )}
-            >
-              <AvatarDisplay opts={avatar} seed={userId} size={collapsed ? 36 : 52} />
-              {!collapsed && (
-                <span className="text-[11px] italic text-muted-foreground truncate max-w-full px-1" suppressHydrationWarning>
-                  {t('profile.avatar.hello', { name: username })}
-                </span>
-              )}
-            </button>
-          </Tooltip>
+          {role === 'guest' && (
+            <Tooltip content={username || t('profile.title')} placement="right" disabled={!collapsed} className="w-full">
+              <button
+                onClick={() => setProfileOpen(true)}
+                aria-label={t('profile.title')}
+                data-cy="profile-button"
+                className={clsx(
+                  'w-full rounded-lg transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-inset',
+                  'hover:bg-muted',
+                  collapsed ? 'flex justify-center py-2' : 'flex flex-col items-center gap-1.5 py-3'
+                )}
+              >
+                <AvatarDisplay opts={avatar} seed={userId} size={collapsed ? 36 : 52} />
+                {!collapsed && (
+                  <span className="text-[11px] italic text-muted-foreground truncate max-w-full px-1" suppressHydrationWarning>
+                    {t('profile.avatar.hello', { name: username })}
+                  </span>
+                )}
+              </button>
+            </Tooltip>
+          )}
           <Tooltip content={t('topbar.logout')} placement="right" disabled={!collapsed} className="w-full">
             <button
               onClick={onLogout}
