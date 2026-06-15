@@ -569,8 +569,10 @@ describe('Release calendar interaction', () => {
 
 // ─── Reminders panel ──────────────────────────────────────────────────────────
 
-const TODAY_DATE   = new Date().toISOString().slice(0, 10)
-const FUTURE_DATE  = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10)
+const _now         = new Date()
+const TODAY_DATE   = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`
+const _future      = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate() + 7)
+const FUTURE_DATE  = `${_future.getFullYear()}-${String(_future.getMonth() + 1).padStart(2, '0')}-${String(_future.getDate()).padStart(2, '0')}`
 const REMINDER_ID  = 500
 
 const reminderMovie = (date: string) => ({
@@ -695,6 +697,142 @@ describe('Release calendar — reminders panel', () => {
     cy.injectAxe()
     cy.contains('Release calendar').parents('.rounded-xl').first().then(($el) => {
       cy.checkA11y($el[0], { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+  })
+})
+
+// ─── Seasonal panel ───────────────────────────────────────────────────────────
+
+const seasonalMovies = {
+  page: 1,
+  results: [
+    { id: 200, title: 'Great Fantasy Movie', release_date: '2022-03-15', vote_average: 8.5, vote_count: 2000, poster_path: null, genre_ids: [14], overview: '' },
+    { id: 201, title: 'Another Fantasy',     release_date: '2021-06-20', vote_average: 7.8, vote_count: 1500, poster_path: null, genre_ids: [14], overview: '' },
+  ],
+  total_pages: 1,
+  total_results: 2,
+}
+
+const seasonalSeries = {
+  page: 1,
+  results: [
+    { id: 300, name: 'Fantasy Series', first_air_date: '2020-04-10', vote_average: 9.0, vote_count: 3000, poster_path: null, genre_ids: [10765], overview: '' },
+  ],
+  total_pages: 1,
+  total_results: 1,
+}
+
+const seasonalMovieDetail = {
+  id: 200, title: 'Great Fantasy Movie', release_date: '2022-03-15',
+  vote_average: 8.5, vote_count: 2000, poster_path: null, genre_ids: [14],
+  overview: 'A great fantasy film.', runtime: 120, genres: [{ id: 14, name: 'Fantasy' }],
+}
+
+describe('Release calendar — seasonal panel', () => {
+  const baseIntercepts = () => {
+    cy.intercept('GET', /\/genre\/movie\/list/, movieGenres)
+    cy.intercept('GET', /\/discover\/movie/, seasonalMovies).as('discoverMovies')
+    cy.intercept('GET', /\/genre\/tv\/list/, tvGenres)
+    cy.intercept('GET', /\/discover\/tv/, seasonalSeries).as('discoverTV')
+    cy.intercept('GET', /\/watch\/providers\/tv/, { results: [] })
+  }
+
+  it('seasonal button is visible for guest with aria-label and aria-pressed="false"', () => {
+    baseIntercepts()
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="calendar-seasonal"]')
+      .should('be.visible')
+      .and('have.attr', 'aria-label', 'Monthly recommendations')
+      .and('have.attr', 'aria-pressed', 'false')
+  })
+
+  it('seasonal button is hidden for admin', () => {
+    baseIntercepts()
+    cy.visitAsAdmin('/home')
+    cy.get('[data-cy="calendar-seasonal"]').should('not.exist')
+  })
+
+  it('clicking the button opens the seasonal panel and sets aria-pressed="true"', () => {
+    baseIntercepts()
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="calendar-seasonal"]').click()
+    cy.get('[data-cy="calendar-seasonal"]').should('not.exist') // replaced by CloseBar
+    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
+      cy.contains('Monthly recommendations').should('be.visible')
+    })
+  })
+
+  it('panel shows Movies and Series column headings', () => {
+    baseIntercepts()
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="calendar-seasonal"]').click()
+    cy.wait('@discoverMovies')
+    cy.wait('@discoverTV')
+    cy.get('[role="region"][aria-label="Monthly recommendations"]').within(() => {
+      cy.contains('Movies').should('be.visible')
+      cy.contains('Series').should('be.visible')
+    })
+  })
+
+  it('panel shows movie titles from discover API', () => {
+    baseIntercepts()
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="calendar-seasonal"]').click()
+    cy.wait('@discoverMovies')
+    cy.get('[role="region"][aria-label="Monthly recommendations"]')
+      .contains('Great Fantasy Movie').should('be.visible')
+  })
+
+  it('panel shows series names from discover API', () => {
+    baseIntercepts()
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="calendar-seasonal"]').click()
+    cy.wait('@discoverTV')
+    cy.get('[role="region"][aria-label="Monthly recommendations"]')
+      .contains('Fantasy Series').should('be.visible')
+  })
+
+  it('clicking X closes the panel and restores the seasonal button', () => {
+    baseIntercepts()
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="calendar-seasonal"]').click()
+    cy.contains('Monthly recommendations').should('be.visible')
+    cy.contains('Release calendar').parents('.rounded-xl').within(() => {
+      cy.get('button[aria-label="Close"]').click()
+    })
+    cy.get('[data-cy="calendar-seasonal"]').should('have.attr', 'aria-pressed', 'false')
+  })
+
+  it('clicking a movie item opens the detail modal', () => {
+    baseIntercepts()
+    cy.intercept('GET', /\/movie\/200/, seasonalMovieDetail).as('movieDetail')
+    cy.intercept('GET', /\/movie\/200\/watch\/providers/, { results: {} })
+    cy.intercept('GET', /\/movie\/200\/videos/, { results: [] })
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="calendar-seasonal"]').click()
+    cy.wait('@discoverMovies')
+    cy.get('[role="region"][aria-label="Monthly recommendations"]')
+      .contains('Great Fantasy Movie').click()
+    cy.wait('@movieDetail')
+    cy.contains('A great fantasy film.').should('be.visible')
+  })
+
+  it('opening reminders closes the seasonal panel', () => {
+    baseIntercepts()
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="calendar-seasonal"]').click()
+    cy.contains('Monthly recommendations').should('be.visible')
+    cy.get('[data-cy="calendar-reminders"]').should('not.exist') // hidden while seasonal is open
+  })
+
+  it('has no axe violations with the seasonal panel open', () => {
+    baseIntercepts()
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="calendar-seasonal"]').click()
+    cy.wait('@discoverMovies')
+    cy.injectAxe()
+    cy.contains('Release calendar').parents('.rounded-xl').first().then(($el) => {
+      cy.checkA11y($el[0], { runOnly: ['wcag2a', 'wcag2aa'], rules: { 'color-contrast': { enabled: false } } })
     })
   })
 })

@@ -371,6 +371,21 @@
     "remindersUpcoming": "Upcoming",
     "remindersTodayEmpty": "No releases today"
   },
+  "seasonal": {
+    "panelTitle": "Monthly recommendations",
+    "january":   "Sci-fi & War",
+    "february":  "Romance",
+    "march":     "Drama & History",
+    "april":     "Fantasy",
+    "may":       "Comedy",
+    "june":      "Adventure & Animation",
+    "july":      "Action & Music",
+    "august":    "Thriller & Western",
+    "september": "Drama & Documentary",
+    "october":   "Horror",
+    "november":  "Crime & Mystery",
+    "december":  "Family"
+  },
   "topbar": {
     "search": "Search...",
     "logout": "Log out"
