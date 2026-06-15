@@ -538,4 +538,80 @@ describe('Movies', () => {
       cy.get('[data-cy="trailer-button"]').should('not.exist')
     })
   })
+
+  // ─── Cast section ─────────────────────────────────────────────
+
+  describe('Cast section in detail modal', () => {
+    const mockDetail = FIGHT_CLUB_DETAIL
+
+    const mockCredits = {
+      cast: [
+        { id: 1, name: 'Brad Pitt', character: 'Tyler Durden', profile_path: null, order: 0 },
+        { id: 2, name: 'Edward Norton', character: 'The Narrator', profile_path: null, order: 1 },
+      ],
+      crew: [
+        { id: 10, name: 'David Fincher', job: 'Director', department: 'Directing', profile_path: null },
+      ],
+    }
+
+    const mockCreditsLarge = {
+      cast: Array.from({ length: 12 }, (_, i) => ({
+        id: i + 1,
+        name: `Actor ${i + 1}`,
+        character: `Character ${i + 1}`,
+        profile_path: null,
+        order: i,
+      })),
+      crew: [
+        { id: 10, name: 'David Fincher', job: 'Director', department: 'Directing', profile_path: null },
+      ],
+    }
+
+    beforeEach(() => {
+      cy.intercept('GET', /\/movie\/550(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/movie\/550\/watch\/providers/, { results: {} })
+      cy.intercept('GET', /\/movie\/550\/release_dates/, { results: [] })
+    })
+
+    it('shows the cast section title', () => {
+      cy.intercept('GET', /\/movie\/550\/credits/, mockCredits).as('credits')
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.wait('@credits')
+      cy.get('[role="dialog"]').contains('Cast').should('be.visible')
+    })
+
+    it('shows director name', () => {
+      cy.intercept('GET', /\/movie\/550\/credits/, mockCredits).as('credits')
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.wait('@credits')
+      cy.get('[role="dialog"]').contains('David Fincher').should('be.visible')
+    })
+
+    it('shows actor name and character', () => {
+      cy.intercept('GET', /\/movie\/550\/credits/, mockCredits).as('credits')
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.wait('@credits')
+      cy.get('[role="dialog"]').contains('Brad Pitt').should('be.visible')
+      cy.get('[role="dialog"]').contains('Tyler Durden').should('be.visible')
+    })
+
+    it('shows expand button when cast exceeds 8 and expands on click', () => {
+      cy.intercept('GET', /\/movie\/550\/credits/, mockCreditsLarge).as('credits')
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.wait('@credits')
+      cy.get('[role="dialog"]').within(() => {
+        cy.get('[role="list"] [role="listitem"]').should('have.length', 8)
+        cy.get('[aria-label*="more"]').click()
+        cy.get('[role="list"] [role="listitem"]').should('have.length', 12)
+      })
+    })
+  })
 })

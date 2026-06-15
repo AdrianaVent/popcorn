@@ -416,6 +416,13 @@
       "messageSuccess": "Correo de recuperación enviado"
     }
   },
+  "cast": {
+    "title": "Reparto",
+    "director": "Director",
+    "creator": "Creado por",
+    "showMore": "Ver {{count}} más",
+    "showLess": "Ver menos"
+  },
   "profile": {
     "title": "Mi perfil",
     "saving": "Guardando...",

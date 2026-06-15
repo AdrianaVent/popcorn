@@ -627,4 +627,83 @@ describe('Series', () => {
       cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
     })
   })
+
+  // ─── Cast section ─────────────────────────────────────────────
+
+  describe('Cast section in detail modal', () => {
+    const mockCredits = {
+      cast: [
+        { id: 1, name: 'Bryan Cranston', character: 'Walter White', profile_path: null, order: 0 },
+        { id: 2, name: 'Aaron Paul', character: 'Jesse Pinkman', profile_path: null, order: 1 },
+      ],
+      crew: [],
+    }
+
+    const mockCreditsLarge = {
+      cast: Array.from({ length: 12 }, (_, i) => ({
+        id: i + 1,
+        name: `Actor ${i + 1}`,
+        character: `Character ${i + 1}`,
+        profile_path: null,
+        order: i,
+      })),
+      crew: [],
+    }
+
+    const detailWithCreator = {
+      ...BREAKING_BAD_DETAIL,
+      created_by: [{ id: 99, name: 'Vince Gilligan', profile_path: null }],
+      tagline: '',
+    }
+
+    beforeEach(() => {
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} })
+      cy.intercept('GET', /\/tv\/1396\/videos/, { results: [] })
+    })
+
+    it('shows the cast section title', () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, BREAKING_BAD_DETAIL).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/credits/, mockCredits).as('credits')
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@credits')
+      cy.get('[role="dialog"]').contains('Cast').should('be.visible')
+    })
+
+    it('shows creator name', () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, detailWithCreator).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/credits/, mockCredits).as('credits')
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@credits')
+      cy.get('[role="dialog"]').contains('Vince Gilligan').should('be.visible')
+    })
+
+    it('shows actor name and character', () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, BREAKING_BAD_DETAIL).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/credits/, mockCredits).as('credits')
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@credits')
+      cy.get('[role="dialog"]').contains('Bryan Cranston').should('be.visible')
+      cy.get('[role="dialog"]').contains('Walter White').should('be.visible')
+    })
+
+    it('shows expand button when cast exceeds 8 and expands on click', () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, BREAKING_BAD_DETAIL).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/credits/, mockCreditsLarge).as('credits')
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@credits')
+      cy.get('[role="dialog"]').within(() => {
+        cy.get('[role="list"] [role="listitem"]').should('have.length', 8)
+        cy.get('[aria-label*="more"]').click()
+        cy.get('[role="list"] [role="listitem"]').should('have.length', 12)
+      })
+    })
+  })
 })

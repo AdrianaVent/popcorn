@@ -416,6 +416,13 @@
       "messageSuccess": "A recovery email has been sent"
     }
   },
+  "cast": {
+    "title": "Cast",
+    "director": "Director",
+    "creator": "Created by",
+    "showMore": "Show {{count}} more",
+    "showLess": "Show less"
+  },
   "profile": {
     "title": "My profile",
     "saving": "Saving...",

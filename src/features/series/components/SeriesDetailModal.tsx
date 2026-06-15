@@ -7,6 +7,7 @@ import IconToggleButton from '@/components/ui/IconToggleButton'
 import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 import { useSeriesDetail } from '@/features/series/hooks/useSeriesDetail'
+import { useSeriesCredits } from '@/features/series/hooks/useSeriesCredits'
 import { useWatchProviders } from '@/hooks/useWatchProviders'
 import { fetchSeriesWatchProviders, fetchSeriesVideos } from '@/features/series/series.service'
 import { useSeriesMarkAll } from '@/features/series/hooks/useSeriesMarkAll'
@@ -26,6 +27,7 @@ import { useLanguageStore } from '@/store/languageStore'
 import SeriesMetaGrid from './SeriesMetaGrid'
 import MediaDetailSkeleton from '@/components/common/MediaDetailSkeleton'
 import SeasonsAccordion from './SeasonsAccordion'
+import CastSection from '@/components/common/CastSection'
 
 type Props = {
   seriesId: number
@@ -38,6 +40,7 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
   const { language } = useLanguageStore()
   const { detail, loading, error, totalRuntime: totalRuntimeHook } = useSeriesDetail(seriesId)
   const totalRuntime = totalRuntimeProp ?? totalRuntimeHook
+  const { cast, crew } = useSeriesCredits(seriesId)
   const { flatrate, rent, loading: providersLoading } = useWatchProviders(seriesId, fetchSeriesWatchProviders, 'series')
 
   const userId = useUserStore((s) => s.userId)
@@ -217,6 +220,9 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
               </Text>
             )}
           </div>
+
+          {/* CAST */}
+          <CastSection cast={cast} crew={crew} creators={detail.created_by} mediaType="series" />
 
         </div>
       )}

@@ -82,6 +82,27 @@ export type TMDBCreator = {
   profile_path: string | null
 }
 
+export type TMDBCastMember = {
+  id: number
+  name: string
+  character: string
+  profile_path: string | null
+  order: number
+}
+
+export type TMDBCrewMember = {
+  id: number
+  name: string
+  job: string
+  department: string
+  profile_path: string | null
+}
+
+export type TMDBCredits = {
+  cast: TMDBCastMember[]
+  crew: TMDBCrewMember[]
+}
+
 export type TMDBNetwork = {
   id: number
   name: string

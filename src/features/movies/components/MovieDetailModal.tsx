@@ -8,6 +8,7 @@ import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 
 import { useMovieDetail } from '@/features/movies/hooks/useMovieDetail'
+import { useMovieCredits } from '@/features/movies/hooks/useMovieCredits'
 import { useWatchProviders } from '@/hooks/useWatchProviders'
 import { fetchMovieWatchProviders, fetchMovieVideos } from '@/features/movies/movies.service'
 import { useMovieInTheaters } from '@/features/movies/hooks/useMovieInTheaters'
@@ -20,6 +21,7 @@ import TrailerPlayer from '@/components/ui/TrailerPlayer'
 import Tooltip from '@/components/ui/Tooltip'
 import { getMovieUI } from '@/features/movies/getMovieUI'
 import WatchedToggleButton from '@/components/ui/WatchedToggleButton'
+import CastSection from '@/components/common/CastSection'
 import { useLanguageStore } from '@/store/languageStore'
 import { formatMonthYear } from '@/utils/formatDate'
 import { useWatchedStore } from '@/store/watchedStore'
@@ -51,6 +53,7 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
   const [currentId, setCurrentId] = useState(movieId)
   const [showTrailer, setShowTrailer] = useState(false)
   const { detail, loading, error } = useMovieDetail(currentId)
+  const { cast, crew } = useMovieCredits(currentId)
   const { flatrate, rent, loading: providersLoading } = useWatchProviders(currentId, fetchMovieWatchProviders, 'movie')
   const { inTheaters, loading: inTheatersLoading } = useMovieInTheaters(currentId)
   const { trailer } = useTrailer(
@@ -229,6 +232,9 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
               </Text>
             )}
           </div>
+
+          {/* CAST */}
+          <CastSection cast={cast} crew={crew} mediaType="movie" />
 
         </div>
       )}
