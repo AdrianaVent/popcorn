@@ -6,12 +6,11 @@ import { SEASONAL_CONFIG } from '@/config/seasonal'
 import type { TMDBMovie, TMDBSeries } from '@/types/tmdb'
 
 const STALE_TIME = 1000 * 60 * 60 * 24 // 24h
+const PAGES = [1, 2, 3, 4, 5]
 
 export function useSeasonalRecommendations(month: number, language: string) {
   const config = SEASONAL_CONFIG[month]
   const tmdbLang = TMDB_LANGUAGE[language] ?? TMDB_LANGUAGE.en
-
-  const PAGES = [1, 2, 3, 4, 5]
 
   const moviesQuery = useQuery<TMDBMovie[]>({
     queryKey: ['seasonal', 'movies', month, language],
