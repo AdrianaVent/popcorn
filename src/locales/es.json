@@ -371,6 +371,21 @@
     "remindersUpcoming": "Próximamente",
     "remindersTodayEmpty": "Sin estrenos hoy"
   },
+  "seasonal": {
+    "panelTitle": "Recomendaciones del mes",
+    "january":   "Ciencia ficción y bélico",
+    "february":  "Romance",
+    "march":     "Drama e historia",
+    "april":     "Fantasía",
+    "may":       "Comedia",
+    "june":      "Aventura y animación",
+    "july":      "Acción y música",
+    "august":    "Thriller y western",
+    "september": "Drama y documental",
+    "october":   "Terror",
+    "november":  "Crimen y misterio",
+    "december":  "Familiar"
+  },
   "topbar": {
     "search": "Buscar...",
     "logout": "Cerrar sesión"

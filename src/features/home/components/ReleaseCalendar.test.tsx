@@ -47,11 +47,17 @@ jest.mock('@/components/icons', () => ({
   XIcon: () => <span>close</span>,
   HeartIcon: () => <span>heart</span>,
   BookmarkIcon: () => <span>bookmark</span>,
+  StarIcon: () => <span>star</span>,
 }))
 
 jest.mock('@/features/home/components/RemindersPanel', () => ({
   __esModule: true,
   default: () => <div data-testid="reminders-panel">reminders</div>,
+}))
+
+jest.mock('@/features/home/components/SeasonalPanel', () => ({
+  __esModule: true,
+  default: () => <div data-testid="seasonal-panel">seasonal</div>,
 }))
 
 jest.mock('@/components/ui/Tooltip', () => ({
@@ -67,9 +73,11 @@ jest.mock('@/components/ui/IconToggleButton', () => ({
   },
 }))
 
+let mockRole = 'guest'
+
 jest.mock('@/store/userStore', () => ({
   useUserStore: (fn: (s: { role: string; userId: string | null }) => unknown) =>
-    fn({ role: 'guest', userId: 'user-1' }),
+    fn({ role: mockRole, userId: 'user-1' }),
 }))
 
 jest.mock('@/store/watchedStore', () => ({
@@ -314,6 +322,22 @@ describe('ReleaseCalendar', () => {
       expect(screen.getByTestId('reminders-panel')).toBeInTheDocument()
       fireEvent.click(screen.getByRole('button', { name: 'Close' }))
       expect(screen.queryByTestId('reminders-panel')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('seasonal button', () => {
+    afterEach(() => { mockRole = 'guest' })
+
+    it('shows the seasonal button for guest', () => {
+      mockRole = 'guest'
+      render(<ReleaseCalendar {...BASE_PROPS} />)
+      expect(screen.getByRole('button', { name: 'seasonal.panelTitle' })).toBeInTheDocument()
+    })
+
+    it('hides the seasonal button for admin', () => {
+      mockRole = 'admin'
+      render(<ReleaseCalendar {...BASE_PROPS} />)
+      expect(screen.queryByRole('button', { name: 'seasonal.panelTitle' })).not.toBeInTheDocument()
     })
   })
 

@@ -207,4 +207,102 @@ describe('UserFormModal', () => {
       expect(screen.getByLabelText('users.form.password')).toHaveAttribute('type', 'password')
     })
   })
+
+  describe('isSelf — self password change', () => {
+    const selfProps = { ...baseProps, user: existingUser, isSelf: true }
+
+    beforeEach(() => {
+      jest.clearAllMocks()
+      global.fetch = jest.fn()
+    })
+
+    afterEach(() => {
+      jest.restoreAllMocks()
+    })
+
+    it('shows 3-field password section when editing own account', () => {
+      render(<UserFormModal {...selfProps} />)
+      expect(screen.getByLabelText('profile.password.current')).toBeInTheDocument()
+      expect(screen.getByLabelText('profile.password.new')).toBeInTheDocument()
+      expect(screen.getByLabelText('profile.password.confirm')).toBeInTheDocument()
+    })
+
+    it('does not show single password field when editing own account', () => {
+      render(<UserFormModal {...selfProps} />)
+      expect(screen.queryByLabelText('users.form.password')).not.toBeInTheDocument()
+    })
+
+    it('does not show 3-field password section when editing another user', () => {
+      render(<UserFormModal {...baseProps} user={existingUser} isSelf={false} />)
+      expect(screen.queryByLabelText('profile.password.current')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText('profile.password.new')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText('profile.password.confirm')).not.toBeInTheDocument()
+    })
+
+    it('shows validation errors when only some pw fields are filled', async () => {
+      render(<UserFormModal {...selfProps} />)
+      fireEvent.change(screen.getByLabelText('profile.password.current'), { target: { value: 'Old1!pass' } })
+      fireEvent.click(screen.getByText('button.accept'))
+      await waitFor(() =>
+        expect(screen.getByText('profile.password.newRequired')).toBeInTheDocument()
+      )
+    })
+
+    it('shows mismatch error when pwNext and pwConfirm differ', async () => {
+      render(<UserFormModal {...selfProps} />)
+      fireEvent.change(screen.getByLabelText('profile.password.current'), { target: { value: 'Old1!pass' } })
+      fireEvent.change(screen.getByLabelText('profile.password.new'), { target: { value: 'New1!pass' } })
+      fireEvent.change(screen.getByLabelText('profile.password.confirm'), { target: { value: 'Different1!' } })
+      fireEvent.click(screen.getByText('button.accept'))
+      await waitFor(() =>
+        expect(screen.getByText('profile.password.mismatch')).toBeInTheDocument()
+      )
+    })
+
+    it('calls /api/profile PATCH before onSubmit when pw fields are filled', async () => {
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true })
+      baseProps.onSubmit.mockResolvedValueOnce(undefined)
+
+      render(<UserFormModal {...selfProps} />)
+      fireEvent.change(screen.getByLabelText('profile.password.current'), { target: { value: 'Old1!pass' } })
+      fireEvent.change(screen.getByLabelText('profile.password.new'), { target: { value: 'New1!pass' } })
+      fireEvent.change(screen.getByLabelText('profile.password.confirm'), { target: { value: 'New1!pass' } })
+      fireEvent.click(screen.getByText('button.accept'))
+
+      await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+        '/api/profile',
+        expect.objectContaining({ method: 'PATCH' })
+      ))
+      await waitFor(() => expect(baseProps.onSubmit).toHaveBeenCalled())
+    })
+
+    it('shows WRONG_PASSWORD inline error and does not close modal', async () => {
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ code: 'WRONG_PASSWORD' }),
+      })
+
+      render(<UserFormModal {...selfProps} />)
+      fireEvent.change(screen.getByLabelText('profile.password.current'), { target: { value: 'WrongPass1!' } })
+      fireEvent.change(screen.getByLabelText('profile.password.new'), { target: { value: 'New1!pass' } })
+      fireEvent.change(screen.getByLabelText('profile.password.confirm'), { target: { value: 'New1!pass' } })
+      fireEvent.click(screen.getByText('button.accept'))
+
+      await waitFor(() =>
+        expect(screen.getByText('profile.password.wrongCurrent')).toBeInTheDocument()
+      )
+      expect(baseProps.onClose).not.toHaveBeenCalled()
+      expect(baseProps.onSubmit).not.toHaveBeenCalled()
+    })
+
+    it('skips /api/profile and calls onSubmit directly when pw fields are empty', async () => {
+      baseProps.onSubmit.mockResolvedValueOnce(undefined)
+
+      render(<UserFormModal {...selfProps} />)
+      fireEvent.click(screen.getByText('button.accept'))
+
+      await waitFor(() => expect(baseProps.onSubmit).toHaveBeenCalled())
+      expect(global.fetch).not.toHaveBeenCalled()
+    })
+  })
 })
