@@ -18,12 +18,18 @@ jest.mock('clsx', () => ({
 
 jest.mock('@/components/common/MediaCard', () => ({
   __esModule: true,
-  default: ({ title, onClick, children }: { title: string; onClick: () => void; children: React.ReactNode }) => (
+  default: ({ title, onClick, overlay, children }: { title: string; onClick: () => void; overlay?: React.ReactNode; children: React.ReactNode }) => (
     <div>
       <button onClick={onClick} aria-label={title}>{title}</button>
+      {overlay}
       {children}
     </div>
   ),
+}))
+
+jest.mock('@/components/ui/Ribbon', () => ({
+  __esModule: true,
+  default: ({ label }: { label: string }) => <div data-testid="ribbon">{label}</div>,
 }))
 
 jest.mock('@/components/ui/StarRating', () => ({
@@ -89,6 +95,27 @@ describe('SeriesCard — rendering', () => {
   it('Similar button is disabled when onShowRecommendations is not provided', () => {
     render(<SeriesCard series={makeSeries()} watchedEpisodes={0} rating={null} onRate={jest.fn()} onClick={jest.fn()} />)
     expect(screen.getByRole('button', { name: 'myList.recommendations.similar: Breaking Bad' })).toBeDisabled()
+  })
+
+  it('shows "En progreso" ribbon when some but not all episodes watched', () => {
+    render(<SeriesCard series={makeSeries()} watchedEpisodes={10} rating={null} onRate={jest.fn()} onClick={jest.fn()} />)
+    expect(screen.getByTestId('ribbon')).toBeInTheDocument()
+    expect(screen.getByTestId('ribbon')).toHaveTextContent('myList.inProgress')
+  })
+
+  it('does not show ribbon when no episodes watched', () => {
+    render(<SeriesCard series={makeSeries()} watchedEpisodes={0} rating={null} onRate={jest.fn()} onClick={jest.fn()} />)
+    expect(screen.queryByTestId('ribbon')).not.toBeInTheDocument()
+  })
+
+  it('does not show ribbon when series is completed', () => {
+    render(<SeriesCard series={makeSeries()} watchedEpisodes={62} rating={null} onRate={jest.fn()} onClick={jest.fn()} />)
+    expect(screen.queryByTestId('ribbon')).not.toBeInTheDocument()
+  })
+
+  it('does not show ribbon when total episodes is 0', () => {
+    render(<SeriesCard series={makeSeries({ number_of_episodes: 0 })} watchedEpisodes={0} rating={null} onRate={jest.fn()} onClick={jest.fn()} />)
+    expect(screen.queryByTestId('ribbon')).not.toBeInTheDocument()
   })
 
   it('Similar button is enabled and calls handler when provided', () => {

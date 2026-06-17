@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.24.0-6B2737)
+![Version](https://img.shields.io/badge/version-0.25.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -227,9 +227,14 @@ A donut chart showing which genres appear most — either in the TMDB catalogue 
 
 A summary card that adapts its content to your role.
 
-*Guest view* — shows activity chips (movies watched, completed sagas, series watched, episodes watched, average rating) and an activity area chart that plots when you marked titles as watched. Use the **day / week / month** toggle to change the chart granularity.
+*Guest view* — two tabs, switched with the **Activity / Summary** toggle in the card header:
 
-![Home — guest stats card](docs/screenshots/home-stats-guest.png)
+- **Activity** — shows chips (movies watched, completed sagas, series watched, episodes watched, series completion %) and an area chart that plots when you marked titles as watched. Use the **day / week / month** toggle to change the chart granularity.
+- **Summary** — shows your average rating and a ratings histogram. When enough titles are watched, a **By decade** bar chart shows the distribution of your watched content by release decade.
+
+![Home — overview with guest stats card (Activity tab)](docs/screenshots/home.png)
+
+![Home — guest stats card (Summary tab) with monthly recommendations panel open](docs/screenshots/home-stats-guest-summary.png)
 
 *Admin view* — shows user stats chips (total users, guests, admins, new this month) and a registrations chart that plots account creation over time, also with a **day / week / month** toggle.
 
@@ -264,7 +269,7 @@ Click the bookmark icon in the release calendar header to open the Reminders pan
 
 **Monthly recommendations**
 
-![Home — monthly recommendations panel](docs/screenshots/home-seasonal.png)
+![Home — monthly recommendations panel and Summary stats tab](docs/screenshots/home-stats-guest-summary.png)
 
 Click the star (★) icon in the release calendar header to open the Monthly recommendations panel. It shows the top 10 movies and top 10 series for the current month, filtered by genre theme (e.g. Horror in October, Romance in February, Fantasy in April) and sorted by rating. Titles you have already watched are automatically excluded. Click any entry to open its detail modal.
 
@@ -396,7 +401,7 @@ Displays your watched movies as cards (poster, year, star rating and a Recommend
 
 ![My list — series tab](docs/screenshots/my-list-series.png)
 
-Displays your watched series as cards. Each card shows an episode progress badge (e.g. `1/62 ep.`), a star rating and a Recommendations button.
+Displays your watched series as cards. Each card shows an episode progress badge (e.g. `1/62 ep.`), a star rating and a Recommendations button. Series with at least one episode watched but not yet complete show an **In progress** ribbon on their poster.
 
 - The star rating is always visible but non-interactive until the series is complete.
 - The Recommendations button is disabled while a series is in progress or when complete but not yet rated at ≥ 3.5★. Hovering the button shows the reason.
