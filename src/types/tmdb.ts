@@ -109,7 +109,9 @@ export type TMDBPerson = {
   profile_path: string | null
   biography: string
   birthday: string | null
+  deathday: string | null
   place_of_birth: string | null
+  also_known_as: string[]
   known_for_department: string
 }
 

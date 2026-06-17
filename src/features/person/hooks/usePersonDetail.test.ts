@@ -31,7 +31,9 @@ const mockPerson: TMDBPerson = {
   profile_path: '/profile.jpg',
   biography: 'An American actor.',
   birthday: '1956-07-09',
+  deathday: null,
   place_of_birth: 'Concord, California',
+  also_known_as: [],
   known_for_department: 'Acting',
 }
 

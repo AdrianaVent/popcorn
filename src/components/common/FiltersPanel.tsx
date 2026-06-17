@@ -30,6 +30,7 @@ function isFieldActive<T extends Record<string, unknown>>(field: FilterField<T>,
     return (val != null && val !== '') || (valTo != null && valTo !== '')
   }
   if (val == null || val === '') return false
+  if (typeof val === 'boolean') return val === true
   if (typeof val === 'number' && val === 0) return false
   return true
 }
