@@ -278,6 +278,39 @@ describe('My List', () => {
     cy.contains('1/62 ep.').should('be.visible')
   })
 
+  it('shows "In progress" ribbon on a series with some episodes watched', () => {
+    loginAndVisitMyList(seedWatched)
+    cy.contains('button', 'Series').click()
+    cy.contains('In progress').should('be.visible')
+  })
+
+  it('does not show "In progress" ribbon on a completed series', () => {
+    loginAndVisitMyList((win, userId) => {
+      win.localStorage.setItem(
+        'popcorn-watched-v3',
+        JSON.stringify({
+          state: {
+            movies: {},
+            episodes: { [userId]: { 10: { 101: { seasonNumber: 1 } } } },
+            seriesData: {
+              [userId]: {
+                10: {
+                  id: 10, name: 'Breaking Bad', poster_path: '/bb.jpg',
+                  first_air_date: '2008-01-20', number_of_episodes: 1,
+                  vote_average: 9.5, vote_count: 100000,
+                  original_language: 'en', watchedAt: NOW,
+                },
+              },
+            },
+          },
+          version: 0,
+        })
+      )
+    })
+    cy.contains('button', 'Series').click()
+    cy.contains('In progress').should('not.exist')
+  })
+
   it('shows Recommendations button disabled for an incomplete series', () => {
     loginAndVisitMyList(seedWatched)
     cy.contains('button', 'Series').click()

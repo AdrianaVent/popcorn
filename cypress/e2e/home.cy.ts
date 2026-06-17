@@ -344,13 +344,13 @@ describe('StatsCard — guest (empty)', () => {
     cy.get('[data-cy="stats-card"]').contains('My activity').should('be.visible')
   })
 
-  it('shows the 5 stat chip labels', () => {
+  it('shows the 5 stat chip labels in Activity tab', () => {
     cy.get('[data-cy="stats-card"]').within(() => {
       cy.contains('Movies').should('be.visible')
       cy.contains('Sagas').should('be.visible')
       cy.contains('Series').should('be.visible')
       cy.contains('Episodes').should('be.visible')
-      cy.contains('Avg. rating').should('be.visible')
+      cy.contains('series completed').should('be.visible')
     })
   })
 
@@ -397,7 +397,84 @@ describe('StatsCard — guest (with activity)', () => {
     })
     cy.get('[data-cy="stats-card"]').contains('Activity').should('be.visible')
     cy.get('[data-cy="stats-card"]').find('svg').should('exist')
-    cy.get('[data-cy="stats-card"]').find('button[aria-pressed="true"]').should('have.text', 'week')
+    cy.get('[data-cy="stats-card"]').contains('button[aria-pressed="true"]', 'week').should('be.visible')
+    cy.injectAxe()
+    cy.get('[data-cy="stats-card"]').then(($el) => {
+      cy.checkA11y($el[0], { runOnly: ['wcag2a', 'wcag2aa'], rules: { 'color-contrast': { enabled: false } } })
+    })
+  })
+})
+
+// ─── StatsCard — guest Resumen tab ───────────────────────────────────────────
+
+describe('StatsCard — guest Resumen tab', () => {
+  const seedWithRatings = (win: Window, userId: string, role: string) => {
+    win.localStorage.setItem('popcorn-language', JSON.stringify({ state: { language: 'en', userLanguages: { [userId]: 'en' } }, version: 0 }))
+    win.localStorage.setItem('popcorn-user', JSON.stringify({ state: { userId, role }, version: 0 }))
+    win.localStorage.setItem('popcorn-watched-v3', JSON.stringify({
+      state: {
+        movies: { [userId]: { 1: { id: 1, title: 'Inception', poster_path: null, release_date: '2010-07-16', vote_average: 8.8, vote_count: 35000, original_language: 'en', watchedAt: Date.now() } } },
+        episodes: {},
+        seriesData: {},
+      },
+      version: 0,
+    }))
+    win.localStorage.setItem('popcorn-ratings-v1', JSON.stringify({
+      state: { ratings: { [userId]: { movies: { 1: 4 }, series: {} } } }, version: 0,
+    }))
+  }
+
+  beforeEach(() => {
+    cy.intercept('GET', /\/genre\/movie\/list/, movieGenres)
+    cy.intercept('GET', /\/discover\/movie/, discoverMovies)
+    cy.intercept('GET', /\/genre\/tv\/list/, tvGenres)
+    cy.intercept('GET', /\/discover\/tv/, discoverTV)
+    cy.intercept('GET', /\/watch\/providers\/tv/, { results: [] })
+  })
+
+  it('shows Activity and Summary tab buttons for guest', () => {
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="stats-card"]').within(() => {
+      cy.contains('button', 'Activity').should('be.visible')
+      cy.contains('button', 'Summary').should('be.visible')
+    })
+  })
+
+  it('Activity tab is selected by default', () => {
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="stats-card"]').contains('button', 'Activity').should('have.attr', 'aria-pressed', 'true')
+    cy.get('[data-cy="stats-card"]').contains('button', 'Summary').should('have.attr', 'aria-pressed', 'false')
+  })
+
+  it('shows no-insights empty state in Summary tab when no data', () => {
+    cy.login('cypress_guest', 'CypressGuest1!').then((resp) => {
+      const { userId, role, username } = resp.body
+      cy.visit('/home', {
+        onBeforeLoad: (win: Window) => {
+          win.localStorage.setItem('popcorn-language', JSON.stringify({ state: { language: 'en', userLanguages: { [userId]: 'en' } }, version: 0 }))
+          win.localStorage.setItem('popcorn-user', JSON.stringify({ state: { userId, role, username }, version: 0 }))
+          win.localStorage.setItem('popcorn-watched-v3', JSON.stringify({ state: { movies: {}, episodes: {}, seriesData: {} }, version: 0 }))
+          win.localStorage.setItem('popcorn-ratings-v1', JSON.stringify({ state: { ratings: {} }, version: 0 }))
+        },
+      })
+    })
+    cy.get('[data-cy="stats-card"]').contains('button', 'Summary').click()
+    cy.get('[data-cy="stats-no-insights"]').should('be.visible')
+  })
+
+  it('shows avg rating and ratings chart in Summary tab when ratings exist', () => {
+    cy.login('cypress_guest', 'CypressGuest1!').then((resp) => {
+      const { userId, role } = resp.body
+      cy.visit('/home', { onBeforeLoad: (win: Window) => seedWithRatings(win, userId, role) })
+    })
+    cy.get('[data-cy="stats-card"]').contains('button', 'Summary').click()
+    cy.get('[data-cy="stats-card"]').contains('My ratings').should('be.visible')
+    cy.get('[data-cy="stats-card"]').find('svg').should('exist')
+  })
+
+  it('has no axe violations with Summary tab open', () => {
+    cy.visitAsGuest('/home')
+    cy.get('[data-cy="stats-card"]').contains('button', 'Summary').click()
     cy.injectAxe()
     cy.get('[data-cy="stats-card"]').then(($el) => {
       cy.checkA11y($el[0], { runOnly: ['wcag2a', 'wcag2aa'], rules: { 'color-contrast': { enabled: false } } })

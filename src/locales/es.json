@@ -279,6 +279,7 @@
     "groupBySaga": "Agrupar por saga",
     "emptyMovies": "Todavía no has marcado ninguna película",
     "emptySeries": "Todavía no has empezado ninguna serie",
+    "inProgress": "En progreso",
     "watching": "Viendo",
     "rate": "Valórala",
     "rating": "Valoración",
@@ -346,8 +347,17 @@
         "weekly": "sem",
         "monthly": "mes"
       },
+      "tab": {
+        "activity": "Actividad",
+        "insights": "Resumen"
+      },
+      "tabGroup": "Vista",
+      "ratingsChart": "Mis valoraciones",
+      "decadesChart": "Por década",
+      "seriesCompletion": "series completadas",
       "registrationsChart": "Registros",
       "noActivity": "Marca algunos títulos como vistos para ver tu actividad",
+      "noInsights": "Valora algunos títulos para ver tus gustos",
       "noUsers": "Aún no hay usuarios registrados",
       "titles": "títulos"
     }
