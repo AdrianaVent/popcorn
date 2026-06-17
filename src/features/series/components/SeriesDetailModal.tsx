@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import Modal from '@/components/ui/Modal'
 import IconToggleButton from '@/components/ui/IconToggleButton'
 import MediaPoster from '@/components/common/MediaPoster'
+import Ribbon from '@/components/ui/Ribbon'
 import Text from '@/components/ui/Text'
 import { useSeriesDetail } from '@/features/series/hooks/useSeriesDetail'
 import { useSeriesCredits } from '@/features/series/hooks/useSeriesCredits'
@@ -117,9 +118,7 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
                 className="shadow-md"
               />
               {ui.statusConfig && (
-                <div className={`absolute top-3 -left-6 w-24 py-0.5 rotate-[-35deg] text-[7px] font-semibold uppercase tracking-wide text-center shadow-sm ${ui.statusConfig.ribbon}`}>
-                  {t(ui.statusConfig.labelKey)}
-                </div>
+                <Ribbon label={t(ui.statusConfig.labelKey)} colorClass={ui.statusConfig.ribbon} />
               )}
             </div>
 

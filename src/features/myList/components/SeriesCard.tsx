@@ -3,6 +3,7 @@
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import MediaCard from '@/components/common/MediaCard'
+import Ribbon from '@/components/ui/Ribbon'
 import StarRating from '@/components/ui/StarRating'
 import Tooltip from '@/components/ui/Tooltip'
 import type { StoredSeries } from '@/store/watchedStore'
@@ -23,9 +24,14 @@ export default function SeriesCard({ series, watchedEpisodes, rating, onRate, on
   const { t } = useTranslation()
   const total = series.number_of_episodes
   const completed = total > 0 && watchedEpisodes >= total
+  const inProgress = watchedEpisodes > 0 && !completed
+
+  const ribbon = inProgress
+    ? <Ribbon label={t('myList.inProgress')} colorClass="bg-primary text-primary-foreground" />
+    : undefined
 
   return (
-    <MediaCard posterPath={series.poster_path} title={series.name} onClick={onClick} eager={eager} isSelected={isRecommendationSource} variant="md">
+    <MediaCard posterPath={series.poster_path} title={series.name} onClick={onClick} eager={eager} isSelected={isRecommendationSource} variant="md" overlay={ribbon}>
       {total > 0 && (
         <span
           role="img"

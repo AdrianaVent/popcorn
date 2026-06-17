@@ -279,6 +279,7 @@
     "groupBySaga": "Group by saga",
     "emptyMovies": "No watched movies yet",
     "emptySeries": "No series started yet",
+    "inProgress": "In progress",
     "watching": "Watching",
     "rate": "Rate it",
     "rating": "Rating",
@@ -346,8 +347,17 @@
         "weekly": "week",
         "monthly": "month"
       },
+      "tab": {
+        "activity": "Activity",
+        "insights": "Summary"
+      },
+      "tabGroup": "View",
+      "ratingsChart": "My ratings",
+      "decadesChart": "By decade",
+      "seriesCompletion": "series completed",
       "registrationsChart": "Registrations",
       "noActivity": "Mark some titles as watched to see your activity",
+      "noInsights": "Rate some titles to see your tastes",
       "noUsers": "No users registered yet",
       "titles": "titles"
     }

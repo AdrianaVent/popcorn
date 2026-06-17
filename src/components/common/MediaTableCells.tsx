@@ -7,6 +7,7 @@ import { resolveGenreName } from '@/config/genres'
 import { getGenreIcon } from '@/config/genreIcons'
 import { useTruncated } from '@/hooks/useTruncated'
 import MediaPoster from '@/components/common/MediaPoster'
+import Ribbon from '@/components/ui/Ribbon'
 
 export function TitleCell({ title }: { title: string }) {
   const { ref, isTruncated } = useTruncated<HTMLSpanElement>(title)
@@ -23,9 +24,7 @@ export function PosterCell({ posterPath, title, isWatched }: { posterPath: strin
     <div className="relative w-9 h-14 overflow-hidden rounded">
       <MediaPoster posterPath={posterPath} title={title} />
       {isWatched && (
-        <div data-cy="watched-ribbon" className="absolute top-1.5 -left-5 w-14 py-0.5 pl-2 rotate-[-35deg] bg-primary text-primary-foreground text-[7px] font-semibold uppercase tracking-wider text-center shadow-sm pointer-events-none">
-          {t('common.watched')}
-        </div>
+        <Ribbon label={t('common.watched')} colorClass="bg-primary text-primary-foreground" size="sm" data-cy="watched-ribbon" />
       )}
     </div>
   )
