@@ -78,9 +78,18 @@ jest.mock('@/features/movies/getMovieUI', () => ({
   getMovieUI: () => mockMovieUI,
 }))
 
+jest.mock('@/features/movies/hooks/useMovieCredits', () => ({
+  useMovieCredits: () => ({ cast: [], crew: [] }),
+}))
+
 jest.mock('@/features/movies/movies.service', () => ({
   fetchMovieWatchProviders: jest.fn(),
   fetchMovieVideos: jest.fn(),
+}))
+
+jest.mock('@/components/common/CastSection', () => ({
+  __esModule: true,
+  default: () => <div data-testid="cast-section" />,
 }))
 
 jest.mock('@/components/common/MediaPoster', () => ({

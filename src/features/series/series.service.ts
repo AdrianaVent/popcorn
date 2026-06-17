@@ -4,7 +4,7 @@ import { WATCH_PROVIDERS_REGION } from '@/config/constants'
 import { fetchWatchProviderOptions } from '@/utils/watchProviders'
 import { getEquivalentGenreIds } from '@/config/genres'
 import type { SeriesFilters } from '@/types/series'
-import type { TMDBPagedResponse, TMDBSeries, TMDBSeriesDetail, TMDBSeasonDetail, TMDBVideosResult, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
+import type { TMDBCredits, TMDBPagedResponse, TMDBSeries, TMDBSeriesDetail, TMDBSeasonDetail, TMDBVideosResult, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
 function mergeSeriesPages(
   en: TMDBPagedResponse<TMDBSeries>,
@@ -100,4 +100,8 @@ export function fetchSeasonVideos(seriesId: number, seasonNumber: number): Promi
 
 export function fetchSeriesRecommendations(id: number, language = 'es'): Promise<TMDBPagedResponse<TMDBSeries>> {
   return seriesService.recommendations(id, TMDB_LANGUAGE[language] ?? 'es-ES')
+}
+
+export function fetchSeriesCredits(id: number, language = 'es'): Promise<TMDBCredits> {
+  return seriesService.credits(id, TMDB_LANGUAGE[language] ?? 'es-ES')
 }

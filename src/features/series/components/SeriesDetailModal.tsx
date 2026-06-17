@@ -7,6 +7,7 @@ import IconToggleButton from '@/components/ui/IconToggleButton'
 import MediaPoster from '@/components/common/MediaPoster'
 import Text from '@/components/ui/Text'
 import { useSeriesDetail } from '@/features/series/hooks/useSeriesDetail'
+import { useSeriesCredits } from '@/features/series/hooks/useSeriesCredits'
 import { useWatchProviders } from '@/hooks/useWatchProviders'
 import { fetchSeriesWatchProviders, fetchSeriesVideos } from '@/features/series/series.service'
 import { useSeriesMarkAll } from '@/features/series/hooks/useSeriesMarkAll'
@@ -26,6 +27,11 @@ import { useLanguageStore } from '@/store/languageStore'
 import SeriesMetaGrid from './SeriesMetaGrid'
 import MediaDetailSkeleton from '@/components/common/MediaDetailSkeleton'
 import SeasonsAccordion from './SeasonsAccordion'
+import CastSection from '@/components/common/CastSection'
+import PersonModal from '@/features/person/PersonModal'
+import dynamic from 'next/dynamic'
+
+const MovieDetailModal = dynamic(() => import('@/features/movies/components/MovieDetailModal'), { ssr: false })
 
 type Props = {
   seriesId: number
@@ -36,23 +42,27 @@ type Props = {
 export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: totalRuntimeProp }: Props) {
   const { t } = useTranslation()
   const { language } = useLanguageStore()
-  const { detail, loading, error, totalRuntime: totalRuntimeHook } = useSeriesDetail(seriesId)
+  const [currentId, setCurrentId] = useState(seriesId)
+  const { detail, loading, error, totalRuntime: totalRuntimeHook } = useSeriesDetail(currentId)
   const totalRuntime = totalRuntimeProp ?? totalRuntimeHook
-  const { flatrate, rent, loading: providersLoading } = useWatchProviders(seriesId, fetchSeriesWatchProviders, 'series')
+  const { cast, crew } = useSeriesCredits(currentId)
+  const { flatrate, rent, loading: providersLoading } = useWatchProviders(currentId, fetchSeriesWatchProviders, 'series')
 
   const userId = useUserStore((s) => s.userId)
   const role   = useUserStore((s) => s.role)
   const userKey = String(userId ?? 'guest')
-  const watchedCount = useWatchedStore((s) => Object.keys(s.episodes[userKey]?.[seriesId] ?? {}).length)
+  const watchedCount = useWatchedStore((s) => Object.keys(s.episodes[userKey]?.[currentId] ?? {}).length)
 
   const watchlistSeries = useWatchlistStore((s) => s.series[userKey])
   const toggleWatchlist = useWatchlistStore((s) => s.toggleSeries)
-  const isInWatchlist   = !!watchlistSeries?.[seriesId]
+  const isInWatchlist   = !!watchlistSeries?.[currentId]
 
   const [showTrailer, setShowTrailer] = useState(false)
+  const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null)
+  const [selectedMovieId, setSelectedMovieId] = useState<number | null>(null)
   const { allTrailers: rawSeriesTrailers } = useTrailer(
-    ['series-trailer', seriesId],
-    () => fetchSeriesVideos(seriesId),
+    ['series-trailer', currentId],
+    () => fetchSeriesVideos(currentId),
     true,
     language,
   )
@@ -79,9 +89,10 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
     genre_ids: detail.genres?.map((g) => g.id) ?? [],
   } : undefined, [detail])
 
-  const { markLoading, handleMarkAll } = useSeriesMarkAll(seriesId, validSeasons, userKey, seriesSnapshot, language)
+  const { markLoading, handleMarkAll } = useSeriesMarkAll(currentId, validSeasons, userKey, seriesSnapshot, language)
 
   return (
+    <>
     <Modal title={detail?.name ?? '...'} onClose={onClose} maxWidth="44rem">
 
       {loading && <MediaDetailSkeleton />}
@@ -193,7 +204,7 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
             <SeasonsAccordion
               seasons={detail.seasons}
               seriesName={detail.name}
-              seriesId={seriesId}
+              seriesId={currentId}
               seriesSnapshot={seriesSnapshot}
               seriesAllTrailers={seriesAllTrailers}
             />
@@ -218,8 +229,32 @@ export default function SeriesDetailModal({ seriesId, onClose, totalRuntime: tot
             )}
           </div>
 
+          {/* CAST */}
+          <CastSection cast={cast} crew={crew} creators={detail.created_by} mediaType="series" onPersonClick={setSelectedPersonId} />
+
         </div>
       )}
+
     </Modal>
+
+    {selectedPersonId !== null && (
+      <PersonModal
+        personId={selectedPersonId}
+        onClose={() => setSelectedPersonId(null)}
+        onCreditClick={(type, id) => {
+          setSelectedPersonId(null)
+          if (type === 'tv') setCurrentId(id)
+          else setSelectedMovieId(id)
+        }}
+      />
+    )}
+
+    {selectedMovieId !== null && (
+      <MovieDetailModal
+        movieId={selectedMovieId}
+        onClose={() => setSelectedMovieId(null)}
+      />
+    )}
+    </>
   )
 }

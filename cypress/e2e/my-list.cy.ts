@@ -707,6 +707,72 @@ describe('My List', () => {
     cy.contains('Fight Club').should('not.exist')
   })
 
+  // ─── Cast section from My List ───────────────────────────────────────────
+
+  describe('Cast section visible from My List', () => {
+    const mockMovieDetail = {
+      id: 1, title: 'Inception', poster_path: null, release_date: '2010-07-16',
+      vote_average: 8.8, vote_count: 35000, original_language: 'en',
+      genres: [{ id: 28, name: 'Action' }], runtime: 148, overview: 'A mind-bending thriller.',
+      belongs_to_collection: null, release_dates: { results: [] },
+    }
+
+    const mockMovieCredits = {
+      cast: [
+        { id: 1, name: 'Leonardo DiCaprio', character: 'Cobb', profile_path: null, order: 0 },
+        { id: 2, name: 'Joseph Gordon-Levitt', character: 'Arthur', profile_path: null, order: 1 },
+      ],
+      crew: [
+        { id: 10, name: 'Christopher Nolan', job: 'Director', department: 'Directing', profile_path: null },
+      ],
+    }
+
+    const mockSeriesDetail = {
+      id: 10, name: 'Breaking Bad', poster_path: null, first_air_date: '2008-01-20',
+      vote_average: 9.5, vote_count: 200000, original_language: 'en',
+      genres: [{ id: 18, name: 'Drama' }], number_of_seasons: 5, number_of_episodes: 62,
+      episode_run_time: [47], status: 'Ended', seasons: [], created_by: [{ id: 99, name: 'Vince Gilligan', profile_path: null }],
+    }
+
+    const mockSeriesCredits = {
+      cast: [
+        { id: 1, name: 'Bryan Cranston', character: 'Walter White', profile_path: null, order: 0 },
+      ],
+      crew: [],
+    }
+
+    it('shows cast section when opening a movie from My List', () => {
+      cy.intercept('GET', /\/movie\/1(\?|$)/, mockMovieDetail).as('detail')
+      cy.intercept('GET', /\/movie\/1\/credits/, mockMovieCredits).as('credits')
+      cy.intercept('GET', /\/movie\/1\/watch\/providers/, { results: {} })
+      cy.intercept('GET', /\/movie\/1\/release_dates/, { results: [] })
+
+      loginAndVisitMyList(seedWatched)
+      cy.get('[aria-label="Inception"]').click()
+      cy.wait('@detail')
+      cy.wait('@credits')
+      cy.get('[role="dialog"]').contains('Cast').should('be.visible')
+      cy.get('[role="dialog"]').contains('Christopher Nolan').should('be.visible')
+      cy.get('[role="dialog"]').contains('Leonardo DiCaprio').should('be.visible')
+    })
+
+    it('shows cast section when opening a series from My List', () => {
+      cy.intercept('GET', /\/tv\/10(\?|$)/, mockSeriesDetail).as('detail')
+      cy.intercept('GET', /\/tv\/10\/credits/, mockSeriesCredits).as('credits')
+      cy.intercept('GET', /\/tv\/10\/watch\/providers/, { results: {} })
+      cy.intercept('GET', /\/tv\/10\/videos/, { results: [] })
+
+      loginAndVisitMyList(seedWatched)
+      cy.contains('button', 'Series').click()
+      cy.get('[aria-label="Breaking Bad"]').click()
+      cy.wait('@detail')
+      cy.wait('@credits')
+      cy.get('[role="dialog"]').contains('Cast').should('be.visible')
+      cy.get('[role="dialog"]').contains('Vince Gilligan').should('be.visible')
+      cy.get('[role="dialog"]').contains('Bryan Cranston').should('be.visible')
+    })
+  })
+
   // ─── Accessibility ────────────────────────────────────────────────────────
 
   describe('Accessibility', () => {

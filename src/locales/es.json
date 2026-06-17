@@ -416,6 +416,40 @@
       "messageSuccess": "Correo de recuperación enviado"
     }
   },
+  "cast": {
+    "title": "Reparto",
+    "director": "Director",
+    "creator": "Creado por",
+    "showMore": "Ver {{count}} más",
+    "showLess": "Ver menos"
+  },
+  "character": {
+    "self": "Él/Ella mismo/a",
+    "voice": "Voz",
+    "narrator": "Narrador",
+    "guest": "Invitado",
+    "uncredited": "(sin acreditar)",
+    "archiveFootage": "Material de archivo"
+  },
+  "person": {
+    "movies": "Películas",
+    "series": "Series",
+    "filmography": "Filmografía",
+    "noCredits": "Sin créditos disponibles",
+    "department": {
+      "acting": "Interpretación",
+      "directing": "Dirección",
+      "writing": "Guion",
+      "production": "Producción",
+      "camera": "Cámara",
+      "editing": "Montaje",
+      "sound": "Sonido",
+      "art": "Arte",
+      "costume & make-up": "Vestuario y maquillaje",
+      "visual effects": "Efectos visuales",
+      "crew": "Equipo técnico"
+    }
+  },
   "profile": {
     "title": "Mi perfil",
     "saving": "Guardando...",
