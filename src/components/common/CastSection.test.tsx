@@ -4,8 +4,8 @@ import type { TMDBCastMember, TMDBCrewMember } from '@/types/tmdb'
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, opts?: { count?: number }) =>
-      opts?.count !== undefined ? `${key}:${opts.count}` : key,
+    t: (key: string, opts?: { count?: number; defaultValue?: string }) =>
+      opts?.count !== undefined ? `${key}:${opts.count}` : (opts?.defaultValue ?? key),
   }),
 }))
 
@@ -116,5 +116,49 @@ describe('CastSection', () => {
   it('renders cast list with list role', () => {
     render(<CastSection cast={makeCast(3)} crew={[]} mediaType="movie" />)
     expect(screen.getByRole('list')).toBeInTheDocument()
+  })
+
+  it('director renders as plain text when onPersonClick is not provided', () => {
+    render(<CastSection cast={[]} crew={makeCrew('Director')} mediaType="movie" />)
+    expect(screen.queryByRole('button', { name: 'Jane Director' })).not.toBeInTheDocument()
+    expect(screen.getByText('Jane Director')).toBeInTheDocument()
+  })
+
+  it('director renders as button when onPersonClick is provided', () => {
+    render(<CastSection cast={[]} crew={makeCrew('Director')} mediaType="movie" onPersonClick={() => {}} />)
+    expect(screen.getByRole('button', { name: 'Jane Director' })).toBeInTheDocument()
+  })
+
+  it('calls onPersonClick with director id when director button is clicked', () => {
+    const handleClick = jest.fn()
+    render(<CastSection cast={[]} crew={makeCrew('Director')} mediaType="movie" onPersonClick={handleClick} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Jane Director' }))
+    expect(handleClick).toHaveBeenCalledWith(99)
+  })
+
+  it('creator renders as button when onPersonClick is provided', () => {
+    const creators = [{ id: 5, name: 'Show Creator', profile_path: null }]
+    render(<CastSection cast={[]} crew={[]} creators={creators} mediaType="series" onPersonClick={() => {}} />)
+    expect(screen.getByRole('button', { name: 'Show Creator' })).toBeInTheDocument()
+  })
+
+  it('calls onPersonClick with creator id when creator button is clicked', () => {
+    const handleClick = jest.fn()
+    const creators = [{ id: 5, name: 'Show Creator', profile_path: null }]
+    render(<CastSection cast={[]} crew={[]} creators={creators} mediaType="series" onPersonClick={handleClick} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Show Creator' }))
+    expect(handleClick).toHaveBeenCalledWith(5)
+  })
+
+  it('cast member renders as button when onPersonClick is provided', () => {
+    render(<CastSection cast={makeCast(1)} crew={[]} mediaType="movie" onPersonClick={() => {}} />)
+    expect(screen.getByRole('button', { name: 'Actor 1' })).toBeInTheDocument()
+  })
+
+  it('calls onPersonClick with cast member id when cast card is clicked', () => {
+    const handleClick = jest.fn()
+    render(<CastSection cast={makeCast(1)} crew={[]} mediaType="movie" onPersonClick={handleClick} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Actor 1' }))
+    expect(handleClick).toHaveBeenCalledWith(1)
   })
 })

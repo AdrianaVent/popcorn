@@ -614,4 +614,157 @@ describe('Movies', () => {
       })
     })
   })
+
+  // ─── Person modal ─────────────────────────────────────────────
+
+  describe('Person modal', () => {
+    const mockDetail = FIGHT_CLUB_DETAIL
+
+    const mockCredits = {
+      cast: [
+        { id: 1, name: 'Brad Pitt', character: 'Tyler Durden', profile_path: null, order: 0 },
+      ],
+      crew: [
+        { id: 10, name: 'David Fincher', job: 'Director', department: 'Directing', profile_path: null },
+      ],
+    }
+
+    const mockPerson = {
+      id: 1,
+      name: 'Brad Pitt',
+      profile_path: null,
+      biography: '',
+      birthday: '1963-12-18',
+      place_of_birth: 'Shawnee, Oklahoma',
+      known_for_department: 'Acting',
+    }
+
+    const mockPersonCredits = {
+      cast: [
+        { id: 550, media_type: 'movie', title: 'Fight Club', vote_count: 26000, vote_average: 8.4, poster_path: null, release_date: '1999-10-15', character: 'Tyler Durden', genre_ids: [], original_language: 'en' },
+        { id: 100, media_type: 'tv', name: 'Some Series', vote_count: 500, vote_average: 7.5, poster_path: null, first_air_date: '2022-01-01', character: 'Himself', genre_ids: [], original_language: 'en' },
+      ],
+      crew: [],
+    }
+
+    const mockPersonCreditsWithInvalid = {
+      cast: [
+        { id: 550, media_type: 'movie', title: 'Fight Club', vote_count: 26000, vote_average: 8.4, poster_path: null, release_date: '1999-10-15', character: 'Tyler Durden', genre_ids: [], original_language: 'en' },
+        { id: 999, media_type: 'tv', name: 'The Tonight Show', vote_count: 0, vote_average: 0, poster_path: null, first_air_date: '2014-01-01', character: 'Self', genre_ids: [], original_language: 'en' },
+      ],
+      crew: [],
+    }
+
+    beforeEach(() => {
+      cy.intercept('GET', /\/movie\/550(\?|$)/, mockDetail).as('detail')
+      cy.intercept('GET', /\/movie\/550\/watch\/providers/, { results: {} })
+      cy.intercept('GET', /\/movie\/550\/release_dates/, { results: [] })
+      cy.intercept('GET', /\/movie\/550\/credits/, mockCredits).as('credits')
+    })
+
+    const openMovieModal = () => {
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Fight Club').click()
+      cy.wait('@detail')
+      cy.wait('@credits')
+    }
+
+    it('clicking an actor card opens the person modal', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      openMovieModal()
+      cy.get('[role="dialog"] button[aria-label="Brad Pitt"]').click()
+      cy.wait('@person')
+      cy.get('[role="dialog"]').last().contains('Brad Pitt').should('be.visible')
+    })
+
+    it('person modal shows known_for_department', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      openMovieModal()
+      cy.get('[role="dialog"] button[aria-label="Brad Pitt"]').click()
+      cy.wait('@person')
+      cy.get('[role="dialog"]').last().contains('Acting').should('be.visible')
+    })
+
+    it('person modal shows Movies and Series tabs', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      openMovieModal()
+      cy.get('[role="dialog"] button[aria-label="Brad Pitt"]').click()
+      cy.wait('@personCredits')
+      cy.get('[role="dialog"]').last().within(() => {
+        cy.get('[role="tab"]').contains('Movies').should('be.visible')
+        cy.get('[role="tab"]').contains('Series').should('be.visible')
+      })
+    })
+
+    it('credits with vote_count=0 are not shown', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCreditsWithInvalid).as('personCredits')
+      openMovieModal()
+      cy.get('[role="dialog"] button[aria-label="Brad Pitt"]').click()
+      cy.wait('@personCredits')
+      cy.get('[role="dialog"]').last().within(() => {
+        cy.get('[role="tab"]').contains('Series').click()
+        cy.contains('The Tonight Show').should('not.exist')
+      })
+    })
+
+    it('clicking a movie credit in person modal navigates to that movie', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      openMovieModal()
+      cy.get('[role="dialog"] button[aria-label="Brad Pitt"]').click()
+      cy.wait('@personCredits')
+      cy.get('[role="dialog"]').last().contains('Fight Club').click()
+      cy.get('[role="dialog"]').should('have.length', 1)
+      cy.get('[role="dialog"]').contains('Fight Club').should('be.visible')
+    })
+
+    it('clicking a TV credit in person modal opens a series detail modal', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      cy.intercept('GET', /\/tv\/100(\?|$)/, {
+        id: 100, name: 'Some Series', first_air_date: '2022-01-01', vote_average: 7.5, vote_count: 500,
+        poster_path: null, original_language: 'en', overview: '', tagline: '', status: 'Ended',
+        number_of_seasons: 1, number_of_episodes: 10, episode_run_time: [45],
+        seasons: [], genres: [], created_by: [],
+      }).as('seriesDetail')
+      cy.intercept('GET', /\/tv\/100\/credits/, { cast: [], crew: [] })
+      cy.intercept('GET', /\/tv\/100\/watch\/providers/, { results: {} })
+      cy.intercept('GET', /\/tv\/100\/videos/, { results: [] })
+      openMovieModal()
+      cy.get('[role="dialog"] button[aria-label="Brad Pitt"]').click()
+      cy.wait('@personCredits')
+      cy.get('[role="dialog"]').last().within(() => {
+        cy.get('[role="tab"]').contains('Series').click()
+        cy.contains('Some Series').click()
+      })
+      cy.wait('@seriesDetail')
+      cy.get('[role="dialog"]').last().contains('Some Series').should('be.visible')
+    })
+
+    it('clicking the director name opens the person modal', () => {
+      const mockDirectorPerson = { ...mockPerson, id: 10, name: 'David Fincher', known_for_department: 'Directing' }
+      cy.intercept('GET', /\/person\/10(\?|$)/, mockDirectorPerson).as('directorPerson')
+      cy.intercept('GET', /\/person\/10\/combined_credits/, { cast: [], crew: [] }).as('directorCredits')
+      openMovieModal()
+      cy.get('[role="dialog"]').contains('David Fincher').click()
+      cy.wait('@directorPerson')
+      cy.get('[role="dialog"]').last().contains('David Fincher').should('be.visible')
+    })
+
+    it('has no axe violations with person modal open', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      openMovieModal()
+      cy.get('[role="dialog"] button[aria-label="Brad Pitt"]').click()
+      cy.wait('@person')
+      cy.wait('@personCredits')
+      cy.get('[role="dialog"]').last().contains('Brad Pitt').should('be.visible')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+  })
 })

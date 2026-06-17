@@ -5,6 +5,7 @@ const BREAKING_BAD_DETAIL = {
   vote_average: 9.5,
   vote_count: 12000,
   overview: 'A chemistry teacher turns to manufacturing meth.',
+  tagline: '',
   genres: [{ id: 18, name: 'Drama' }],
   original_language: 'en',
   poster_path: null,
@@ -13,6 +14,7 @@ const BREAKING_BAD_DETAIL = {
   episode_run_time: [47],
   status: 'Ended',
   seasons: [],
+  created_by: [],
 }
 
 const BREAKING_BAD_WITH_SEASON = {
@@ -704,6 +706,138 @@ describe('Series', () => {
         cy.get('[aria-label*="more"]').click()
         cy.get('[role="list"] [role="listitem"]').should('have.length', 12)
       })
+    })
+  })
+
+  // ─── Person modal ─────────────────────────────────────────────
+
+  describe('Person modal', () => {
+    const mockCredits = {
+      cast: [
+        { id: 1, name: 'Bryan Cranston', character: 'Walter White', profile_path: null, order: 0 },
+      ],
+      crew: [],
+    }
+
+    const detailWithCreator = {
+      ...BREAKING_BAD_DETAIL,
+      created_by: [{ id: 99, name: 'Vince Gilligan', profile_path: null }],
+      tagline: '',
+    }
+
+    const mockPerson = {
+      id: 1,
+      name: 'Bryan Cranston',
+      profile_path: null,
+      biography: '',
+      birthday: '1956-03-07',
+      place_of_birth: 'Hollywood, California',
+      known_for_department: 'Acting',
+    }
+
+    const mockPersonCredits = {
+      cast: [
+        { id: 1396, media_type: 'tv', name: 'Breaking Bad', vote_count: 12000, vote_average: 9.5, poster_path: null, first_air_date: '2008-01-20', character: 'Walter White', genre_ids: [], original_language: 'en' },
+        { id: 200, media_type: 'movie', title: 'Trumbo', vote_count: 1500, vote_average: 7.2, poster_path: null, release_date: '2015-11-06', character: 'Dalton Trumbo', genre_ids: [], original_language: 'en' },
+      ],
+      crew: [],
+    }
+
+    beforeEach(() => {
+      cy.intercept('GET', /\/tv\/1396\/watch\/providers/, { results: {} })
+      cy.intercept('GET', /\/tv\/1396\/videos/, { results: [] })
+    })
+
+    const openSeriesModal = () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, BREAKING_BAD_DETAIL).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/credits/, mockCredits).as('credits')
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@credits')
+    }
+
+    it('clicking an actor card opens the person modal', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      openSeriesModal()
+      cy.get('[role="dialog"] button[aria-label="Bryan Cranston"]').click()
+      cy.wait('@person')
+      cy.get('[role="dialog"]').last().contains('Bryan Cranston').should('be.visible')
+    })
+
+    it('person modal shows known_for_department', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      openSeriesModal()
+      cy.get('[role="dialog"] button[aria-label="Bryan Cranston"]').click()
+      cy.wait('@person')
+      cy.get('[role="dialog"]').last().contains('Acting').should('be.visible')
+    })
+
+    it('clicking a TV credit in person modal navigates to that series', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      openSeriesModal()
+      cy.get('[role="dialog"] button[aria-label="Bryan Cranston"]').click()
+      cy.wait('@personCredits')
+      cy.get('[role="dialog"]').last().within(() => {
+        cy.get('[role="tab"]').contains('Series').click()
+        cy.contains('Breaking Bad').click()
+      })
+      cy.get('[role="dialog"]').should('have.length', 1)
+      cy.get('[role="dialog"]').contains('Breaking Bad').should('be.visible')
+    })
+
+    it('clicking a movie credit in person modal opens a movie detail modal', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      cy.intercept('GET', /\/movie\/200(\?|$)/, {
+        id: 200, title: 'Trumbo', release_date: '2015-11-06', vote_average: 7.2, vote_count: 1500,
+        runtime: 124, overview: '', tagline: '', poster_path: null, original_language: 'en',
+        genres: [], belongs_to_collection: null, status: 'Released',
+        release_dates: { results: [] },
+      }).as('movieDetail')
+      cy.intercept('GET', /\/movie\/200\/watch\/providers/, { results: {} })
+      cy.intercept('GET', /\/movie\/200\/release_dates/, { results: [] })
+      cy.intercept('GET', /\/movie\/200\/credits/, { cast: [], crew: [] })
+      cy.intercept('GET', /\/movie\/200\/videos/, { results: [] })
+      openSeriesModal()
+      cy.get('[role="dialog"] button[aria-label="Bryan Cranston"]').click()
+      cy.wait('@personCredits')
+      cy.get('[role="dialog"]').last().within(() => {
+        cy.get('[role="tab"]').contains('Movies').click()
+        cy.contains('Trumbo').click()
+      })
+      cy.wait('@movieDetail')
+      cy.get('[role="dialog"]').last().contains('Trumbo').should('be.visible')
+    })
+
+    it('has no axe violations with person modal open', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      openSeriesModal()
+      cy.get('[role="dialog"] button[aria-label="Bryan Cranston"]').click()
+      cy.wait('@person')
+      cy.wait('@personCredits')
+      cy.get('[role="dialog"]').last().contains('Bryan Cranston').should('be.visible')
+      cy.injectAxe()
+      cy.checkA11y(undefined, { runOnly: ['wcag2a', 'wcag2aa'] })
+    })
+
+    it('clicking the creator name opens the person modal', () => {
+      cy.intercept('GET', /\/tv\/1396(\?|$)/, detailWithCreator).as('detail')
+      cy.intercept('GET', /\/tv\/1396\/credits/, mockCredits).as('credits')
+      const mockCreatorPerson = { ...mockPerson, id: 99, name: 'Vince Gilligan', known_for_department: 'Writing' }
+      cy.intercept('GET', /\/person\/99(\?|$)/, mockCreatorPerson).as('creatorPerson')
+      cy.intercept('GET', /\/person\/99\/combined_credits/, { cast: [], crew: [] }).as('creatorCredits')
+      cy.wait('@tmdb')
+      cy.contains('tr', 'Breaking Bad').click()
+      cy.wait('@detail')
+      cy.wait('@credits')
+      cy.get('[role="dialog"]').contains('Vince Gilligan').click()
+      cy.wait('@creatorPerson')
+      cy.get('[role="dialog"]').last().contains('Vince Gilligan').should('be.visible')
     })
   })
 })

@@ -103,6 +103,37 @@ export type TMDBCredits = {
   crew: TMDBCrewMember[]
 }
 
+export type TMDBPerson = {
+  id: number
+  name: string
+  profile_path: string | null
+  biography: string
+  birthday: string | null
+  place_of_birth: string | null
+  known_for_department: string
+}
+
+export type TMDBPersonCombinedCredit = {
+  id: number
+  media_type: 'movie' | 'tv'
+  title?: string
+  name?: string
+  poster_path: string | null
+  release_date?: string
+  first_air_date?: string
+  vote_average: number
+  vote_count: number
+  character?: string
+  job?: string
+  genre_ids: number[]
+  original_language: string
+}
+
+export type TMDBPersonCombinedCredits = {
+  cast: TMDBPersonCombinedCredit[]
+  crew: TMDBPersonCombinedCredit[]
+}
+
 export type TMDBNetwork = {
   id: number
   name: string

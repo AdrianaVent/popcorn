@@ -12,16 +12,16 @@ const MAX_CAST = 8
 type Props = {
   cast: TMDBCastMember[]
   crew: TMDBCrewMember[]
-  // For movies: show Director; for series: pass creators directly
   creators?: { id: number; name: string; profile_path: string | null }[]
   mediaType: 'movie' | 'series'
+  onPersonClick?: (id: number) => void
 }
 
 function findDirector(crew: TMDBCrewMember[]): TMDBCrewMember | undefined {
   return crew.find((m) => m.job === 'Director')
 }
 
-export default function CastSection({ cast, crew, creators, mediaType }: Props) {
+export default function CastSection({ cast, crew, creators, mediaType, onPersonClick }: Props) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
 
@@ -58,22 +58,49 @@ export default function CastSection({ cast, crew, creators, mediaType }: Props) 
       {mediaType === 'movie' && director && (
         <div className="flex items-center gap-2">
           <Text variant="small" className="text-muted-foreground shrink-0">{t('cast.director')}:</Text>
-          <Text variant="small" className="text-foreground">{director.name}</Text>
+          {onPersonClick ? (
+            <button
+              type="button"
+              onClick={() => onPersonClick(director.id)}
+              className="text-sm text-foreground font-normal hover:text-primary hover:font-bold hc:hover:text-foreground transition-colors outline-none focus-visible:underline"
+            >
+              {director.name}
+            </button>
+          ) : (
+            <Text variant="small" className="text-foreground">{director.name}</Text>
+          )}
         </div>
       )}
       {mediaType === 'series' && creators && creators.length > 0 && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Text variant="small" className="text-muted-foreground shrink-0">{t('cast.creator')}:</Text>
-          <Text variant="small" className="text-foreground">
-            {creators.map((c) => c.name).join(', ')}
-          </Text>
+          {onPersonClick ? (
+            <span className="flex flex-wrap gap-x-1">
+              {creators.map((c, i) => (
+                <span key={c.id}>
+                  <button
+                    type="button"
+                    onClick={() => onPersonClick(c.id)}
+                    className="text-sm text-foreground font-normal hover:text-primary hover:font-bold hc:hover:text-foreground transition-colors outline-none focus-visible:underline"
+                  >
+                    {c.name}
+                  </button>
+                  {i < creators.length - 1 && <span className="text-muted-foreground">,</span>}
+                </span>
+              ))}
+            </span>
+          ) : (
+            <Text variant="small" className="text-foreground">
+              {creators.map((c) => c.name).join(', ')}
+            </Text>
+          )}
         </div>
       )}
 
       {/* Cast carousel / grid */}
       {visibleCast.length > 0 && (
         <div
-          className={expanded ? 'flex flex-wrap gap-5' : 'flex gap-5 overflow-x-auto pb-1 scrollbar-hide'}
+          className={expanded ? 'flex flex-wrap gap-5' : 'flex gap-5 overflow-x-auto py-1 scrollbar-hide'}
           role="list"
           aria-label={t('cast.title')}
         >
@@ -83,6 +110,7 @@ export default function CastSection({ cast, crew, creators, mediaType }: Props) 
                 name={member.name}
                 sub={member.character}
                 profilePath={member.profile_path}
+                onClick={onPersonClick ? () => onPersonClick(member.id) : undefined}
               />
             </div>
           ))}

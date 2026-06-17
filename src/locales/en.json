@@ -423,6 +423,33 @@
     "showMore": "Show {{count}} more",
     "showLess": "Show less"
   },
+  "character": {
+    "self": "Self",
+    "voice": "Voice",
+    "narrator": "Narrator",
+    "guest": "Guest",
+    "uncredited": "(uncredited)",
+    "archiveFootage": "Archive footage"
+  },
+  "person": {
+    "movies": "Movies",
+    "series": "Series",
+    "filmography": "Filmography",
+    "noCredits": "No credits found",
+    "department": {
+      "acting": "Acting",
+      "directing": "Directing",
+      "writing": "Writing",
+      "production": "Production",
+      "camera": "Camera",
+      "editing": "Editing",
+      "sound": "Sound",
+      "art": "Art",
+      "costume & make-up": "Costume & Make-Up",
+      "visual effects": "Visual Effects",
+      "crew": "Crew"
+    }
+  },
   "profile": {
     "title": "My profile",
     "saving": "Saving...",

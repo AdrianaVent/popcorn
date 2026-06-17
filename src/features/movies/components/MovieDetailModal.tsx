@@ -22,6 +22,10 @@ import Tooltip from '@/components/ui/Tooltip'
 import { getMovieUI } from '@/features/movies/getMovieUI'
 import WatchedToggleButton from '@/components/ui/WatchedToggleButton'
 import CastSection from '@/components/common/CastSection'
+import PersonModal from '@/features/person/PersonModal'
+import dynamic from 'next/dynamic'
+
+const SeriesDetailModal = dynamic(() => import('@/features/series/components/SeriesDetailModal'), { ssr: false })
 import { useLanguageStore } from '@/store/languageStore'
 import { formatMonthYear } from '@/utils/formatDate'
 import { useWatchedStore } from '@/store/watchedStore'
@@ -52,6 +56,8 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
   const { language } = useLanguageStore()
   const [currentId, setCurrentId] = useState(movieId)
   const [showTrailer, setShowTrailer] = useState(false)
+  const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null)
+  const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null)
   const { detail, loading, error } = useMovieDetail(currentId)
   const { cast, crew } = useMovieCredits(currentId)
   const { flatrate, rent, loading: providersLoading } = useWatchProviders(currentId, fetchMovieWatchProviders, 'movie')
@@ -91,153 +97,175 @@ export default function MovieDetailModal({ movieId, onClose }: Props) {
   const ui = getMovieUI(detail)
 
   return (
-    <Modal title={detail?.title ?? '...'} onClose={onClose} maxWidth="44rem">
+    <>
+      <Modal title={detail?.title ?? '...'} onClose={onClose} maxWidth="44rem">
 
-      {loading && <MediaDetailSkeleton />}
+        {loading && <MediaDetailSkeleton />}
 
-      {!loading && error && (
-        <Text variant="body" className="text-muted-foreground text-center py-8">
-          {t(`tmdb.errors.${error}`, {
-            defaultValue: t('movies.error'),
-          })}
-        </Text>
-      )}
+        {!loading && error && (
+          <Text variant="body" className="text-muted-foreground text-center py-8">
+            {t(`tmdb.errors.${error}`, {
+              defaultValue: t('movies.error'),
+            })}
+          </Text>
+        )}
 
-      {!loading && !error && detail && (
-        <div className="space-y-6">
+        {!loading && !error && detail && (
+          <div className="space-y-6">
 
-          {/* HEADER */}
-          <div className="flex gap-6 items-start">
+            {/* HEADER */}
+            <div className="flex gap-6 items-start">
 
-            <MediaPoster
-              posterPath={detail.poster_path}
-              title={detail.title}
-              variant="md"
-              className="shadow-md"
-            />
+              <MediaPoster
+                posterPath={detail.poster_path}
+                title={detail.title}
+                variant="md"
+                className="shadow-md"
+              />
 
-            <div className="flex flex-col gap-3 min-w-0 flex-1">
+              <div className="flex flex-col gap-3 min-w-0 flex-1">
 
-              <div className="flex items-start justify-between gap-3">
-                <Text
-                  variant="subtitle"
-                  as="h2"
-                  className="text-foreground leading-tight text-[1.4rem]"
-                >
-                  {detail.title}
-                </Text>
-                <div className="flex items-center gap-2 shrink-0">
-                  {trailer && (
-                    <Tooltip content={t('common.trailer')} placement="top">
-                      <IconToggleButton
-                        data-cy="trailer-button"
-                        aria-label={t('common.trailer')}
-                        active={showTrailer}
-                        onClick={() => setShowTrailer((v) => !v)}
-                      >
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                          <path d="M3 2l7 4-7 4V2z" />
-                        </svg>
-                      </IconToggleButton>
-                    </Tooltip>
-                  )}
-                  {role !== 'admin' && !isWatched && (
-                    <Tooltip content={isInWatchlist ? t('myList.watchlist.remove') : t('myList.watchlist.add')} placement="top">
-                      <IconToggleButton
-                        data-cy="watchlist-toggle"
-                        aria-label={isInWatchlist ? t('myList.watchlist.remove') : t('myList.watchlist.add')}
-                        active={isInWatchlist}
-                        onClick={() => detail && toggleWatchlist(userKey, {
+                <div className="flex items-start justify-between gap-3">
+                  <Text
+                    variant="subtitle"
+                    as="h2"
+                    className="text-foreground leading-tight text-[1.4rem]"
+                  >
+                    {detail.title}
+                  </Text>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {trailer && (
+                      <Tooltip content={t('common.trailer')} placement="top">
+                        <IconToggleButton
+                          data-cy="trailer-button"
+                          aria-label={t('common.trailer')}
+                          active={showTrailer}
+                          onClick={() => setShowTrailer((v) => !v)}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                            <path d="M3 2l7 4-7 4V2z" />
+                          </svg>
+                        </IconToggleButton>
+                      </Tooltip>
+                    )}
+                    {role !== 'admin' && !isWatched && (
+                      <Tooltip content={isInWatchlist ? t('myList.watchlist.remove') : t('myList.watchlist.add')} placement="top">
+                        <IconToggleButton
+                          data-cy="watchlist-toggle"
+                          aria-label={isInWatchlist ? t('myList.watchlist.remove') : t('myList.watchlist.add')}
+                          active={isInWatchlist}
+                          onClick={() => detail && toggleWatchlist(userKey, {
+                            id: detail.id,
+                            title: detail.title,
+                            release_date: detail.release_date,
+                            poster_path: detail.poster_path,
+                            vote_average: detail.vote_average,
+                            vote_count: detail.vote_count,
+                            original_language: detail.original_language,
+                            collection_id: detail.belongs_to_collection?.id,
+                            collection_name: detail.belongs_to_collection?.name,
+                            addedAt: Date.now(),
+                          })}
+                        >
+                          <HeartIcon size={13} filled={isInWatchlist} />
+                        </IconToggleButton>
+                      </Tooltip>
+                    )}
+                    {role !== 'admin' && (!ui.isUpcoming || isWatched) && (
+                      <WatchedToggleButton
+                        isWatched={isWatched}
+                        label={isWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
+                        onClick={() => toggleMovie(userKey, {
                           id: detail.id,
                           title: detail.title,
                           release_date: detail.release_date,
-                          poster_path: detail.poster_path,
                           vote_average: detail.vote_average,
                           vote_count: detail.vote_count,
+                          poster_path: detail.poster_path,
                           original_language: detail.original_language,
                           collection_id: detail.belongs_to_collection?.id,
                           collection_name: detail.belongs_to_collection?.name,
-                          addedAt: Date.now(),
+                          genre_ids: detail.genres?.map((g) => g.id) ?? [],
                         })}
-                      >
-                        <HeartIcon size={13} filled={isInWatchlist} />
-                      </IconToggleButton>
-                    </Tooltip>
-                  )}
-                  {role !== 'admin' && (!ui.isUpcoming || isWatched) && (
-                    <WatchedToggleButton
-                      isWatched={isWatched}
-                      label={isWatched ? t('movies.detail.watched') : t('movies.detail.markWatched')}
-                      onClick={() => toggleMovie(userKey, {
-                        id: detail.id,
-                        title: detail.title,
-                        release_date: detail.release_date,
-                        vote_average: detail.vote_average,
-                        vote_count: detail.vote_count,
-                        poster_path: detail.poster_path,
-                        original_language: detail.original_language,
-                        collection_id: detail.belongs_to_collection?.id,
-                        collection_name: detail.belongs_to_collection?.name,
-                        genre_ids: detail.genres?.map((g) => g.id) ?? [],
-                      })}
-                    />
-                  )}
+                      />
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {detail.tagline && (
+                {detail.tagline && (
+                  <Text variant="small" className="text-muted-foreground italic">
+                    {detail.tagline}
+                  </Text>
+                )}
+
+                {ui.isUpcoming && <UpcomingBadge resolvedDate={ui.resolvedDate} language={language} />}
+
+                {/* META GRID */}
+                <MovieMetaGrid
+                  detail={detail}
+                  isUpcoming={ui.isUpcoming}
+                  releaseYear={ui.releaseYear}
+                />
+
+              </div>
+            </div>
+
+            {showTrailer && trailer && <TrailerPlayer trailerKey={trailer.key} onClose={() => setShowTrailer(false)} />}
+
+            {/* COLLECTION */}
+            {detail.belongs_to_collection && (
+              <CollectionAccordion
+                collection={detail.belongs_to_collection}
+                movieId={currentId}
+                onMovieSelect={setCurrentId}
+              />
+            )}
+
+            {/* WATCH PROVIDERS */}
+            <WatchProviders flatrate={flatrate} rent={rent} inTheaters={inTheaters} loading={providersLoading || inTheatersLoading} />
+
+            {/* OVERVIEW */}
+            <div className="flex flex-col gap-2 pt-5">
+              <Text className="text-caption font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                {t('movies.detail.overview')}
+              </Text>
+              {detail.overview ? (
+                <Text variant="small" className="text-foreground leading-relaxed">
+                  {detail.overview}
+                </Text>
+              ) : (
                 <Text variant="small" className="text-muted-foreground italic">
-                  {detail.tagline}
+                  {t('common.noOverview')}
                 </Text>
               )}
-
-              {ui.isUpcoming && <UpcomingBadge resolvedDate={ui.resolvedDate} language={language} />}
-
-              {/* META GRID */}
-              <MovieMetaGrid
-                detail={detail}
-                isUpcoming={ui.isUpcoming}
-                releaseYear={ui.releaseYear}
-              />
-
             </div>
+
+            {/* CAST */}
+            <CastSection cast={cast} crew={crew} mediaType="movie" onPersonClick={setSelectedPersonId} />
+
           </div>
+        )}
 
-          {showTrailer && trailer && <TrailerPlayer trailerKey={trailer.key} onClose={() => setShowTrailer(false)} />}
+      </Modal>
 
-          {/* COLLECTION */}
-          {detail.belongs_to_collection && (
-            <CollectionAccordion
-              collection={detail.belongs_to_collection}
-              movieId={currentId}
-              onMovieSelect={setCurrentId}
-            />
-          )}
-
-          {/* WATCH PROVIDERS */}
-          <WatchProviders flatrate={flatrate} rent={rent} inTheaters={inTheaters} loading={providersLoading || inTheatersLoading} />
-
-          {/* OVERVIEW */}
-          <div className="flex flex-col gap-2 pt-5">
-            <Text className="text-caption font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              {t('movies.detail.overview')}
-            </Text>
-            {detail.overview ? (
-              <Text variant="small" className="text-foreground leading-relaxed">
-                {detail.overview}
-              </Text>
-            ) : (
-              <Text variant="small" className="text-muted-foreground italic">
-                {t('common.noOverview')}
-              </Text>
-            )}
-          </div>
-
-          {/* CAST */}
-          <CastSection cast={cast} crew={crew} mediaType="movie" />
-
-        </div>
+      {selectedPersonId !== null && (
+        <PersonModal
+          personId={selectedPersonId}
+          onClose={() => setSelectedPersonId(null)}
+          onCreditClick={(type, id) => {
+            setSelectedPersonId(null)
+            if (type === 'movie') setCurrentId(id)
+            else setSelectedSeriesId(id)
+          }}
+        />
       )}
-    </Modal>
+
+      {selectedSeriesId !== null && (
+        <SeriesDetailModal
+          seriesId={selectedSeriesId}
+          onClose={() => setSelectedSeriesId(null)}
+        />
+      )}
+    </>
   )
 }

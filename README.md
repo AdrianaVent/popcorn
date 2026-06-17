@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.23.0-6B2737)
+![Version](https://img.shields.io/badge/version-0.24.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -19,6 +19,7 @@ Personal movie & series dashboard. Track what you watch, explore collections, an
 | Filter by title, rating, year, language, platform, status | ✓ | ✓ |
 | Sort and paginate results | ✓ | ✓ |
 | View watch providers by region | ✓ | ✓ |
+| Browse actor and director filmographies (movies + series tabs, cross-type navigation) | ✓ | ✓ |
 | Watch trailers (movie / series / season / saga / calendar) | ✓ | ✓ |
 | Home dashboard — genre charts (global view only) | ✓ | — |
 | Home dashboard — genre charts (personal + global view) | — | ✓ |
@@ -312,6 +313,17 @@ The modal shows the **synopsis**, **genres**, **runtime**, **release year**, **v
 - Click the play button next to the title to watch the official trailer inline. Click it again or use the **×** button on the player to close it.
 - The TMDB rating is displayed as stars (0.5–5 scale).
 
+**Cast and director filmography**
+
+![Person filmography modal](docs/screenshots/person-modal.png)
+
+Click any actor or director name in the cast section of a movie or series detail modal to open a filmography panel for that person. The panel shows:
+
+- A photo, role (e.g. Acting, Directing) and birth year.
+- A **Movies** tab and a **Series** tab listing all their credits, sorted from newest to oldest. Credits with no TMDB rating (e.g. talk show appearances) are filtered out.
+- Each entry shows the poster thumbnail, title, year, and character or role. Entries you have already marked as watched are indicated with a watched badge.
+- Clicking any credit navigates directly to that movie or series detail modal. If you are in a movie modal and click a TV credit, the series modal opens automatically (and vice versa).
+
 **Sagas**
 
 ![Movie detail — saga accordion expanded](docs/screenshots/movie-detail-saga.png)
@@ -437,7 +449,11 @@ Click **Add user**, fill in the username, password and role (admin or guest), an
 
 **Editing a user**
 
+![Edit user modal](docs/screenshots/users-edit.png)
+
 Click the edit icon on any row to open a form with the current values pre-filled. When editing another user's account, the password field is not shown — each user manages their own password from their own session. When an admin edits their own account, the password field is replaced by a three-field form (current password → new password → confirm) that is submitted together with the rest of the form via **Accept**.
+
+![Edit own account — password section](docs/screenshots/users-edit-self.png)
 
 **Deleting users**
 
@@ -503,9 +519,9 @@ The access token expires after 1 hour. When that happens the app automatically r
 
 ## Running tests
 
-The project has two test layers: **1043 unit/integration tests** (Jest) and **234 end-to-end tests** (Cypress). Both run automatically in CI on every push.
+The project has two test layers: **1157 unit/integration tests** (Jest) and **257 end-to-end tests** (Cypress). Both run automatically in CI on every push.
 
-### Unit & integration tests (Jest) — 1043 tests · 83 suites
+### Unit & integration tests (Jest) — 1157 tests · 94 suites
 
 ```bash
 npm test           # run once
@@ -522,7 +538,7 @@ npm run test:watch # watch mode
 | Services | `apiFetch` (401 auto-refresh, session expiry redirect) |
 | API routes | `/api/users/import` (field validation, role/password rules, duplicates, invalid creator/date), `/api/users/stats` (requireAdmin guard, returns stats, 401 response) |
 
-### End-to-end tests (Cypress) — 243 tests · 9 suites
+### End-to-end tests (Cypress) — 257 tests · 9 suites
 
 In CI, Cypress runs against the production build automatically. Locally, run against the dev server:
 
@@ -541,8 +557,8 @@ npm run cypress:run
 |---|---|---|
 | `auth.cy.ts` | 9 | Redirect when unauthenticated, invalid credentials, login, logout, session expiry, guest redirect from /users |
 | `home.cy.ts` | 66 | Genre charts, tab switch, My profile/Global toggle, empty state, release calendar, Top 10 year display, calendar trailer button, Top 10 genre filter dropdown, calendar watchlist button (admin: hidden; guest: visible; toggle aria-pressed; hidden when watched); StatsCard admin (Users title, 4 chips, registrations chart, period toggle default/update, loading skeleton, axe); StatsCard guest (My activity title, 5 chip labels, empty state, axe; activity chart + period toggle with seeded data); Reminders panel (button hidden for admin, visible for guest, opens Today + Upcoming sections, closes via X, empty state, watchlisted movie in Today, watchlisted movie in Upcoming, axe); Seasonal panel (button visible for guest only — hidden for admin; aria-label/aria-pressed; opens panel with Movies + Series columns; X closes panel; clicking movie opens detail modal; axe); Drag mode (Organizar button aria-pressed, 4 handles, exits on second click, axe) |
-| `movies.cy.ts` | 40 | Movie list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, access control, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter (2h → 120min, 90min), watchlist heart button (guest: visible + gains active style on click; admin: hidden) |
-| `series.cy.ts` | 38 | Series list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, episode runtime guard, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter client-side (filters below total duration threshold, not sent to TMDB), watchlist heart button (guest: visible + gains active style on click; admin: hidden) |
+| `movies.cy.ts` | 48 | Movie list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, access control, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter (2h → 120min, 90min), watchlist heart button (guest: visible + gains active style on click; admin: hidden); person modal (actor opens modal, known_for_department, movies/series tabs, vote_count=0 filtered, clicking movie credit navigates, clicking TV credit opens series modal, director opens modal, axe) |
+| `series.cy.ts` | 44 | Series list, detail modal, watch providers, genre multi-select filter, platform filter, star rating filter, genre deduplication, episode runtime guard, trailer (show, open, close, X button), column sort (rating asc/desc), runtime filter client-side (filters below total duration threshold, not sent to TMDB), watchlist heart button (guest: visible + gains active style on click; admin: hidden); person modal (actor opens modal, known_for_department, clicking TV credit navigates to series, clicking movie credit opens MovieDetailModal, creator opens modal, axe) |
 | `users.cy.ts` | 23 | Create, edit, delete (single + bulk), toasts, import JSON/CSV, partial failures; self-edit password change (3-field section visible, single pw field absent, no pw fields for other users, WRONG_PASSWORD inline, success closes modal) |
 | `my-list.cy.ts` | 39 | Tabs, empty state, nav access control, watched movie, Recommendations button (disabled/enabled), saga name formatting, single-released-movie collection as standalone, section ordering (standalone-first/saga-first), series tab + episode progress, "Finish to rate", recommendations drawer (open, header, close via X/Escape, items, excludes watched, click opens modal), unwatched saga placeholders, future-release placeholder visible, click placeholder opens modal, Watchlist tab (visible, empty state, movie/series visible, count badge, remove on heart click) |
 | `settings.cy.ts` | 6 | Theme switching (light / dark / high contrast), language switching (EN / ES) |
@@ -647,6 +663,7 @@ src/
 │   ├── myList/         # MyListFeature · myListUtils · MoviesTabPanel · SeriesTabPanel · WatchlistTabPanel
 │   │                   # MovieCard · SeriesCard · SagaCard · WatchlistSagaCard · UnwatchedMoviePlaceholder · RecommendationsDrawer · WatchlistCard
 │   │                   # hooks: useMovieRecommendations · useSeriesRecommendations
+│   ├── person/         # PersonModal · usePersonDetail · usePersonCredits · mergeCredits · getYear
 │   ├── series/         # SeriesFeature · useSeriesColumns · useSeriesExport · useSeriesMarkAll · useSeriesEnrichment · components · service
 │   └── users/          # UsersFeature · useUserColumns · useUserExport · UserFormModal · ImportUsersModal · users.service.ts
 ├── hooks/              # useFilters · useWatchProviders · useTruncated · useTrailer · useEnrichedTrailers

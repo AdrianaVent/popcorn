@@ -1,6 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import CastCard from './CastCard'
 
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, opts?: { defaultValue?: string }) => opts?.defaultValue ?? key,
+  }),
+}))
+
 jest.mock('next/image', () => ({
   __esModule: true,
   default: ({ src, alt, onError }: { src: string; alt: string; onError: () => void }) =>
@@ -34,5 +40,27 @@ describe('CastCard', () => {
     render(<CastCard name="Jane Smith" sub="Villain" profilePath={null} />)
     expect(screen.getByText('Jane Smith')).toBeInTheDocument()
     expect(screen.getByText('Villain')).toBeInTheDocument()
+  })
+
+  it('renders as a div when no onClick is provided', () => {
+    const { container } = render(<CastCard name="John Doe" sub="Hero" profilePath={null} />)
+    expect(container.firstChild?.nodeName).toBe('DIV')
+  })
+
+  it('renders as a button when onClick is provided', () => {
+    render(<CastCard name="John Doe" sub="Hero" profilePath={null} onClick={() => {}} />)
+    expect(screen.getByRole('button', { name: 'John Doe' })).toBeInTheDocument()
+  })
+
+  it('calls onClick when button is clicked', () => {
+    const handleClick = jest.fn()
+    render(<CastCard name="John Doe" sub="Hero" profilePath={null} onClick={handleClick} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(handleClick).toHaveBeenCalledTimes(1)
+  })
+
+  it('button has aria-label equal to actor name', () => {
+    render(<CastCard name="Jane Smith" sub="Villain" profilePath={null} onClick={() => {}} />)
+    expect(screen.getByRole('button', { name: 'Jane Smith' })).toBeInTheDocument()
   })
 })
