@@ -1,6 +1,6 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.25.0-6B2737)
+![Version](https://img.shields.io/badge/version-0.26.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
@@ -297,6 +297,9 @@ Use the filters to narrow the list:
 | Genres | Multi-select genre picker. Select one or more genres to filter by. |
 | Platform | Shows titles available on a specific streaming service in Spain. |
 | Watched | Switch between **All**, **Watched** and **Unwatched** (guest only). |
+| In theaters | Shows only titles currently playing in Spanish theatres (uses TMDB's now-playing feed). |
+
+When **In theaters** is active, all other discover-based filters (rating, year, language, genres, platform) are replaced by the now-playing feed — only the title search and runtime filter continue to apply client-side.
 
 **Sorting**
 
@@ -324,9 +327,9 @@ The modal shows the **synopsis**, **genres**, **runtime**, **release year**, **v
 
 Click any actor or director name in the cast section of a movie or series detail modal to open a filmography panel for that person. The panel shows:
 
-- A photo, role (e.g. Acting, Directing) and birth year.
+- A photo, known aliases (also known as), role (e.g. Acting, Directing), full birth date with age, and place of birth. If the person is deceased, the death date and age at death are shown instead.
 - A **Movies** tab and a **Series** tab listing all their credits, sorted from newest to oldest. Credits with no TMDB rating (e.g. talk show appearances) are filtered out.
-- Each entry shows the poster thumbnail, title, year, and character or role. Entries you have already marked as watched are indicated with a watched badge.
+- Each entry shows the poster thumbnail, title, year, and character or role — common self-referential roles (Himself, Herself, Voice, Narrator…) and frequent crew job titles (Executive Producer, Director of Photography, Screenplay…) are translated into the active language. Entries you have already marked as watched are indicated with a watched badge.
 - Clicking any credit navigates directly to that movie or series detail modal. If you are in a movie modal and click a TV credit, the series modal opens automatically (and vice versa).
 
 **Sagas**

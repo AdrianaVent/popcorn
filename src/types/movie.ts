@@ -14,4 +14,5 @@ export type MovieFilters = {
   watched?: 'watched' | 'unwatched'
   provider_id?: string
   genre_ids?: number[]
+  in_theaters?: boolean
 }

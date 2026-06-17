@@ -109,6 +109,16 @@ describe('Movies', () => {
     cy.contains('Fight Club').should('be.visible')
   })
 
+  // ─── En cartelera filter ─────────────────────────────────────
+
+  it('en cartelera filter calls now_playing endpoint', () => {
+    cy.intercept('GET', /\/movie\/now_playing/, { fixture: 'movies.json' }).as('nowPlaying')
+    cy.wait('@tmdb')
+    cy.get('[data-cy="filter-in_theaters"]').check()
+    cy.wait('@nowPlaying')
+    cy.contains('Fight Club').should('be.visible')
+  })
+
   // ─── Clear filters ────────────────────────────────────────────
 
   it('clear filters button resets active filters', () => {
@@ -635,7 +645,9 @@ describe('Movies', () => {
       profile_path: null,
       biography: '',
       birthday: '1963-12-18',
+      deathday: null,
       place_of_birth: 'Shawnee, Oklahoma',
+      also_known_as: ['William Bradley Pitt'],
       known_for_department: 'Acting',
     }
 
@@ -753,6 +765,37 @@ describe('Movies', () => {
       cy.get('[role="dialog"]').contains('David Fincher').click()
       cy.wait('@directorPerson')
       cy.get('[role="dialog"]').last().contains('David Fincher').should('be.visible')
+    })
+
+    it('person modal shows birthday with year', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      openMovieModal()
+      cy.get('[role="dialog"] button[aria-label="Brad Pitt"]').click()
+      cy.wait('@person')
+      cy.get('[role="dialog"]').last().contains('1963').should('be.visible')
+    })
+
+    it('person modal shows also_known_as alias', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      openMovieModal()
+      cy.get('[role="dialog"] button[aria-label="Brad Pitt"]').click()
+      cy.wait('@person')
+      cy.get('[role="dialog"]').last().contains('William Bradley Pitt').should('be.visible')
+    })
+
+    it('person modal translates Himself character credit', () => {
+      cy.intercept('GET', /\/person\/1(\?|$)/, mockPerson).as('person')
+      cy.intercept('GET', /\/person\/1\/combined_credits/, mockPersonCredits).as('personCredits')
+      openMovieModal()
+      cy.get('[role="dialog"] button[aria-label="Brad Pitt"]').click()
+      cy.wait('@personCredits')
+      // "Himself" credit in the TV series tab should be translated
+      cy.get('[role="dialog"]').last().within(() => {
+        cy.get('[role="tab"]').contains('Series').click()
+      })
+      cy.get('[role="dialog"]').last().should('not.contain', 'Himself')
     })
 
     it('has no axe violations with person modal open', () => {

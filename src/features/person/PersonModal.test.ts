@@ -1,4 +1,4 @@
-import { mergeCredits, getYear } from './PersonModal'
+import { mergeCredits, getYear, calcAge } from './PersonModal'
 import type { TMDBPersonCombinedCredit } from '@/types/tmdb'
 
 const makeCredit = (overrides: Partial<TMDBPersonCombinedCredit>): TMDBPersonCombinedCredit => ({
@@ -76,6 +76,28 @@ describe('mergeCredits', () => {
     const cast = [makeCredit({ id: 1, character: undefined })]
     const result = mergeCredits(cast, [])
     expect(result[0].role).toBe('')
+  })
+})
+
+describe('calcAge', () => {
+  it('returns correct age when birthday has passed this year', () => {
+    expect(calcAge('1980-01-01', '2024-06-15')).toBe(44)
+  })
+
+  it('returns correct age when birthday has not passed this year', () => {
+    expect(calcAge('1980-12-31', '2024-06-15')).toBe(43)
+  })
+
+  it('returns correct age on the exact birthday', () => {
+    expect(calcAge('1980-06-15', '2024-06-15')).toBe(44)
+  })
+
+  it('computes age at death when referenceDate is deathday', () => {
+    expect(calcAge('1926-06-01', '1962-08-04')).toBe(36)
+  })
+
+  it('returns 0 for same birth and reference date', () => {
+    expect(calcAge('2000-01-01', '2000-01-01')).toBe(0)
   })
 })
 

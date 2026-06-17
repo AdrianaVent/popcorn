@@ -98,7 +98,8 @@
       "year": "Año",
       "watched": "Visto",
       "platform": "Plataforma",
-      "genres": "Géneros"
+      "genres": "Géneros",
+      "inTheaters": "En cartelera"
     },
     "columns": {
       "poster": "Póster",
@@ -441,11 +442,30 @@
     "uncredited": "(sin acreditar)",
     "archiveFootage": "Material de archivo"
   },
+  "job": {
+    "director": "Director",
+    "producer": "Productor",
+    "executiveProducer": "Productor ejecutivo",
+    "coProducer": "Coproductor",
+    "screenplay": "Guión",
+    "writer": "Guionista",
+    "story": "Historia original",
+    "dop": "Director de fotografía",
+    "composer": "Música original",
+    "editor": "Montador",
+    "casting": "Casting",
+    "productionDesign": "Director de arte",
+    "costumeDesign": "Diseño de vestuario",
+    "vfxSupervisor": "Supervisor de efectos visuales",
+    "stuntCoordinator": "Coordinador de especialistas",
+    "actorsAssistant": "Asistente del actor"
+  },
   "person": {
     "movies": "Películas",
     "series": "Series",
     "filmography": "Filmografía",
     "noCredits": "Sin créditos disponibles",
+    "yearsOld": "años",
     "department": {
       "acting": "Interpretación",
       "directing": "Dirección",
