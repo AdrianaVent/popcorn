@@ -11,8 +11,10 @@ import { usePersonCredits } from '@/features/person/hooks/usePersonCredits'
 import { useWatchedStore } from '@/store/watchedStore'
 import { useUserStore } from '@/store/userStore'
 import { getTMDBImageUrl } from '@/utils/tmdb'
+import { formatShortDate } from '@/utils/formatDate'
+import { useLanguageStore } from '@/store/languageStore'
 import type { TMDBPersonCombinedCredit } from '@/types/tmdb'
-import { translateCharacter } from '@/utils/translateCharacter'
+import { translateCharacter, translateJob } from '@/utils/translateCharacter'
 import { EyeIcon, FilmIcon, TvIcon } from '@/components/icons'
 
 type Props = {
@@ -93,7 +95,10 @@ function CreditRow({
   const { t } = useTranslation()
   const year = getYear(credit)
   const title = credit.title ?? credit.name ?? '—'
-  const role = credit.role ? translateCharacter(credit.role, t) : ''
+  const isCrew = credit.character === undefined
+  const role = credit.role
+    ? isCrew ? translateJob(credit.role, t) : translateCharacter(credit.role, t)
+    : ''
 
   return (
     <button
@@ -140,8 +145,17 @@ function CreditRow({
   )
 }
 
+export function calcAge(birthday: string, referenceDate: string): number {
+  const birth = new Date(birthday)
+  const ref   = new Date(referenceDate)
+  let age = ref.getFullYear() - birth.getFullYear()
+  if (ref.getMonth() < birth.getMonth() || (ref.getMonth() === birth.getMonth() && ref.getDate() < birth.getDate())) age--
+  return age
+}
+
 export default function PersonModal({ personId, onClose, onCreditClick }: Props) {
   const { t } = useTranslation()
+  const { language } = useLanguageStore()
   const [tab, setTab] = useState<Tab>('movies')
 
   const { person, loading: personLoading } = usePersonDetail(personId)
@@ -163,6 +177,7 @@ export default function PersonModal({ personId, onClose, onCreditClick }: Props)
     crew.filter((c) => c.media_type === 'tv' && hasPage(c)),
   )
 
+  const aliases = person?.also_known_as?.filter((a) => a !== person.name).slice(0, 2) ?? []
   const loading = personLoading || creditsLoading
   const currentCredits = tab === 'movies' ? movieCredits : seriesCredits
 
@@ -227,6 +242,11 @@ export default function PersonModal({ personId, onClose, onCreditClick }: Props)
               <Text variant="subtitle" as="h2" className="text-foreground leading-tight text-[1.2rem]">
                 {person.name}
               </Text>
+              {aliases.length > 0 && (
+                <Text variant="caption" className="text-muted-foreground italic">
+                  {aliases.join(' · ')}
+                </Text>
+              )}
               {person.known_for_department && (
                 <Text variant="small" className="text-muted-foreground">
                   {t(`person.department.${person.known_for_department.toLowerCase()}`, {
@@ -236,7 +256,11 @@ export default function PersonModal({ personId, onClose, onCreditClick }: Props)
               )}
               {person.birthday && (
                 <Text variant="caption" className="text-muted-foreground">
-                  {person.birthday.slice(0, 4)}
+                  {formatShortDate(person.birthday, language)}
+                  {person.deathday
+                    ? ` – ${formatShortDate(person.deathday, language)} (${calcAge(person.birthday, person.deathday)} ${t('person.yearsOld')})`
+                    : ` (${calcAge(person.birthday, new Date().toISOString().slice(0, 10))} ${t('person.yearsOld')})`
+                  }
                   {person.place_of_birth ? ` · ${person.place_of_birth}` : ''}
                 </Text>
               )}
@@ -254,6 +278,7 @@ export default function PersonModal({ personId, onClose, onCreditClick }: Props)
             id="person-tabpanel"
             role="tabpanel"
             aria-labelledby={`person-tab-${tab}`}
+            className="overflow-y-auto max-h-[50vh] pr-1"
           >
           {currentCredits.length === 0 ? (
             <Text variant="small" className="text-muted-foreground italic text-center py-4">

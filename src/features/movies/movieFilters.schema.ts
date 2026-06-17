@@ -46,6 +46,11 @@ export const staticMovieFiltersSchema: FiltersSchema<MovieFilters> = [
     ],
   },
   {
+    key: 'in_theaters',
+    label: 'movies.filters.inTheaters',
+    type: 'boolean',
+  },
+  {
     key: 'runtime_gte',
     label: 'movies.filters.runtimeGte',
     type: 'number',

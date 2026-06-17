@@ -52,6 +52,10 @@ export function fetchMovies(
     return moviesService.search(filters.title, page, tmdbLang)
   }
 
+  if (filters?.in_theaters) {
+    return moviesService.nowPlaying(page, tmdbLang)
+  }
+
   const params: Record<string, string | number> = {}
   if (sortBy)                    params['sort_by'] = sortBy
   if (filters?.vote_average_gte) params['vote_average.gte'] = filters.vote_average_gte

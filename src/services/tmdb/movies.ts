@@ -31,6 +31,9 @@ export const moviesService = {
   watchProviderOptions: (region: string) =>
     tmdbFetch<{ results: WatchProvider[] }>('/watch/providers/movie', { watch_region: region, language: 'en-US' }),
 
+  nowPlaying: (page = 1, language = DEFAULT_LANGUAGE, region = 'ES') =>
+    tmdbFetch<TMDBPagedResponse<TMDBMovie>>('/movie/now_playing', { page, language, region }),
+
   topRated: (page = 1, language = DEFAULT_LANGUAGE) =>
     tmdbFetch<TMDBPagedResponse<TMDBMovie>>('/movie/top_rated', { page, language }),
 

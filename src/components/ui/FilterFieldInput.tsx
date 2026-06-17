@@ -130,6 +130,7 @@ export default function FilterFieldInput<T extends Record<string, unknown>>({ fi
       return (
         <input
           type="checkbox"
+          data-cy={`filter-${String(field.key)}`}
           aria-label={ariaLabel}
           checked={Boolean(value)}
           onChange={(e) => onChange(updateFilterValue(filters, field.key, e.target.checked as T[keyof T]))}
