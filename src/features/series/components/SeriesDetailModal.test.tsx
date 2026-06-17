@@ -77,10 +77,19 @@ jest.mock('@/features/series/getSeriesUI', () => ({
   getSeriesUI: () => ({ firstAirYear: 2022, statusConfig: null }),
 }))
 
+jest.mock('@/features/series/hooks/useSeriesCredits', () => ({
+  useSeriesCredits: () => ({ cast: [], crew: [] }),
+}))
+
 jest.mock('@/features/series/series.service', () => ({
   fetchSeriesWatchProviders: jest.fn(),
   fetchSeasonDetail: jest.fn(),
   fetchSeriesVideos: jest.fn(),
+}))
+
+jest.mock('@/components/common/CastSection', () => ({
+  __esModule: true,
+  default: () => <div data-testid="cast-section" />,
 }))
 
 jest.mock('@/components/common/MediaPoster', () => ({

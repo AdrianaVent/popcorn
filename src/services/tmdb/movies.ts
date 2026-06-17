@@ -1,6 +1,6 @@
 import { tmdbFetch } from './client'
 import { DEFAULT_LANGUAGE } from '@/config/constants'
-import type { ReleaseDatesResult, TMDBCollectionDetail, TMDBMovie, TMDBMovieDetail, TMDBPagedResponse, TMDBVideosResult, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
+import type { ReleaseDatesResult, TMDBCollectionDetail, TMDBCredits, TMDBMovie, TMDBMovieDetail, TMDBPagedResponse, TMDBVideosResult, WatchProvider, WatchProvidersResult } from '@/types/tmdb'
 
 export const moviesService = {
   detail: (id: number, language = DEFAULT_LANGUAGE, extra: Record<string, string> = {}) =>
@@ -42,4 +42,7 @@ export const moviesService = {
 
   recommendations: (id: number, language = DEFAULT_LANGUAGE) =>
     tmdbFetch<TMDBPagedResponse<TMDBMovie>>(`/movie/${id}/recommendations`, { language }),
+
+  credits: (id: number, language = DEFAULT_LANGUAGE) =>
+    tmdbFetch<TMDBCredits>(`/movie/${id}/credits`, { language }),
 }
