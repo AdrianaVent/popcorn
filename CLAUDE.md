@@ -1,11 +1,23 @@
 # Popcorn
 
-Personal movie & series dashboard built with Next.js.
+Personal movie & series dashboard — Next.js web app + React Native mobile app (Expo), structured as an npm workspace monorepo.
+
+## Monorepo structure
+
+```
+apps/web/      # Next.js 16 web app
+apps/mobile/   # React Native app (Expo SDK 56) — in development
+shared/        # @popcorn/shared — types, utils, services, locales shared by both apps
+data/          # SQLite DB (gitignored) — shared between web and mobile via the web API
+```
+
+Root scripts delegate to the relevant workspace (`npm run dev` → `apps/web`, `npm run mobile` → `apps/mobile`, `npm run test:shared` → `shared`).
 
 ## Stack
 
+**Web (`apps/web`)**
 - **Next.js 16** + React 19 (App Router)
-- **TypeScript 5** — path alias `@/*` → `src/*`
+- **TypeScript 5** — path alias `@/*` → `src/*`; `@popcorn/shared/*` → `../../shared/src/*`
 - **Tailwind CSS 4** + PostCSS
 - **Zustand 5** — global state with localStorage persistence
 - **i18next** + react-i18next — ES/EN internationalization
@@ -17,6 +29,17 @@ Personal movie & series dashboard built with Next.js.
 - **ESLint 9** + Prettier — no semicolons, single quotes
 - **Jest 30** + Testing Library — unit & integration tests
 - **Cypress 15** — end-to-end tests (auth, movies, user management)
+
+**Mobile (`apps/mobile`)**
+- **Expo SDK 56** + React Native
+- **Expo Router** — file-based navigation, 5 bottom tabs (Home, Movies, Series, My List, Profile)
+- **Metro** — configured with `watchFolders` + `extraNodeModules` to resolve `@popcorn/shared`
+- **Babel module-resolver** — aliases `@popcorn/shared` → `../../shared/src`
+
+**Shared (`shared/` → `@popcorn/shared`)**
+- Re-exports types, utils, services and locales consumed by both apps
+- Own Jest config + test suite (204 tests)
+- `transpilePackages: ['@popcorn/shared']` in `next.config.ts` so Next.js compiles it directly
 
 ---
 
@@ -302,6 +325,7 @@ data/
 | StatsCard refactor — split 437-line component into `stats/` subfolder: `GuestStats`, `AdminStats`, `InsightsTab`, `ChartFooter`, `StatChip`, `StatsCharts`, `statsCard.types.ts`, `statsCard.utils.ts`; pure functions re-exported from `StatsCard.tsx` for backward-compatible test imports | Done |
 | StatsCard guest — **Activity / Summary** tab toggle (ToggleSwitch in card header); Activity tab: 5 chips (movies, sagas, series, episodes, series completion %) + activity chart; Summary tab: avg rating + ratings histogram + by-decade bar chart (year ranges: `< 1980`, `1980–89` … `2020–`); empty state when no data | Done |
 | SeriesCard "En progreso" ribbon — shown on in-progress series (watched > 0 && !completed); uses `Ribbon` component with `bg-primary text-primary-foreground`; absent when not started or completed | Done |
+| npm workspace monorepo — `apps/web`, `apps/mobile`, `shared/` (`@popcorn/shared`); Metro + Babel aliases for mobile; `transpilePackages` for web; DB at monorepo root; CI updated for workspace (`tsc` in `apps/web`, Cypress `working-directory: apps/web`, `test:shared` step) | Done |
 
 ---
 
@@ -401,6 +425,21 @@ Tokens in `src/styles/globals.css` and `src/styles/theme/`. CSS custom propertie
 - Inline `style={{}}` only for runtime-computed values (positions, dynamic heights) — never for colors or typography
 - No CSS Modules, styled-components or CSS-in-JS
 - Target aesthetic: SaaS-style — clean, minimal, easy to scan (Stripe / Linear / Notion)
+
+---
+
+## Monorepo
+
+npm workspaces with `apps/*` and `shared` workspace declarations. The root `package.json` delegates all scripts to the appropriate workspace — `dev`, `build`, `start`, `test`, `lint`, `cypress`, `cypress:run` → `apps/web`; `test:shared` → `shared`; `mobile` → `apps/mobile`.
+
+**`@popcorn/shared`** lives in `shared/` and is consumed by both apps:
+- Web: via npm workspace symlink + `transpilePackages: ['@popcorn/shared']` in `next.config.ts` (no webpack alias — incompatible with Turbopack). TypeScript resolves it via `paths: { "@popcorn/shared/*": ["../../shared/src/*"] }`.
+- Mobile: via Metro `extraNodeModules` + Babel `module-resolver` alias → `../../shared/src`.
+- Shared tests run with their own `jest.config.ts` mapping both `@/` and `@popcorn/shared/` to `<rootDir>/src/`.
+
+**DB path** — `db/client.ts` uses `process.env.DATA_DIR` (Docker/prod) or `path.join(process.cwd(), '..', '..', 'data')` (dev, since CWD is `apps/web/`). The `data/` folder lives at the monorepo root and is shared between web and mobile (mobile reads data via the web API, not directly).
+
+**CI** — `tsc` runs with `working-directory: apps/web`; Cypress action uses `working-directory: apps/web` + `install: false` (root `npm ci` runs first); Docker version reads from `apps/web/package.json`.
 
 ---
 

@@ -1,11 +1,11 @@
 # Popcorn 🍿
 
-![Version](https://img.shields.io/badge/version-0.26.0-6B2737)
+![Version](https://img.shields.io/badge/version-0.27.0-6B2737)
 ![Built with Claude](https://img.shields.io/badge/built%20with-Claude%20Code-black?logo=anthropic)
 
 Personal movie & series dashboard. Track what you watch, explore collections, and manage your watchlist — all in one place.
 
-> Optimised for desktop and tablet (768px and above). Mobile is not supported.
+> Web app optimised for desktop and tablet (768px and above). A React Native mobile app (Expo) is in development.
 
 **Author:** Adriana Ventura Candela &nbsp;·&nbsp; [GitHub](https://github.com/AdrianaVent) &nbsp;·&nbsp; [LinkedIn](https://www.linkedin.com/in/adriana-ventura-candela-9a942510b/)
 
@@ -40,7 +40,7 @@ Personal movie & series dashboard. Track what you watch, explore collections, an
 | Manage users (create, edit, delete, bulk delete) | ✓ | — |
 | Import users from JSON / CSV | ✓ | — |
 
-![Login screen](docs/screenshots/login.png)
+![Login screen](apps/web/docs/screenshots/login.png)
 
 ---
 
@@ -138,10 +138,10 @@ This downloads all libraries listed in `package.json`. It may take a minute.
 Copy the example env file:
 
 ```bash
-cp .env.local.example .env.local
+cp apps/web/.env.local.example apps/web/.env.local
 ```
 
-Open `.env.local` in any text editor and fill in the two required values:
+Open `apps/web/.env.local` in any text editor and fill in the two required values:
 
 ```env
 NEXT_PUBLIC_TMDB_API_KEY=   # your TMDB API key — free at themoviedb.org
@@ -198,6 +198,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser and sign in 
 
 ## User Manual
 
+### Web app
+
 ---
 
 ### Home (`/home`)
@@ -232,19 +234,19 @@ A summary card that adapts its content to your role.
 - **Activity** — shows chips (movies watched, completed sagas, series watched, episodes watched, series completion %) and an area chart that plots when you marked titles as watched. Use the **day / week / month** toggle to change the chart granularity.
 - **Summary** — shows your average rating and a ratings histogram. When enough titles are watched, a **By decade** bar chart shows the distribution of your watched content by release decade.
 
-![Home — overview with guest stats card (Activity tab)](docs/screenshots/home.png)
+![Home — overview with guest stats card (Activity tab)](apps/web/docs/screenshots/home.png)
 
-![Home — guest stats card (Summary tab) with monthly recommendations panel open](docs/screenshots/home-stats-guest-summary.png)
+![Home — guest stats card (Summary tab) with monthly recommendations panel open](apps/web/docs/screenshots/home-stats-guest-summary.png)
 
 *Admin view* — shows user stats chips (total users, guests, admins, new this month) and a registrations chart that plots account creation over time, also with a **day / week / month** toggle.
 
-![Home — admin stats card](docs/screenshots/home-stats-admin.png)
+![Home — admin stats card](apps/web/docs/screenshots/home-stats-admin.png)
 
 **Release calendar**
 
-![Home — release calendar with day selected](docs/screenshots/home-calendar.png)
+![Home — release calendar with day selected](apps/web/docs/screenshots/home-calendar.png)
 
-![Home — release calendar with trailer open](docs/screenshots/home-calendar-trailer.png)
+![Home — release calendar with trailer open](apps/web/docs/screenshots/home-calendar-trailer.png)
 
 A monthly calendar showing upcoming movie and series releases from TMDB (English and Spanish titles).
 
@@ -257,19 +259,19 @@ A monthly calendar showing upcoming movie and series releases from TMDB (English
 
 **Arrange cards**
 
-![Home — drag mode active](docs/screenshots/home-drag-mode.png)
+![Home — drag mode active](apps/web/docs/screenshots/home-drag-mode.png)
 
 Click **Organizar** in the page header to enter drag mode. Each card dims and shows a grip handle in the centre — drag it to reorder. The layout is saved automatically when you exit drag mode. The order is stored per user.
 
 **Reminders** *(guest only)*
 
-![Home — reminders panel open](docs/screenshots/home-calendar-reminders.png)
+![Home — reminders panel open](apps/web/docs/screenshots/home-calendar-reminders.png)
 
 Click the bookmark icon in the release calendar header to open the Reminders panel — a side panel that lists all your watchlisted titles that are releasing this month, split into **Today** and **Upcoming** sections. Click any entry to open its detail modal. Close the panel with the **×** button or by clicking the bookmark icon again.
 
 **Monthly recommendations**
 
-![Home — monthly recommendations panel and Summary stats tab](docs/screenshots/home-stats-guest-summary.png)
+![Home — monthly recommendations panel and Summary stats tab](apps/web/docs/screenshots/home-stats-guest-summary.png)
 
 Click the star (★) icon in the release calendar header to open the Monthly recommendations panel. It shows the top 10 movies and top 10 series for the current month, filtered by genre theme (e.g. Horror in October, Romance in February, Fantasy in April) and sorted by rating. Titles you have already watched are automatically excluded. Click any entry to open its detail modal.
 
@@ -281,7 +283,7 @@ A paginated table of movies from TMDB, sorted by popularity by default.
 
 **Browsing and filtering**
 
-![Movies list with active filters](docs/screenshots/movies-list.png)
+![Movies list with active filters](apps/web/docs/screenshots/movies-list.png)
 
 The **Filters** panel sits at the top of the page. Click the chevron on the right to collapse it — when collapsed, any active filters are shown as summary pills in the header so you can see what is applied at a glance. Click **Clear filters** to reset everything without having to expand the panel first.
 
@@ -313,7 +315,7 @@ Movies you have marked as watched show a diagonal **Watched** ribbon on their po
 
 Click anywhere on a row to open a panel with full information about the movie.
 
-![Movie detail — overview and watch providers](docs/screenshots/movie-detail-overview.png)
+![Movie detail — overview and watch providers](apps/web/docs/screenshots/movie-detail-overview.png)
 
 The modal shows the **synopsis**, **genres**, **runtime**, **release year**, **vote count** and **watch providers** — where the title is available in Spain (subscription, rental, purchase).
 
@@ -323,7 +325,7 @@ The modal shows the **synopsis**, **genres**, **runtime**, **release year**, **v
 
 **Cast and director filmography**
 
-![Person filmography modal](docs/screenshots/person-modal.png)
+![Person filmography modal](apps/web/docs/screenshots/person-modal.png)
 
 Click any actor or director name in the cast section of a movie or series detail modal to open a filmography panel for that person. The panel shows:
 
@@ -334,13 +336,13 @@ Click any actor or director name in the cast section of a movie or series detail
 
 **Sagas**
 
-![Movie detail — saga accordion expanded](docs/screenshots/movie-detail-saga.png)
+![Movie detail — saga accordion expanded](apps/web/docs/screenshots/movie-detail-saga.png)
 
 If the movie belongs to a collection, a **Saga** accordion lists all released films in the series (future or undated instalments are omitted). Click any title to navigate to that film without closing the modal. The accordion marks which films you have already watched and lets you mark the entire saga as watched in one click. Each film has a play button to watch its trailer inline.
 
 **Movies currently in cinemas**
 
-![Movie detail — in theaters chip](docs/screenshots/movie-detail-theaters.png)
+![Movie detail — in theaters chip](apps/web/docs/screenshots/movie-detail-theaters.png)
 
 Movies released in Spanish cinemas within the last 90 days show an **In theaters** chip next to the streaming platform badges.
 
@@ -354,7 +356,7 @@ The **Watched** filter and the watched ribbon are available to guest accounts on
 
 **Browsing and filtering**
 
-![Series list with active filters](docs/screenshots/series-list.png)
+![Series list with active filters](apps/web/docs/screenshots/series-list.png)
 
 The series list includes a **Status** filter (airing, ended, cancelled...) not available in Movies. All other filters work identically.
 
@@ -362,15 +364,15 @@ The series list includes a **Status** filter (airing, ended, cancelled...) not a
 
 Click anywhere on a row to open a panel with full information about the series.
 
-![Series detail — overview and watch providers](docs/screenshots/series-detail-overview.png)
+![Series detail — overview and watch providers](apps/web/docs/screenshots/series-detail-overview.png)
 
-![Series detail — trailer open](docs/screenshots/series-detail-overview-trailer.png)
+![Series detail — trailer open](apps/web/docs/screenshots/series-detail-overview-trailer.png)
 
 The modal shows the **synopsis**, **genres**, **episode runtime**, **status**, total number of **seasons and episodes**, and **watch providers**. Mark the series as watched with the button next to the title *(guest only)*. Click the play button next to the title to watch the official trailer inline. Click it again or use the **×** button on the player to close it.
 
 **Episode tracking** *(guest only)*
 
-![Series detail — seasons accordion expanded](docs/screenshots/series-detail-seasons.png)
+![Series detail — seasons accordion expanded](apps/web/docs/screenshots/series-detail-seasons.png)
 
 Expand the **Seasons** accordion to see the full episode list broken down by season.
 
@@ -389,7 +391,7 @@ The page has three tabs — **Movies**, **Series**, and **Watchlist** — each s
 
 **Movies tab**
 
-![My list — movies grouped by saga](docs/screenshots/my-list-movies.png)
+![My list — movies grouped by saga](apps/web/docs/screenshots/my-list-movies.png)
 
 Displays your watched movies as cards (poster, year, star rating and a Recommendations button). The layout adapts dynamically:
 
@@ -402,7 +404,7 @@ Displays your watched movies as cards (poster, year, star rating and a Recommend
 
 **Series tab**
 
-![My list — series tab](docs/screenshots/my-list-series.png)
+![My list — series tab](apps/web/docs/screenshots/my-list-series.png)
 
 Displays your watched series as cards. Each card shows an episode progress badge (e.g. `1/62 ep.`), a star rating and a Recommendations button. Series with at least one episode watched but not yet complete show an **In progress** ribbon on their poster.
 
@@ -412,7 +414,7 @@ Displays your watched series as cards. Each card shows an episode progress badge
 
 **Watchlist tab**
 
-![My list — watchlist tab](docs/screenshots/my-list-watchlist.png)
+![My list — watchlist tab](apps/web/docs/screenshots/my-list-watchlist.png)
 
 A watchlist of titles you want to watch later. Add titles via the heart (♥) button in the movie/series detail modals or in the release calendar. Items are automatically removed from the list when you mark them as watched.
 
@@ -443,13 +445,13 @@ A paginated list of all user accounts.
 
 **Browsing and filtering**
 
-![Users list](docs/screenshots/users-list.png)
+![Users list](apps/web/docs/screenshots/users-list.png)
 
 Use the filter panel to search by username, role, creation date or creator (the admin who created the account).
 
 **Creating a user**
 
-![Add user modal](docs/screenshots/users-add.png)
+![Add user modal](apps/web/docs/screenshots/users-add.png)
 
 Click **Add user**, fill in the username, password and role (admin or guest), and confirm. The new user appears immediately in the list.
 
@@ -457,15 +459,15 @@ Click **Add user**, fill in the username, password and role (admin or guest), an
 
 **Editing a user**
 
-![Edit user modal](docs/screenshots/users-edit.png)
+![Edit user modal](apps/web/docs/screenshots/users-edit.png)
 
 Click the edit icon on any row to open a form with the current values pre-filled. When editing another user's account, the password field is not shown — each user manages their own password from their own session. When an admin edits their own account, the password field is replaced by a three-field form (current password → new password → confirm) that is submitted together with the rest of the form via **Accept**.
 
-![Edit own account — password section](docs/screenshots/users-edit-self.png)
+![Edit own account — password section](apps/web/docs/screenshots/users-edit-self.png)
 
 **Deleting users**
 
-![Delete confirmation dialog](docs/screenshots/users-delete.png)
+![Delete confirmation dialog](apps/web/docs/screenshots/users-delete.png)
 
 - Click the delete icon on a row to delete a single user. A confirmation dialog will appear before the action is executed.
 - Select multiple rows using the checkboxes and click **Delete selected** for a bulk deletion.
@@ -474,7 +476,7 @@ Admins cannot delete or change the role of their own account.
 
 **Importing users in bulk**
 
-![Import users modal](docs/screenshots/users-import.png)
+![Import users modal](apps/web/docs/screenshots/users-import.png)
 
 Click **Import** to upload a JSON or CSV file and create multiple accounts at once. Expected formats:
 
@@ -488,7 +490,7 @@ alice,Pass123!,guest
 bob,Pass456!,admin
 ```
 
-![Import results](docs/screenshots/users-import-results.png)
+![Import results](apps/web/docs/screenshots/users-import-results.png)
 
 After processing, a results screen shows how many accounts were created and lists any rows that failed with the reason for each error. Failed rows can be downloaded as a CSV for correction and re-upload.
 
@@ -498,7 +500,7 @@ After processing, a results screen shows how many accounts were created and list
 
 Click the gear icon in the sidebar to open the settings panel.
 
-![Settings modal](docs/screenshots/settings.png)
+![Settings modal](apps/web/docs/screenshots/settings.png)
 
 - **Language** — switch between English and Spanish. Defaults to Spanish on first login. The preference is stored per user in localStorage and applied immediately across the entire interface with no page reload — i18next resolves the stored language before the first render to avoid any visible flash.
 - **Region** — switch between Spain and United States. Determines which streaming platforms are shown in the watch providers section of every movie and series detail modal.
@@ -513,9 +515,9 @@ The sidebar displays your avatar and username at the bottom. Clicking it opens t
 - **Avatar** — click the pencil icon to customise your avatar: choose hair style, facial expression, optional glasses (with colour), skin tone, hair colour, and shirt colour. A live preview updates as you make changes. Click the pencil again to discard, or click **Save avatar** to persist the selection. Avatar customisation is available to guest users only.
 - **Password** — enter your current password and a new password (min 8 characters, 1 uppercase, 1 number, 1 special character) to change it. Each field has an eye toggle to show/hide the value. Validation errors appear inline; success and error banners appear above the form.
 
-![Profile modal](docs/screenshots/my-profile.png)
+![Profile modal](apps/web/docs/screenshots/my-profile.png)
 
-![Profile modal — avatar editor open](docs/screenshots/my-profile-update-avatar.png)
+![Profile modal — avatar editor open](apps/web/docs/screenshots/my-profile-update-avatar.png)
 
 ---
 
@@ -637,8 +639,9 @@ docker compose down -v                            # stop and delete data volume 
 |---|---|
 | `npm run dev` | Start development server |
 | `npm run build` | Production build |
-| `npm run start` | Start production server |
-| `npm test` | Run Jest unit tests |
+| `npm run start` | Start production server (web) |
+| `npm test` | Run Jest unit tests (web) |
+| `npm run test:shared` | Run Jest unit tests (shared) |
 | `npm run test:watch` | Jest in watch mode |
 | `npm run cypress` | Open Cypress UI |
 | `npm run cypress:run` | Run E2E tests headlessly |
@@ -646,61 +649,61 @@ docker compose down -v                            # stop and delete data volume 
 | `npm run lint:fix` | ESLint auto-fix |
 | `npm run format` | Prettier format |
 | `npm run seed` | Create default admin user |
+| `npm run mobile` | Start Expo dev server (mobile) |
 
 ---
 
 ## Project structure
 
 ```
-src/
-├── app/api/auth/       # login · logout · refresh — thin Route Handlers
-├── components/
-│   ├── common/         # FiltersPanel, ExportButton, Sidebar, SettingsModal, ...
-│   ├── layouts/        # AuthLayout, DashboardLayout, PageLayout
-│   └── ui/             # Button, Input, Text, Modal, ModalFooter, Header,
-│                       # DatePicker, ConfirmModal, IconButton, IconToggleButton, Table/, LoadingOverlay,
-│                       # Toast/ToastItem, Toast/ToastContainer, BarChart, ToggleSwitch,
-│                       # SearchableSelect, YearRangePicker, FilterFieldInput,
-│                       # StarRating, Tooltip, TrailerPlayer, ...
-├── config/             # auth.ts · tmdb.ts · i18n.ts · constants.ts
-├── db/                 # client.ts (SQLite singleton) · users.ts (typed queries)
-├── features/
-│   ├── auth/login/     # LoginFeature · useLogin · login.service.ts
-│   ├── home/           # HomeFeature · useMovieGenres · useSeriesGenres · ReleaseCalendar · CalendarGrid · CalendarReleaseItem · Top10Card · GenreDropdown
-│   ├── movies/         # MoviesFeature · useMovieColumns · useMovieExport · useMovieRuntimeEnrichment · CollectionAccordion · SagaMovieItem · service
-│   ├── myList/         # MyListFeature · myListUtils · MoviesTabPanel · SeriesTabPanel · WatchlistTabPanel
-│   │                   # MovieCard · SeriesCard · SagaCard · WatchlistSagaCard · UnwatchedMoviePlaceholder · RecommendationsDrawer · WatchlistCard
-│   │                   # hooks: useMovieRecommendations · useSeriesRecommendations
-│   ├── person/         # PersonModal · usePersonDetail · usePersonCredits · mergeCredits · getYear
-│   ├── series/         # SeriesFeature · useSeriesColumns · useSeriesExport · useSeriesMarkAll · useSeriesEnrichment · components · service
-│   └── users/          # UsersFeature · useUserColumns · useUserExport · UserFormModal · ImportUsersModal · users.service.ts
-├── hooks/              # useFilters · useWatchProviders · useTruncated · useTrailer · useEnrichedTrailers
-├── locales/            # en.json · es.json
-├── middleware.ts        # JWT verification + route protection
-├── providers/          # GlobalProvider · ThemeProvider · LanguageProvider
-├── services/
-│   ├── apiFetch.ts     # fetch wrapper — auto-refresh on 401, redirect to /login on expiry
-│   ├── auth/           # authService — bcrypt verify, JWT sign/refresh
-│   └── tmdb/           # TMDB client — movies, series, search
-├── store/              # themeStore · languageStore · userStore · watchedStore · watchlistStore · ratingsStore · toastStore
-└── utils/              # formatDate · formatNumber · exportData · importUtils · getTMDBImageUrl · ...
-cypress/
-├── e2e/                # auth · home · movies · series · my-list · users · settings
-├── fixtures/           # mocked TMDB responses
-└── support/            # commands.ts (cy.login) · e2e.ts (global hooks)
-scripts/
-├── seed.ts             # Creates an admin user (local dev)
-└── docker-seed.js      # Creates admin user on first Docker run (CommonJS, no TS)
+apps/
+├── web/                    # Next.js 16 web app
+│   ├── src/
+│   │   ├── app/api/auth/   # login · logout · refresh — thin Route Handlers
+│   │   ├── components/
+│   │   │   ├── common/     # FiltersPanel, ExportButton, Sidebar, SettingsModal, ...
+│   │   │   ├── layouts/    # AuthLayout, DashboardLayout, PageLayout
+│   │   │   └── ui/         # Button, Input, Text, Modal, Table/, Toast/, BarChart,
+│   │   │                   # StarRating, Tooltip, TrailerPlayer, ...
+│   │   ├── config/         # auth.ts · tmdb.ts · i18n.ts · constants.ts
+│   │   ├── db/             # client.ts (SQLite singleton) · users.ts (typed queries)
+│   │   ├── features/
+│   │   │   ├── auth/login/ # LoginFeature · useLogin · login.service.ts
+│   │   │   ├── home/       # HomeFeature · ReleaseCalendar · Top10Card · StatsCard
+│   │   │   ├── movies/     # MoviesFeature · CollectionAccordion · service
+│   │   │   ├── myList/     # MyListFeature · MovieCard · SeriesCard · SagaCard · RecommendationsDrawer
+│   │   │   ├── person/     # PersonModal · usePersonDetail · usePersonCredits
+│   │   │   ├── series/     # SeriesFeature · SeasonsAccordion · service
+│   │   │   └── users/      # UsersFeature · UserFormModal · ImportUsersModal
+│   │   ├── hooks/          # useFilters · useWatchProviders · useTruncated · useTrailer
+│   │   ├── middleware.ts   # JWT verification + route protection
+│   │   ├── providers/      # GlobalProvider · ThemeProvider · LanguageProvider
+│   │   ├── services/       # apiFetch · authService · tmdb client
+│   │   ├── store/          # themeStore · languageStore · watchedStore · watchlistStore · ratingsStore
+│   │   └── utils/          # formatDate · formatNumber · exportData · getTMDBImageUrl · ...
+│   ├── cypress/
+│   │   ├── e2e/            # auth · home · movies · series · my-list · users · settings
+│   │   └── support/        # commands.ts · e2e.ts
+│   └── scripts/
+│       ├── seed.ts         # Creates an admin user (local dev)
+│       └── docker-seed.js  # Creates admin user on first Docker run
+└── mobile/                 # React Native app (Expo) — in development
+    └── app/(tabs)/         # Home · Movies · Series · My List · Profile tabs
+shared/                     # Shared package (@popcorn/shared) — types, utils, services, locales
 data/
-└── popcorn.db          # SQLite database — gitignored, auto-created on first run
-Dockerfile              # Multi-stage build: deps → builder → runner (Node 20 Alpine)
-docker-compose.yml      # Compose with persistent volume for the database
-docker-entrypoint.sh    # Seeds DB if absent, then starts the app
+└── popcorn.db              # SQLite database — gitignored, auto-created on first run
+Dockerfile                  # Multi-stage build: deps → builder → runner (Node 20 Alpine)
+docker-compose.yml          # Compose with persistent volume for the database
+docker-entrypoint.sh        # Seeds DB if absent, then starts the app
 ```
 
 ---
 
 ## Tech stack
+
+| | |
+|---|---|
+**Web (`apps/web`)**
 
 | | |
 |---|---|
@@ -716,6 +719,15 @@ docker-entrypoint.sh    # Seeds DB if absent, then starts the app
 | Linting | ESLint 9 + Prettier |
 | CI/CD | GitHub Actions — tsc, lint, jest, build + Cypress E2E on every push; Docker publish + GitHub Release on `main` |
 | Docker | Multi-stage image (Node 20 Alpine, ~200 MB via standalone output) — non-root user, healthcheck, auto-seeds DB on first run; published to ghcr.io on `main` |
+
+**Mobile (`apps/mobile`) — in development**
+
+| | |
+|---|---|
+| Framework | Expo SDK 56 + React Native |
+| Navigation | Expo Router (file-based, 5 bottom tabs) |
+| Shared code | `@popcorn/shared` — types, utils, services and locales shared with the web app |
+| Backend | Same Next.js API (auth, TMDB proxy) — no separate mobile backend |
 
 ---
 
